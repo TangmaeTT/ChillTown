@@ -1,8 +1,10 @@
 // Local player: position, facing, walking. Pure logic; the view reads it, the controller feeds it input.
 
-// must match player.png (tools/char_sheet.py prints the count): col 0 standing + WALK_FRAMES walk cycle
-export const WALK_FRAMES = 18;
-export const WALK_FPS = 20;
+import sheet from './player_sheet.json';
+
+// player.png layout, written by tools/char_sheet.py together with the sheet: col 0 standing + WALK_FRAMES walk cycle
+export const WALK_FRAMES: number = sheet.walkFrames;
+export const WALK_FPS: number = sheet.walkFps;
 const SPEED = 70; // world px per second
 
 export class PlayerModel {

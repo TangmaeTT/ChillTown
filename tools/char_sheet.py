@@ -3,6 +3,14 @@
   python tools/char_sheet.py art-in/char/man1.png client/public/assets/player.png --height 52
   python tools/char_sheet.py --iso-down down.png --iso-up up.png client/public/assets/player.png --height 52
 
+  python tools/char_sheet.py --stand stand.png --walk-down walk_down.png [--walk-up walk_up.png]
+         [--emotes emotes.png] client/public/assets/player.png      (ChatGPT sheets from the prompts in chat)
+
+--stand: 4 standing views in one row: down-left, down-right, up-left, up-right.
+--walk-down / --walk-up: walk cycles in a 4x2 grid (down-left / up-right); missing --walk-up = the back
+  views bob in step. --emotes: any grid (default 4x2) of extra poses -> <out>_extra.png.
+Every mode also writes client/src/model/player_sheet.json (walk frame count + fps) for the game.
+
 --iso-down / --iso-up: two walk-cycle grids (e.g. from Autosprite, transparent background, frames in a
 regular grid): one walking toward the camera-left (down-left), one walking away to the right (up-right).
 They're mirrored for down-right and up-left; every frame of the cycle is used.
@@ -90,6 +98,15 @@ def place(sheet, img, col, row, dy=0, mirror=False):
     region[mask] = img[mask]
 
 
+SHEET_JSON = Path(__file__).resolve().parent.parent / "client" / "src" / "model" / "player_sheet.json"
+
+
+def write_sheet_json(walk_frames, fps):
+    import json
+    SHEET_JSON.write_text(json.dumps({"walkFrames": walk_frames, "walkFps": fps}, indent=2) + "\n")
+    print(f"wrote {SHEET_JSON.name}: {walk_frames} walk frames at {fps} fps")
+
+
 def grid_frames(path, cols, rows, count):
     """frames laid out in a regular grid (Autosprite exports), trimmed"""
     a = np.array(Image.open(path).convert("RGBA"))
@@ -130,7 +147,51 @@ def iso_pair(a):
     sheet = pf.reduce_colours(sheet, a.colors)
     Image.fromarray(sheet).save(a.out)
     pf.report(sheet, "player")
-    print(f"saved {a.out}: {n} walk frames per direction (set WALK_FRAMES = {n} in client/src/model/PlayerModel.ts)")
+    print(f"saved {a.out}: {n} walk frames per direction")
+    write_sheet_json(n, 20)
+
+
+def gpt_sheets(a):
+    """ChatGPT: a row of 4 standing views + 4x2 walk grids (+ optional emotes grid)"""
+    stand = grid_frames(a.stand, 4, 1, 4)
+    walk_dn = grid_frames(a.walk_down, 4, 2, 8)
+    walk_up = grid_frames(a.walk_up, 4, 2, 8) if a.walk_up else None
+    scale = stand[0].shape[0] / a.height
+    small = lambda im, sc: pf.resample(im, max(1, round(im.shape[1] / sc)))
+    dl, dr, ul, ur = (small(f, scale) for f in stand)
+    # walk frames are matched to the standing height (a stride is a touch shorter)
+    wsc = lambda frames: np.median([f.shape[0] for f in frames]) / (a.height * 0.98)
+    walk_dn = [small(f, wsc(walk_dn)) for f in walk_dn]
+    walk_up = [small(f, wsc(walk_up)) for f in walk_up] if walk_up else None
+    n = len(walk_dn)
+
+    sheet = np.zeros((8 * FRAME, (n + 1) * FRAME, 4), np.uint8)
+    # rows: E SE S SW W NW N NE -> (standing, walk cycle or None to bob, mirror the cycle)
+    rows = [
+        (dr, walk_dn, True), (dr, walk_dn, True), (dl, walk_dn, False), (dl, walk_dn, False), (dl, walk_dn, False),
+        (ul, walk_up, True), (ur, walk_up, False), (ur, walk_up, False),
+    ]
+    for r, (still, cycle, mirror) in enumerate(rows):
+        place(sheet, still, 0, r)
+        for f in range(n):
+            if cycle:
+                place(sheet, cycle[f % len(cycle)], f + 1, r, mirror=mirror)
+            else:
+                place(sheet, still, f + 1, r, dy=BOB[f % len(BOB)])
+    sheet = pf.reduce_colours(sheet, a.colors)
+    Image.fromarray(sheet).save(a.out)
+    pf.report(sheet, "player")
+    write_sheet_json(n, 10)
+
+    if a.emotes:
+        ex = [small(e, scale) for e in grid_frames(a.emotes, a.cols, a.rows, a.count)]
+        sheet = np.zeros((FRAME, len(ex) * FRAME, 4), np.uint8)
+        for k, e in enumerate(ex):
+            place(sheet, e if e.shape[1] <= FRAME else pf.resample(e, FRAME - 2), k, 0)
+        sheet = pf.reduce_colours(sheet, a.colors)
+        path = Path(a.out).with_name(Path(a.out).stem + "_extra.png")
+        Image.fromarray(sheet).save(path)
+        print("saved", path)
 
 
 def main():
@@ -138,12 +199,17 @@ def main():
     ap.add_argument("src", nargs="?", help="single ChatGPT sheet (layout above)")
     ap.add_argument("out")
     ap.add_argument("--iso-down"); ap.add_argument("--iso-up")
-    ap.add_argument("--cols", type=int, default=5); ap.add_argument("--rows", type=int, default=4)
-    ap.add_argument("--count", type=int, default=18, help="frames in each grid")
+    ap.add_argument("--stand"); ap.add_argument("--walk-down"); ap.add_argument("--walk-up"); ap.add_argument("--emotes")
+    ap.add_argument("--cols", type=int, default=None); ap.add_argument("--rows", type=int, default=None)
+    ap.add_argument("--count", type=int, default=None, help="frames in each grid")
     ap.add_argument("--height", type=int, default=52, help="standing height in game pixels")
     ap.add_argument("--colors", type=int, default=32)
     a = ap.parse_args()
+    if a.stand and a.walk_down:
+        a.cols, a.rows, a.count = a.cols or 4, a.rows or 2, a.count or 8
+        return gpt_sheets(a)
     if a.iso_down and a.iso_up:
+        a.cols, a.rows, a.count = a.cols or 5, a.rows or 4, a.count or 18
         return iso_pair(a)
 
     rgba = pf.key_background(np.array(Image.open(a.src).convert("RGBA")), [255, 0, 255], 110)
