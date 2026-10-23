@@ -3,6 +3,7 @@
 เกมออนไลน์บนเว็บไว้เดินเล่น แต่งตัว และคุยกัน แนว Zheza ฉากเป็นกรุงเทพแบบดัดแปลง ใจกลางคือย่านสยาม · Phaser 4 + TypeScript · isometric pixel art
 
 - โน้ตโปรเจกต์ (เริ่มอ่านที่นี่): [`PROJECT_NOTES.md`](PROJECT_NOTES.md)
+- Game design: [`design/GDD.md`](design/GDD.md)
 - ผังใจกลางสยาม: [`design/siam-layout.md`](design/siam-layout.md) · ![ผัง](design/siam-map.png)
 
 ## รันเกม
