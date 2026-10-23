@@ -5,3 +5,6 @@ dist/
 art-test/pixellab/openapi.json
 art-test/pixelfix-test/fake_ai.png
 __pycache__/
+
+# raw images from ChatGPT before pixelfix (see design/asset-list.md)
+art-in/
