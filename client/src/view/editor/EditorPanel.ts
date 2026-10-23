@@ -25,6 +25,7 @@ const GROUNDS: { g: Ground; name: string; color: string }[] = [
     { g: 'road', name: 'ถนน', color: '#46484c' }, { g: 'crosswalk', name: 'ทางม้าลาย', color: '#c9c7bc' },
     { g: 'soi', name: 'ซอย', color: '#4e4e50' }, { g: 'grass', name: 'หญ้า', color: '#4e6e42' },
     { g: 'water', name: 'น้ำ', color: '#264e62' }, { g: 'wood', name: 'ไม้', color: '#806246' },
+    { g: 'tile', name: 'พื้นสถานี', color: '#c4c0b6' }, { g: 'rail', name: 'ราง', color: '#3e3a36' },
 ];
 const ARTS: (Art | '')[] = ['', 'tree', 'bench', 'clock', 'kiosk'];
 

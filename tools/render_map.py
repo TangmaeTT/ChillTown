@@ -16,10 +16,10 @@ OUT = ROOT / "design" / "siam-map.png"
 T = 16  # px per tile
 
 GROUND = {"plaza": "#4a4d47", "sidewalk": "#5d5f57", "road": "#2a2e31", "crosswalk": "#a9ab9c", "soi": "#3a3e3f",
-          "water": "#1f4a6b", "wood": "#6b5440", "grass": "#3b5849"}
-CODES = {"p": "plaza", "s": "sidewalk", "r": "road", "c": "crosswalk", "o": "soi", "w": "water", "d": "wood", "g": "grass"}
+          "water": "#1f4a6b", "wood": "#6b5440", "grass": "#3b5849", "tile": "#b8b4aa", "rail": "#3e3a36"}
+CODES = {"p": "plaza", "s": "sidewalk", "r": "road", "c": "crosswalk", "o": "soi", "w": "water", "d": "wood", "g": "grass", "t": "tile", "x": "rail"}
 # where each room's panel sits on the sheet (in tiles), roughly matching real geography
-LAYOUT = {"mall": (4, 3), "canal": (36, 3), "plaza": (2, 27), "soi": (8, 51)}
+LAYOUT = {"mall": (4, 3), "canal": (36, 3), "plaza": (2, 27), "soi": (8, 51), "concourse": (40, 31), "platform": (38, 47)}
 
 FONT = "C:/Windows/Fonts/LeelawUI.ttf"
 FONT_B = "C:/Windows/Fonts/LeelaUIb.ttf"

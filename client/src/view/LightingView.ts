@@ -1,6 +1,8 @@
 import { Scene, GameObjects, BlendModes } from 'phaser';
 import { lighting, type Light } from './lighting';
 
+const INDOOR: Light = { ambient: [236, 230, 216], lights: 1, sun: 0, sky: [14, 16, 20] };
+
 // Applies the time-of-day look: a multiply overlay for ambient colour, additive lights (lamps, shop spill)
 // and glow layers (lit windows, signs) that fade in with `lights`, and daylight shadows that fade with `sun`.
 export class LightingView {
@@ -10,7 +12,8 @@ export class LightingView {
     private shadows: { obj: { setAlpha(a: number): unknown }; base: number }[] = [];
     current: Light = lighting();
 
-    constructor(private scene: Scene) {
+    /** indoor rooms keep a fixed, lamp-lit look whatever the time */
+    constructor(private scene: Scene, private indoor = false) {
         this.overlay = scene.add.rectangle(0, 0, 4000, 4000, 0xffffff).setScrollFactor(0).setDepth(50000)
             .setBlendMode(BlendModes.MULTIPLY);
     }
@@ -30,7 +33,7 @@ export class LightingView {
     addShadow(obj: { setAlpha(a: number): unknown }, base: number) { this.shadows.push({ obj, base }); }
 
     update(time: number) {
-        const L = this.current = lighting();
+        const L = this.current = this.indoor ? INDOOR : lighting();
         this.overlay.setFillStyle((L.ambient[0] << 16) | (L.ambient[1] << 8) | L.ambient[2]);
         this.scene.cameras.main.setBackgroundColor((L.sky[0] << 16) | (L.sky[1] << 8) | L.sky[2]);
         for (const l of this.lights) {

@@ -27,6 +27,15 @@ export const SKYTRAIN = {
     roadLength: 32,
 };
 
+// A train line as the trains see it: where the rails are and where trains stop.
+export type TrainLine = { length: number; stopI: number; tracks: { j: number; dir: 1 | -1 }[]; z: number };
+
+/** the viaduct over the station plaza */
+export const PLAZA_LINE: TrainLine = { length: SKYTRAIN.roadLength, stopI: SKYTRAIN.station.stopI, tracks: SKYTRAIN.tracks, z: SKYTRAIN.deck.z + SKYTRAIN.deck.h };
+
+/** the platform room: island platform between two tracks; rails sit a little below the platform floor */
+export const PLATFORM_LINE: TrainLine = { length: 26, stopI: 13, tracks: [{ j: 1.5, dir: 1 }, { j: 8.5, dir: -1 }], z: -6 };
+
 /** Tiles the skytrain makes unwalkable (stairs; pillars stand on the road which is blocked anyway). */
 export function skytrainSolids(): Rect[] {
     return SKYTRAIN.stairs.map(s => ({ i0: s.i0 + 0.5, j0: s.j0 + 0.5, i1: s.i1 - 0.5, j1: s.j1 - 0.5 }));

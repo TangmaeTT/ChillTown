@@ -16,6 +16,7 @@ export type Ghost = { rect: Rect; ok: boolean } | null;
 // preview colours for ground painted during a drag (the real tiles appear when the stroke ends)
 const PAINT: Record<Ground, number> = {
     plaza: 0xa8a294, sidewalk: 0x9e9888, road: 0x46484c, crosswalk: 0xc9c7bc, soi: 0x4e4e50, grass: 0x4e6e42, water: 0x264e62, wood: 0x806246,
+    tile: 0xc4c0b6, rail: 0x3e3a36,
 };
 
 export class EditorOverlay {

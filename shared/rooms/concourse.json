@@ -1,0 +1,48 @@
+{
+  "id": "concourse",
+  "name": "สถานีสยาม · ชั้นขายตั๋ว",
+  "w": 22,
+  "h": 10,
+  "spawn": {"i":2,"j":2},
+  "indoor": true,
+  "boxes": [
+    {"i0":2,"j0":1,"i1":3,"j1":1,"h":50,"color":5330010,"label":"แผนที่สาย"},
+    {"i0":5,"j0":1,"i1":5,"j1":1,"h":40,"color":4091816},
+    {"i0":6,"j0":1,"i1":6,"j1":1,"h":40,"color":4091816,"label":"ตู้ขายตั๋ว"},
+    {"i0":7,"j0":1,"i1":7,"j1":1,"h":40,"color":4091816},
+    {"i0":8,"j0":1,"i1":8,"j1":1,"h":40,"color":4091816},
+    {"i0":10,"j0":1,"i1":12,"j1":1,"h":30,"color":8221800,"label":"ประชาสัมพันธ์","front":"left"},
+    {"i0":16,"j0":1,"i1":19,"j1":3,"h":46,"color":7033920,"art":"kiosk","label":"ร้านกาแฟ","front":"left"},
+    {"i0":0,"j0":5,"i1":7,"j1":5,"h":18,"color":9080724,"label":"ราวกั้น"},
+    {"i0":8,"j0":5,"i1":8,"j1":5,"h":22,"color":10132886},
+    {"i0":10,"j0":5,"i1":10,"j1":5,"h":22,"color":10132886},
+    {"i0":12,"j0":5,"i1":12,"j1":5,"h":22,"color":10132886},
+    {"i0":14,"j0":5,"i1":14,"j1":5,"h":22,"color":10132886},
+    {"i0":15,"j0":5,"i1":21,"j1":5,"h":18,"color":9080724},
+    {"i0":3,"j0":7,"i1":4,"j1":7,"h":8,"color":7033920,"art":"bench"},
+    {"i0":17,"j0":7,"i1":18,"j1":7,"h":8,"color":7033920,"art":"bench"}
+  ],
+  "exits": [
+    {"i0":0,"j0":1,"i1":0,"j1":3,"to":"plaza","spawn":{"i":9,"j":1},"label":"↓ ลงฝั่งห้าง"},
+    {"i0":21,"j0":1,"i1":21,"j1":3,"to":"plaza","spawn":{"i":19,"j":18},"label":"↓ ลงฝั่งซอย"},
+    {"i0":10,"j0":9,"i1":12,"j1":9,"to":"platform","spawn":{"i":16,"j":5},"label":"↑ ชานชาลา"}
+  ],
+  "lamps": [],
+  "walkways": [
+    [[-0.6,2],[9,2.5],[9,5],[11,8],[11,9.6]],
+    [[11,9.6],[11,7],[13,5],[13,3],[21.6,2]],
+    [[21.6,3],[11,3.5],[11,5],[12,8],[12,9.6]]
+  ],
+  "ground": [
+    "tttttttttttttttttttttt",
+    "tttttttttttttttttttttt",
+    "tttttttttttttttttttttt",
+    "tttttttttttttttttttttt",
+    "tttttttttttttttttttttt",
+    "tttttttttttttttttttttt",
+    "tttttttttttttttttttttt",
+    "tttttttttttttttttttttt",
+    "tttttttttttttttttttttt",
+    "tttttttttttttttttttttt"
+  ]
+}

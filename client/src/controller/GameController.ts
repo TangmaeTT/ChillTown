@@ -6,10 +6,11 @@ import { PlayerModel } from '../model/PlayerModel';
 import { TrainModel } from '../model/TrainModel';
 import { TrafficModel } from '../model/TrafficModel';
 import { NpcModel } from '../model/NpcModel';
-import { SKYTRAIN } from '@shared/skytrain';
+import { SKYTRAIN, PLAZA_LINE, PLATFORM_LINE } from '@shared/skytrain';
 import { makeSharedTextures } from '../view/art/textures';
 import { makeGroundTextures } from '../view/art/ground';
-import { SkytrainView } from '../view/SkytrainView';
+import { SkytrainView, D as SKY_DEPTH } from '../view/SkytrainView';
+import { TrainCarsView } from '../view/TrainCarsView';
 import { TrafficView } from '../view/TrafficView';
 import { NpcView, NPC_TINTS } from '../view/NpcView';
 import { RoomView } from '../view/RoomView';
@@ -37,7 +38,7 @@ export class GameController extends Scene {
     // skytrain scenery (station plaza only)
     private trains: TrainModel | null = null;
     private traffic: TrafficModel | null = null;
-    private trainView: SkytrainView | null = null;
+    private trainView: TrainCarsView | null = null;
     private trafficView: TrafficView | null = null;
     private npcs: NpcModel | null = null;
     private npcView: NpcView | null = null;
@@ -70,16 +71,23 @@ export class GameController extends Scene {
         this.player = new PlayerModel(p.x, p.y, this.data0.facing);
 
         // --- views
-        this.lighting = new LightingView(this);
+        this.lighting = new LightingView(this, this.room.room.indoor);
         this.occluders = new Occluders();
         new RoomView(this, this.room, this.lighting, this.occluders);
         this.playerView = new PlayerView(this, this.player, 'คุณ');
-        if (this.room.room.scenery === 'skytrain') {
-            this.trains = new TrainModel();
+        this.trains = this.traffic = this.trainView = this.trafficView = null;
+        const scenery = this.room.room.scenery, grid = this.room.grid;
+        if (scenery === 'skytrain') {
+            new SkytrainView(this, grid, this.lighting, this.occluders);
+            this.trains = new TrainModel(PLAZA_LINE);
+            this.trainView = new TrainCarsView(this, grid, this.lighting, PLAZA_LINE,
+                { depth: SKY_DEPTH.train, roof: { i0: SKYTRAIN.station.roof.i0, i1: SKYTRAIN.station.roof.i1 } });
             this.traffic = new TrafficModel(world.minutes);
-            this.trainView = new SkytrainView(this, this.room.grid, this.lighting, this.occluders);
-            this.trafficView = new TrafficView(this, this.room.grid, this.lighting);
-        } else this.trains = this.traffic = this.trainView = this.trafficView = null;
+            this.trafficView = new TrafficView(this, grid, this.lighting);
+        } else if (scenery === 'platform') {
+            this.trains = new TrainModel(PLATFORM_LINE, 14);   // longer stop: people get on and off here
+            this.trainView = new TrainCarsView(this, grid, this.lighting, PLATFORM_LINE, { rails: true });
+        }
         const routes = this.room.room.walkways;
         this.npcs = routes ? new NpcModel(routes, world.minutes, NPC_TINTS.length) : null;
         this.npcView = routes ? new NpcView(this, this.room.grid) : null;

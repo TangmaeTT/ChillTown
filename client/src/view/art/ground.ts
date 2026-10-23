@@ -40,6 +40,15 @@ const PATTERNS: Record<Ground, Pattern> = {
         const glint = ((u * 3 + v * 7 + hash(Math.floor(u * 6), Math.floor(v * 6), s)) % 1) < 0.06;
         return glint ? [120, 160, 176] : mul([38, 78, 98], n(x >> 2, y >> 1, s, 0.1));
     },
+    tile: (u, v, x, y, s) => {                // station floor: large polished tiles with a soft sheen
+        const joint = (u * 2) % 1 < 0.03 || (v * 2) % 1 < 0.03;
+        const sheen = ((u + v) * 3 + hash(Math.floor(u * 2), Math.floor(v * 2), s)) % 1 < 0.12 ? 1.06 : 1;
+        return mul([196, 192, 182], (joint ? 0.86 : sheen) * n(x, y, s, 0.04));
+    },
+    rail: (u, _v, x, y, s) => {               // track bed: dark ballast, concrete sleepers across the rails
+        const sleeper = (u * 3) % 1 < 0.28;
+        return sleeper ? mul([120, 118, 112], n(x, y, s, 0.1)) : mul([62, 58, 54], n(x, y, s + 5, 0.3));
+    },
     wood: (_u, v, x, y, s) => {               // planks along i
         const gap = (v * 6) % 1 < 0.12;
         return mul([128, 98, 70], (gap ? 0.6 : 0.92 + hash(0, Math.floor(v * 6), s) * 0.15) * n(x, y, s, 0.1));
