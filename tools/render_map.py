@@ -1,4 +1,4 @@
-"""Top-down plan of all rooms, drawn from client/src/game/rooms.ts (the same data the game uses).
+"""Top-down plan of all rooms, drawn from shared/rooms.ts (the same data the game uses).
 
   python tools/render_map.py            -> design/siam-map.png
 
@@ -25,9 +25,9 @@ FONT_B = "C:/Windows/Fonts/LeelaUIb.ttf"
 
 
 def load_rooms():
-    js = "import('./src/game/rooms.ts').then(m => console.log(JSON.stringify(m.ROOMS)))"
+    js = "import('./shared/rooms.ts').then(m => console.log(JSON.stringify(m.ROOMS)))"
     out = subprocess.run(["node", "--experimental-strip-types", "--no-warnings", "-e", js],
-                         cwd=ROOT / "client", capture_output=True, text=True, encoding="utf-8", check=True).stdout
+                         cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True).stdout
     return json.loads(out)
 
 

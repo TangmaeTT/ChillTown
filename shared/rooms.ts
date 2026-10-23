@@ -1,3 +1,4 @@
+// Room layouts, shared by client (drawing) and server (collision/validation).
 // Siam centre, blockout v1: four connected rooms (Zheza-style). Grey boxes stand in for buildings
 // until real art exists; labels say what each one is for. All names are placeholders, no real brands.
 //
@@ -14,6 +15,7 @@ export type Box = Rect & {
     elevated?: boolean;     // drawn above the player, doesn't block walking (skytrain deck, roofs)
     image?: string;         // real art instead of a grey box (origin = bottom corner of the footprint)
     glow?: boolean;         // warm light spilling from the front
+    art?: 'tree' | 'bench' | 'clock' | 'kiosk';   // code-drawn pixel art instead of a grey box
 };
 export type RoomId = 'plaza' | 'soi' | 'mall' | 'canal';
 export type Exit = Rect & { to: RoomId | null; spawn?: { i: number; j: number }; label: string };
@@ -22,16 +24,17 @@ export type Room = {
     base: Ground; areas: (Rect & { g: Ground })[];
     boxes: Box[]; exits: Exit[]; lamps: { i: number; j: number }[];
     spawn: { i: number; j: number };
+    scenery?: 'skytrain';   // extra code-drawn structure (layout in skytrain.ts)
 };
 
 export const BLOCKING_GROUND: Ground[] = ['road', 'water'];
 
-const CONCRETE = 0x8a8f8a, SHOP = 0x7d7468, TREE = 0x4d6c55, DARK = 0x51545a, WOOD = 0x6b5440;
+const SHOP = 0x7d7468, TREE = 0x4d6c55, DARK = 0x51545a, WOOD = 0x6b5440;
 const r = (i0: number, j0: number, i1: number, j1: number): Rect => ({ i0, j0, i1, j1 });
 
 // ---------------------------------------------------------------- 1. station plaza
 const plaza: Room = {
-    id: 'plaza', name: 'ลานสถานีสยาม', w: 32, h: 20, base: 'plaza', spawn: { i: 16, j: 3 },
+    id: 'plaza', name: 'ลานสถานีสยาม', w: 32, h: 20, base: 'plaza', spawn: { i: 16, j: 3 }, scenery: 'skytrain',
     areas: [
         { ...r(0, 6, 31, 7), g: 'sidewalk' },
         { ...r(0, 8, 31, 11), g: 'road' },
@@ -41,19 +44,14 @@ const plaza: Room = {
         { ...r(13, 14, 19, 19), g: 'soi' },
     ],
     boxes: [
-        // skytrain: deck over the road, station body over road + both sidewalks
-        { ...r(0, 8, 31, 11), z: 104, h: 14, color: CONCRETE, elevated: true, label: 'รางรถไฟฟ้าลอยฟ้า' },
-        { ...r(11, 6, 21, 13), z: 104, h: 60, color: 0x9a9f98, elevated: true, label: 'สถานีรถไฟฟ้า (ชั้นชานชาลา)' },
-        ...[2, 7, 12, 20, 25, 30].map(i => ({ ...r(i, 9, i, 10), h: 104, color: CONCRETE })),
-        { ...r(8, 3, 9, 5), h: 104, color: CONCRETE, label: 'บันไดขึ้นสถานี' },
-        { ...r(23, 14, 24, 16), h: 104, color: CONCRETE, label: 'บันไดขึ้นสถานี' },
-        // north plaza: meeting point under the station
-        { ...r(13, 2, 13, 2), h: 46, color: DARK, label: 'นาฬิกา · จุดนัดเจอ' },
-        { ...r(4, 1, 5, 1), h: 8, color: WOOD }, { ...r(24, 1, 25, 1), h: 8, color: WOOD },
-        ...[2, 7, 22, 28].map(i => ({ ...r(i, 0, i, 0), h: 56, color: TREE })),
+        // the skytrain itself (viaduct, station, stairs, trains, traffic) comes from scenery: 'skytrain'
+        // north plaza: meeting point beside the station stairs
+        { ...r(13, 2, 13, 2), h: 46, color: DARK, art: 'clock' },
+        { ...r(4, 1, 5, 1), h: 8, color: WOOD, art: 'bench' }, { ...r(24, 1, 25, 1), h: 8, color: WOOD, art: 'bench' },
+        ...[2, 7, 22, 28].map(i => ({ ...r(i, 0, i, 0), h: 56, color: TREE, art: 'tree' as const })),
         // south side: kiosks toward the soi
-        { ...r(4, 16, 7, 18), h: 70, color: SHOP, label: 'ร้านน้ำ/ขนม' },
-        { ...r(25, 16, 29, 18), h: 80, color: SHOP, label: 'ร้านดอกไม้' },
+        { ...r(4, 16, 7, 18), h: 46, color: 0x8f7068, art: 'kiosk', label: 'ร้านน้ำ/ขนม' },
+        { ...r(25, 16, 29, 18), h: 46, color: 0x648566, art: 'kiosk', label: 'ร้านดอกไม้' },
     ],
     exits: [
         { ...r(14, 0, 18, 0), to: 'mall', spawn: { i: 13, j: 17 }, label: '↑ ลานหน้าห้าง' },
@@ -101,8 +99,8 @@ const mall: Room = {
         { ...r(19, 0, 25, 4), h: 180, color: 0x6f747a, label: 'ห้างใหญ่' },
         { ...r(12, 9, 15, 12), h: 16, color: 0x285265, label: 'น้ำพุ' },
         { ...r(20, 9, 23, 12), h: 4, color: 0x5a4f55, label: 'ลานจัดกิจกรรม/อีเวนต์' },
-        { ...r(9, 14, 10, 14), h: 8, color: WOOD }, { ...r(17, 14, 18, 14), h: 8, color: WOOD },
-        ...[3, 7, 20, 24].flatMap(i => [{ ...r(i, 7, i, 7), h: 56, color: TREE }, { ...r(i, 16, i, 16), h: 56, color: TREE }]),
+        { ...r(9, 14, 10, 14), h: 8, color: WOOD, art: 'bench' }, { ...r(17, 14, 18, 14), h: 8, color: WOOD, art: 'bench' },
+        ...[3, 7, 20, 24].flatMap(i => [{ ...r(i, 7, i, 7), h: 56, color: TREE, art: 'tree' as const }, { ...r(i, 16, i, 16), h: 56, color: TREE, art: 'tree' as const }]),
     ],
     exits: [
         { ...r(12, 5, 15, 5), to: null, label: 'ทางเข้าห้าง · เร็ว ๆ นี้' },
@@ -128,8 +126,8 @@ const canal: Room = {
         { ...r(21, 0, 23, 2), h: 50, color: WOOD },
         { ...r(9, 8, 13, 10), z: 48, h: 8, color: WOOD, elevated: true, label: 'ท่าเรือ' },
         { ...r(15, 9, 18, 10), h: 12, color: 0x8f7068, label: 'เรือ (เร็ว ๆ นี้)' },
-        ...[3, 8, 16, 21].map(i => ({ ...r(i, 17, i, 17), h: 48, color: TREE })),
-        { ...r(11, 16, 13, 16), h: 8, color: WOOD, label: 'ม้านั่งริมน้ำ' },
+        ...[3, 8, 16, 21].map(i => ({ ...r(i, 17, i, 17), h: 48, color: TREE, art: 'tree' as const })),
+        { ...r(11, 16, 13, 16), h: 8, color: WOOD, art: 'bench' },
     ],
     exits: [
         { ...r(0, 11, 0, 14), to: 'mall', spawn: { i: 25, j: 8 }, label: '← หน้าห้าง' },

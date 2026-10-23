@@ -1,0 +1,6 @@
+{
+    "name": "chilltown-shared",
+    "private": true,
+    "type": "module",
+    "description": "Code used by both client and server: room layouts, collision, iso grid, game clock. Pure TypeScript, erasable syntax only."
+}

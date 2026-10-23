@@ -1,4 +1,8 @@
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
+
+// code shared with the server (room layouts, collision, clock)
+const shared = fileURLToPath(new URL('../../shared', import.meta.url));
 
 const phasermsg = () => {
     return {
@@ -18,6 +22,7 @@ const phasermsg = () => {
 
 export default defineConfig({
     base: './',
+    resolve: { alias: { '@shared': shared } },
     logLevel: 'warning',
     build: {
         rollupOptions: {

@@ -43,22 +43,15 @@
   - ข้อเสีย: สีสดและแสงแบนกว่าร้านก๋วยเตี๋ยว ต้องปรับเข้าพาเลตทีหลัง · ตัวสูง ~51 px เข้าสัดส่วนประตูร้านดีกว่า 38–48 ตามสเปกเดิม
 - [x] เขียน `tools/pixelfix.py` ใหม่ (23 ต.ค. ตัวเก่าหาย): ลบพื้น magenta → หาจุดเหลื่อมของตารางพิกเซลเอง → ย่อ `--scale` (ใช้สีที่พบบ่อยในบล็อก ไม่เฉลี่ย) → ลดสีด้วย k-means ใน Lab (`--colors`, ค่าเริ่ม 48) → alpha คม → ตัดขอบ
   - ตึกจาก AI: `python tools/pixelfix.py in.png out.png` · ปรับสีงาน PixelLab ให้หม่นเข้าพาเลต: `--scale 1 --bg none --colors 0 --pull 0.3 --sat 0.75 --keep-size` · ดูค่าเฉย ๆ: `--check` (รายงานจำนวนสีและความสว่าง เทียบเป้า 30%)
-- [x] ผังใจกลางสยาม blockout v1 (23 ต.ค.): 4 ห้องเชื่อมกันแบบ Zheza (ลานสถานี · ซอยสแควร์ · ลานหน้าห้าง · ท่าเรือคลอง) เดินได้จริง เปลี่ยนห้องที่แถบทอง · รายละเอียดและหน้าที่แต่ละโซน: `design/siam-layout.md` · ผังมุมบน: `design/siam-map.png` (`python tools/render_map.py`) · ข้อมูลห้อง: `client/src/game/rooms.ts` · ทดสอบ `?room=soi&zoom=0.75`
+- [x] ผังใจกลางสยาม blockout v1 (23 ต.ค.): 4 ห้องเชื่อมกันแบบ Zheza (ลานสถานี · ซอยสแควร์ · ลานหน้าห้าง · ท่าเรือคลอง) เดินได้จริง เปลี่ยนห้องที่แถบทอง · รายละเอียดและหน้าที่แต่ละโซน: `design/siam-layout.md` · ผังมุมบน: `design/siam-map.png` (`python tools/render_map.py`) · ข้อมูลห้อง: `shared/rooms.ts` · ทดสอบ `?room=soi&zoom=0.75`
 - [x] มือถือเต็มจอ: Scale.EXPAND + ปุ่ม ⛶ (Android) + PWA "เพิ่มไปยังหน้าจอโฮม" (iPhone)
 - [x] ตั้ง Vite ให้มือถือใน Wi-Fi เดียวกันเข้าเล่นได้ (`host: true`)
 
-รันเกม: `cd client` แล้ว `npm run dev-nolog` จากนั้นเปิด `http://localhost:8080` หรือที่อยู่ Network บนมือถือ
+รันเกม: `cd client` แล้ว `npm run dev-nolog` (server: `cd server` แล้ว `npm start`) จากนั้นเปิด `http://localhost:8080` หรือที่อยู่ Network บนมือถือ
 
 ## 5. โครงสร้างโค้ด
 
-| ไฟล์ | หน้าที่ |
-|---|---|
-| `client/src/game/scenes/Game.ts` | ฉากหลัก: แผนที่ ตัวละคร การเดิน การบังกัน แสง กลางวัน-กลางคืน |
-| `client/src/game/scenes/UI.ts` | HUD (นาฬิกา ปุ่มฝน ปุ่มเร่งเวลา) และฝน |
-| `client/src/game/textures.ts` | วาดพื้น ตัวละคร เสาไฟ แสง แอ่งน้ำด้วยโค้ด (ภาพชั่วคราว) |
-| `client/src/game/iso.ts` | สูตรแปลงพิกัด tile ↔ world |
-| `client/src/game/world.ts` | เวลาในเกมและสภาพอากาศ |
-| `client/vite/config.dev.mjs` | เพิ่ม `host: true` |
+ดู `README.md` หัวข้อโครงสร้าง: `shared/` (ใช้ร่วม) · `client/` หน้าบ้าน MVC · `server/` หลังบ้าน MVC
 
 ## 6. Prompt ที่ใช้ได้ผล
 

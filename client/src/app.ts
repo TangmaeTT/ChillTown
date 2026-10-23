@@ -1,6 +1,9 @@
-import { Game as MainGame } from './scenes/Game';
-import { UI } from './scenes/UI';
 import { AUTO, Game, Scale, Types } from 'phaser';
+import { GameController } from './controller/GameController';
+import { HudScene } from './view/HudScene';
+
+// Phaser bootstrap. Code layout: model/ (state, no Phaser) · view/ (drawing) · controller/ (input + loop),
+// plus ../../shared (room layouts, collision, clock) used by the server too.
 
 const config: Types.Core.GameConfig = {
     type: AUTO,
@@ -16,7 +19,7 @@ const config: Types.Core.GameConfig = {
         autoCenter: Scale.CENTER_BOTH,
         fullscreenTarget: 'app'
     },
-    scene: [MainGame, UI]
+    scene: [GameController, HudScene]
 };
 
 const StartGame = (parent: string) => new Game({ ...config, parent });

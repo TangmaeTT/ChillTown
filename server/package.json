@@ -1,0 +1,16 @@
+{
+    "name": "chilltown-server",
+    "private": true,
+    "type": "module",
+    "description": "Chill Town backend (MVC). Runs TypeScript directly on Node 24 - no build step.",
+    "engines": { "node": ">=22.18" },
+    "scripts": {
+        "start": "node src/index.ts",
+        "dev": "node --watch src/index.ts",
+        "typecheck": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@types/node": "^22.15.0",
+        "typescript": "~5.8.3"
+    }
+}

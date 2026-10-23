@@ -1,8 +1,9 @@
 import { Scene, GameObjects } from 'phaser';
-import { world, timeLabel, zoomBy } from '../world';
+import { world, timeLabel, phaseLabel } from '../model/WorldModel';
+import * as actions from '../controller/actions';
 
-// HUD + rain, drawn at screen resolution (no camera zoom)
-export class UI extends Scene {
+// HUD + rain, drawn at screen resolution (no camera zoom). Buttons only call controller actions.
+export class HudScene extends Scene {
     clock!: GameObjects.Text;
     rainBtn!: GameObjects.Text;
     speedBtn!: GameObjects.Text;
@@ -26,14 +27,14 @@ export class UI extends Scene {
         this.clock = this.add.text(26, 22, '', { ...font, fontSize: '18px' }).setDepth(11);
         this.rainBtn = this.add.text(26, 54, '', { ...font, fontSize: '14px', backgroundColor: '#25301f', padding: { x: 8, y: 4 } })
             .setDepth(11).setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => { world.raining = !world.raining; this.refresh(); });
+            .on('pointerdown', () => { actions.toggleRain(); this.refresh(); });
         this.speedBtn = this.add.text(140, 54, '', { ...font, fontSize: '14px', backgroundColor: '#25301f', padding: { x: 8, y: 4 } })
             .setDepth(11).setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => { world.speed = world.speed === 1 ? 12 : 1; this.refresh(); });
+            .on('pointerdown', () => { actions.toggleFastForward(); this.refresh(); });
         // full screen: Android/desktop browsers. iPhone Safari has no Fullscreen API -> install to home screen instead
         this.fsBtn = this.add.text(252, 54, '⛶', { ...font, fontSize: '14px', backgroundColor: '#25301f', padding: { x: 8, y: 4 } })
             .setDepth(11).setInteractive({ useHandCursor: true })
-            .on('pointerup', () => this.toggleFullscreen());
+            .on('pointerup', () => actions.toggleFullscreen(this));
         this.fsBtn.setVisible(this.sys.game.device.fullscreen.available);
         this.hint = this.add.text(W / 2, H - 14, 'คลิก/แตะเพื่อเดิน · WASD หรือปุ่มลูกศร', { ...font, fontSize: '13px', color: '#9fb08f' })
             .setOrigin(0.5, 1).setDepth(11);
@@ -42,8 +43,8 @@ export class UI extends Scene {
         // zoom buttons, bottom-right (thumb reach on phones)
         const zb = { ...font, fontSize: '20px', backgroundColor: '#0e1014cc', padding: { x: 12, y: 2 }, fixedWidth: 44, align: 'center' };
         this.zoomBtns = [
-            this.add.text(0, 0, '－', zb).setInteractive({ useHandCursor: true }).on('pointerdown', () => zoomBy(1 / 1.25)),
-            this.add.text(0, 0, '＋', zb).setInteractive({ useHandCursor: true }).on('pointerdown', () => zoomBy(1.25)),
+            this.add.text(0, 0, '－', zb).setInteractive({ useHandCursor: true }).on('pointerdown', () => actions.zoom(1 / 1.25)),
+            this.add.text(0, 0, '＋', zb).setInteractive({ useHandCursor: true }).on('pointerdown', () => actions.zoom(1.25)),
         ];
         this.zoomBtns.forEach(b => b.setOrigin(1, 1).setDepth(11));
         const placeZoom = () => this.zoomBtns.forEach((b, k) => b.setPosition(this.scale.width - 14 - (1 - k) * 52, this.scale.height - 14));
@@ -56,14 +57,6 @@ export class UI extends Scene {
         this.refresh();
     }
 
-    toggleFullscreen() {
-        if (this.scale.isFullscreen) { this.scale.stopFullscreen(); return; }
-        this.scale.startFullscreen();
-        // phones: try to hold landscape while full screen (not supported everywhere, so ignore failures)
-        const o = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
-        o?.lock?.('landscape').catch(() => {});
-    }
-
     refresh() {
         this.rainBtn.setText(world.raining ? '☂ ฝน: ตก' : '☀ ฝน: หยุด');
         this.speedBtn.setText(world.speed === 1 ? '⏩ เร่งเวลา' : '▶ เวลาปกติ');
@@ -71,7 +64,7 @@ export class UI extends Scene {
 
     update(_t: number, delta: number) {
         const dt = delta / 1000, W = this.scale.width, H = this.scale.height;
-        this.clock.setText(`วันที่ ${world.day}  ·  ${timeLabel()}`);
+        this.clock.setText(`วันที่ ${world.day} · ${timeLabel()} · ${phaseLabel()}`);
         this.roomLabel.setText(`📍 ${world.roomName}`);
         const g = this.rain; g.clear();
         if (!world.raining) return;
