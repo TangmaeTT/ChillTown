@@ -13,7 +13,8 @@
         "strict": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "resolveJsonModule": true
     },
     "include": ["src", "../shared"]
 }

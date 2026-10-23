@@ -17,6 +17,7 @@ T = 16  # px per tile
 
 GROUND = {"plaza": "#4a4d47", "sidewalk": "#5d5f57", "road": "#2a2e31", "crosswalk": "#a9ab9c", "soi": "#3a3e3f",
           "water": "#1f4a6b", "wood": "#6b5440", "grass": "#3b5849"}
+CODES = {"p": "plaza", "s": "sidewalk", "r": "road", "c": "crosswalk", "o": "soi", "w": "water", "d": "wood", "g": "grass"}
 # where each room's panel sits on the sheet (in tiles), roughly matching real geography
 LAYOUT = {"mall": (4, 3), "canal": (36, 3), "plaza": (2, 27), "soi": (8, 51)}
 
@@ -51,10 +52,7 @@ def main():
         px = lambda i, j: ((ox + i) * T, (oy + j) * T)
         for i in range(r["w"]):
             for j in range(r["h"]):
-                g = r["base"]
-                for a in r["areas"]:
-                    if a["i0"] <= i <= a["i1"] and a["j0"] <= j <= a["j1"]:
-                        g = a["g"]
+                g = CODES[r["ground"][j][i]]
                 x, y = px(i, j)
                 d.rectangle([x, y, x + T - 1, y + T - 1], fill=GROUND[g])
         for b in r["boxes"]:

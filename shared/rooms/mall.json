@@ -1,0 +1,59 @@
+{
+  "id": "mall",
+  "name": "ลานหน้าห้าง",
+  "w": 28,
+  "h": 20,
+  "spawn": {"i":13,"j":17},
+  "boxes": [
+    {"i0":0,"j0":0,"i1":8,"j1":4,"h":180,"color":7304314,"label":"ห้างใหญ่"},
+    {"i0":9,"j0":0,"i1":18,"j1":4,"h":230,"color":8093830,"label":"ห้างใหญ่ · ทางเข้าหลัก"},
+    {"i0":19,"j0":0,"i1":25,"j1":4,"h":180,"color":7304314,"label":"ห้างใหญ่"},
+    {"i0":12,"j0":9,"i1":15,"j1":12,"h":16,"color":2642533,"label":"น้ำพุ"},
+    {"i0":20,"j0":9,"i1":23,"j1":12,"h":4,"color":5918549,"label":"ลานจัดกิจกรรม/อีเวนต์"},
+    {"i0":9,"j0":14,"i1":10,"j1":14,"h":8,"color":7033920,"art":"bench"},
+    {"i0":17,"j0":14,"i1":18,"j1":14,"h":8,"color":7033920,"art":"bench"},
+    {"i0":3,"j0":7,"i1":3,"j1":7,"h":56,"color":5074005,"art":"tree"},
+    {"i0":3,"j0":16,"i1":3,"j1":16,"h":56,"color":5074005,"art":"tree"},
+    {"i0":7,"j0":7,"i1":7,"j1":7,"h":56,"color":5074005,"art":"tree"},
+    {"i0":7,"j0":16,"i1":7,"j1":16,"h":56,"color":5074005,"art":"tree"},
+    {"i0":20,"j0":7,"i1":20,"j1":7,"h":56,"color":5074005,"art":"tree"},
+    {"i0":20,"j0":16,"i1":20,"j1":16,"h":56,"color":5074005,"art":"tree"},
+    {"i0":24,"j0":7,"i1":24,"j1":7,"h":56,"color":5074005,"art":"tree"},
+    {"i0":24,"j0":16,"i1":24,"j1":16,"h":56,"color":5074005,"art":"tree"}
+  ],
+  "exits": [
+    {"i0":12,"j0":5,"i1":15,"j1":5,"to":null,"label":"ทางเข้าห้าง · เร็ว ๆ นี้"},
+    {"i0":12,"j0":19,"i1":15,"j1":19,"to":"plaza","spawn":{"i":16,"j":2},"label":"↓ ลานสถานี"},
+    {"i0":27,"j0":7,"i1":27,"j1":9,"to":"canal","spawn":{"i":2,"j":12},"label":"→ ทางไปคลอง"}
+  ],
+  "lamps": [
+    {"i":5,"j":7},
+    {"i":11,"j":7},
+    {"i":17,"j":7},
+    {"i":22,"j":7},
+    {"i":5,"j":15},
+    {"i":22,"j":15}
+  ],
+  "ground": [
+    "pppppppppppppppppppppppppppp",
+    "pppppppppppppppppppppppppppp",
+    "pppppppppppppppppppppppppppp",
+    "pppppppppppppppppppppppppppp",
+    "pppppppppppppppppppppppppppp",
+    "ssssssssssssssssssssssssssoo",
+    "ssssssssssssssssssssssssssoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo",
+    "ppppppppppppppppppppppppppoo"
+  ]
+}

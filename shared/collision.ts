@@ -1,15 +1,13 @@
 // Walkability and exits for a room. The client uses it to move the player; the server will use the
 // same rules to reject impossible moves.
-import { BLOCKING_GROUND, type Ground, type Room, type Exit } from './rooms.ts';
+import { BLOCKING_GROUND, GROUND_OF, type Ground, type Room, type Exit } from './rooms.ts';
 import { skytrainSolids } from './skytrain.ts';
 
 const inRect = (r: { i0: number; j0: number; i1: number; j1: number }, i: number, j: number) =>
     i >= r.i0 && i <= r.i1 && j >= r.j0 && j <= r.j1;
 
 export function groundAt(room: Room, i: number, j: number): Ground {
-    let g = room.base;
-    for (const a of room.areas) if (inRect(a, i, j)) g = a.g;
-    return g;
+    return GROUND_OF[room.ground[j]?.[i] ?? 'p'] ?? 'plaza';
 }
 
 /** Set of "i,j" tile keys nobody can stand on. */

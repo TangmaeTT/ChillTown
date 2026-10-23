@@ -1,0 +1,50 @@
+{
+  "id": "canal",
+  "name": "ท่าเรือคลอง",
+  "w": 24,
+  "h": 20,
+  "spawn": {"i":2,"j":12},
+  "boxes": [
+    {"i0":2,"j0":0,"i1":5,"j1":3,"h":70,"color":7033920,"label":"บ้านไม้ริมคลอง"},
+    {"i0":8,"j0":0,"i1":11,"j1":2,"h":56,"color":7033920},
+    {"i0":15,"j0":0,"i1":19,"j1":3,"h":84,"color":8221800,"label":"ตึกเก่าฝั่งตรงข้าม"},
+    {"i0":21,"j0":0,"i1":23,"j1":2,"h":50,"color":7033920},
+    {"i0":9,"j0":8,"i1":13,"j1":10,"z":48,"h":8,"color":7033920,"elevated":true,"label":"ท่าเรือ"},
+    {"i0":15,"j0":9,"i1":18,"j1":10,"h":12,"color":9400424,"label":"เรือ (เร็ว ๆ นี้)"},
+    {"i0":3,"j0":17,"i1":3,"j1":17,"h":48,"color":5074005,"art":"tree"},
+    {"i0":8,"j0":17,"i1":8,"j1":17,"h":48,"color":5074005,"art":"tree"},
+    {"i0":16,"j0":17,"i1":16,"j1":17,"h":48,"color":5074005,"art":"tree"},
+    {"i0":21,"j0":17,"i1":21,"j1":17,"h":48,"color":5074005,"art":"tree"},
+    {"i0":11,"j0":16,"i1":13,"j1":16,"h":8,"color":7033920,"art":"bench"}
+  ],
+  "exits": [
+    {"i0":0,"j0":11,"i1":0,"j1":14,"to":"mall","spawn":{"i":25,"j":8},"label":"← หน้าห้าง"}
+  ],
+  "lamps": [
+    {"i":4,"j":11},
+    {"i":18,"j":11},
+    {"i":13,"j":10}
+  ],
+  "ground": [
+    "gggggggggggggggggggggggg",
+    "gggggggggggggggggggggggg",
+    "gggggggggggggggggggggggg",
+    "gggggggggggggggggggggggg",
+    "gggggggggggggggggggggggg",
+    "wwwwwwwwwwwwwwwwwwwwwwww",
+    "wwwwwwwwwwwwwwwwwwwwwwww",
+    "wwwwwwwwwwwwwwwwwwwwwwww",
+    "wwwwwwwwwdddddwwwwwwwwww",
+    "wwwwwwwwwdddddwwwwwwwwww",
+    "wwwwwwwwwdddddwwwwwwwwww",
+    "ssssssssssssssssssssssss",
+    "ssssssssssssssssssssssss",
+    "ssssssssssssssssssssssss",
+    "ssssssssssssssssssssssss",
+    "gggggggggggggggggggggggg",
+    "gggggggggggggggggggggggg",
+    "gggggggggggggggggggggggg",
+    "gggggggggggggggggggggggg",
+    "gggggggggggggggggggggggg"
+  ]
+}

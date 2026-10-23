@@ -1,0 +1,62 @@
+{
+  "id": "plaza",
+  "name": "ลานสถานีสยาม",
+  "w": 32,
+  "h": 20,
+  "spawn": {"i":15,"j":15},
+  "scenery": "skytrain",
+  "boxes": [
+    {"i0":13,"j0":2,"i1":13,"j1":2,"h":46,"color":5330010,"art":"clock"},
+    {"i0":4,"j0":1,"i1":5,"j1":1,"h":8,"color":7033920,"art":"bench"},
+    {"i0":24,"j0":1,"i1":25,"j1":1,"h":8,"color":7033920,"art":"bench"},
+    {"i0":2,"j0":0,"i1":2,"j1":0,"h":56,"color":5074005,"art":"tree"},
+    {"i0":7,"j0":0,"i1":7,"j1":0,"h":56,"color":5074005,"art":"tree"},
+    {"i0":22,"j0":0,"i1":22,"j1":0,"h":56,"color":5074005,"art":"tree"},
+    {"i0":28,"j0":0,"i1":28,"j1":0,"h":56,"color":5074005,"art":"tree"},
+    {"i0":4,"j0":16,"i1":7,"j1":18,"h":46,"color":9400424,"art":"kiosk","label":"ร้านน้ำ/ขนม"},
+    {"i0":25,"j0":16,"i1":29,"j1":18,"h":46,"color":6587750,"art":"kiosk","label":"ร้านดอกไม้"}
+  ],
+  "exits": [
+    {"i0":14,"j0":0,"i1":18,"j1":0,"to":"mall","spawn":{"i":13,"j":17},"label":"↑ ลานหน้าห้าง"},
+    {"i0":14,"j0":19,"i1":18,"j1":19,"to":"soi","spawn":{"i":11,"j":2},"label":"↓ ซอยสแควร์"}
+  ],
+  "lamps": [
+    {"i":4,"j":6},
+    {"i":27,"j":6},
+    {"i":4,"j":13},
+    {"i":20,"j":13},
+    {"i":28,"j":13}
+  ],
+  "walkways": [
+    [[-0.6,7],[31.6,7]],
+    [[31.6,7.4],[-0.6,7.4]],
+    [[-0.6,12.4],[31.6,12.4]],
+    [[31.6,12],[-0.6,12]],
+    [[16,-0.6],[16,6.5],[16,12.5],[15,15],[16,19.6]],
+    [[15.5,19.6],[15.5,13],[15.5,7],[15.5,-0.6]],
+    [[-0.6,3.5],[12,3.5],[12.6,2.8],[31.6,4]],
+    [[-0.6,15],[12,15],[15,17.5],[15.5,19.6]]
+  ],
+  "ground": [
+    "pppppppppppppppppppppppppppppppp",
+    "pppppppppppppppppppppppppppppppp",
+    "pppppppppppppppppppppppppppppppp",
+    "pppppppppppppppppppppppppppppppp",
+    "pppppppppppppppppppppppppppppppp",
+    "pppppppppppppppppppppppppppppppp",
+    "ssssssssssssssssssssssssssssssss",
+    "ssssssssssssssssssssssssssssssss",
+    "rrrrrrrrrrrrrrrcccrrrrrrrrrrrrrr",
+    "rrrrrrrrrrrrrrrcccrrrrrrrrrrrrrr",
+    "rrrrrrrrrrrrrrrcccrrrrrrrrrrrrrr",
+    "rrrrrrrrrrrrrrrcccrrrrrrrrrrrrrr",
+    "ssssssssssssssssssssssssssssssss",
+    "ssssssssssssssssssssssssssssssss",
+    "sssssssssssssooooooossssssssssss",
+    "sssssssssssssooooooossssssssssss",
+    "sssssssssssssooooooossssssssssss",
+    "sssssssssssssooooooossssssssssss",
+    "sssssssssssssooooooossssssssssss",
+    "sssssssssssssooooooossssssssssss"
+  ]
+}

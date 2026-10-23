@@ -20,6 +20,8 @@ export class PlayerView {
 
     get gameObject() { return this.sprite; }
 
+    setVisible(on: boolean) { this.sprite.setVisible(on); this.nameTag.setVisible(on); }
+
     sync(model: PlayerModel, depth: number) {
         this.sprite.setPosition(model.x, model.y).setFrame(model.facing * (WALK_FRAMES + 1) + model.frame).setDepth(depth);
         this.nameTag.setPosition(Math.round(model.x), Math.round(model.y - 56)).setDepth(depth + 0.5);

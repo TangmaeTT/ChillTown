@@ -1,0 +1,56 @@
+{
+  "id": "soi",
+  "name": "ซอยสแควร์",
+  "w": 24,
+  "h": 24,
+  "spawn": {"i":11,"j":2},
+  "boxes": [
+    {"i0":1,"j0":1,"i1":8,"j1":4,"h":120,"color":8221800,"label":"ตึกแถว · โรงเรียนกวดวิชา"},
+    {"i0":1,"j0":5,"i1":4,"j1":8,"h":96,"color":8221800,"label":"ร้านเสื้อผ้า (แต่งตัว)"},
+    {"i0":5,"j0":5,"i1":8,"j1":8,"h":104,"color":8221800,"label":"คาเฟ่"},
+    {"i0":15,"j0":1,"i1":22,"j1":4,"h":130,"color":5330010,"label":"โรงหนังเก่า"},
+    {"i0":15,"j0":5,"i1":18,"j1":8,"h":96,"color":8221800,"label":"ร้านเกม · ร้านเน็ต"},
+    {"i0":19,"j0":5,"i1":22,"j1":8,"h":100,"color":8221800,"label":"ร้านสะดวกซื้อ"},
+    {"i0":1,"j0":15,"i1":4,"j1":22,"h":110,"color":8221800,"label":"ร้านกิ๊ฟช็อป"},
+    {"i0":5,"j0":15,"i1":8,"j1":22,"h":100,"color":8221800,"label":"ร้านตัดผม"},
+    {"i0":15,"j0":15,"i1":18,"j1":17,"h":0,"color":8221800,"image":"noodle_shop","glow":true},
+    {"i0":19,"j0":15,"i1":22,"j1":22,"h":116,"color":8221800,"label":"ตึกแถว"},
+    {"i0":15,"j0":18,"i1":18,"j1":22,"h":96,"color":8221800,"label":"ร้านหนังสือ"}
+  ],
+  "exits": [
+    {"i0":10,"j0":0,"i1":13,"j1":0,"to":"plaza","spawn":{"i":16,"j":17},"label":"↑ ลานสถานี"}
+  ],
+  "lamps": [
+    {"i":9,"j":10},
+    {"i":14,"j":13},
+    {"i":9,"j":19},
+    {"i":14,"j":5},
+    {"i":20,"j":13}
+  ],
+  "ground": [
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "oooooooooooooooooooooooo",
+    "oooooooooooooooooooooooo",
+    "oooooooooooooooooooooooo",
+    "oooooooooooooooooooooooo",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss",
+    "ssssssssssoooossssssssss"
+  ]
+}

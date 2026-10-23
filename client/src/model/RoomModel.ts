@@ -8,8 +8,8 @@ export class RoomModel {
     readonly grid: IsoGrid;
     readonly blocked: Set<string>;
 
-    constructor(id: RoomId) {
-        this.room = ROOMS[id];
+    constructor(room: Room) {
+        this.room = room;
         this.grid = new IsoGrid(this.room.w, this.room.h);
         this.blocked = buildBlocked(this.room);
     }

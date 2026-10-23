@@ -12,6 +12,7 @@ export const world = {
     roomName: '',            // shown in the HUD
     // camera zoom, kept across room changes. ?zoom=0.75 in the URL sets the starting value
     zoom: Number(params.get('zoom')) || 2,
+    edit: params.get('edit') === '1',   // ?edit=1 opens the map editor
 };
 
 // ?time=18:30 starts at that in-game time (testing/screenshots)
@@ -29,6 +30,14 @@ export function tickClock(dt: number) {
     world.day = t.day;
 }
 tickClock(0);
+
+/** jump the clock to an hour of the day (map editor time slider) */
+export function setTimeOfDay(hours: number) {
+    const now = gameTime(Date.now() / 1000).minutes;
+    world.offset = (((hours * 60 - now) % 1440 + 1440) % 1440) / 1440 * DAY_SECONDS;
+    world.speed = 1;
+    tickClock(0);
+}
 
 export const timeLabel = () => clockLabel(world.minutes);
 export const phaseLabel = () => PHASE_TH[phaseOf(world.minutes)];

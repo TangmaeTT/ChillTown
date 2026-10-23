@@ -1,7 +1,7 @@
 // URL -> controller. Add new endpoints here.
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { getTime } from './controllers/TimeController.ts';
-import { getRooms, getWalkable } from './controllers/RoomController.ts';
+import { getRooms, getRoomLayout, getWalkable, putRoom } from './controllers/RoomController.ts';
 
 type Handler = (req: IncomingMessage, res: ServerResponse, params: Record<string, string>, query: URLSearchParams) => void;
 type Route = { method: string; pattern: RegExp; keys: string[]; handler: Handler };
@@ -17,7 +17,9 @@ function route(method: string, path: string, handler: Handler) {
 route('GET', '/api/health', (_q, res) => { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"ok":true}'); });
 route('GET', '/api/time', getTime);
 route('GET', '/api/rooms', getRooms);
-route('GET', '/api/rooms/:id/walkable', getWalkable as Handler);
+route('GET', '/api/rooms/:id', getRoomLayout);
+route('GET', '/api/rooms/:id/walkable', getWalkable);
+route('PUT', '/api/rooms/:id', putRoom);   // map editor (dev only)
 
 /** Find the handler for a request; false if nothing matched. */
 export function dispatch(req: IncomingMessage, res: ServerResponse): boolean {

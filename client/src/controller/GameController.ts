@@ -1,5 +1,5 @@
 import { Scene, Math as PMath } from 'phaser';
-import type { RoomId } from '@shared/rooms';
+import { ROOMS, type RoomId } from '@shared/rooms';
 import { world, tickClock } from '../model/WorldModel';
 import { RoomModel, roomFromUrl } from '../model/RoomModel';
 import { PlayerModel } from '../model/PlayerModel';
@@ -17,11 +17,13 @@ import { PlayerView, PLAYER_SHEET } from '../view/PlayerView';
 import { LightingView } from '../view/LightingView';
 import { Occluders } from '../view/Occluders';
 import { InputController } from './InputController';
+import { EditorController, editorRoom, savedCamera } from './EditorController';
 
-type RoomData = { room?: RoomId; spawn?: { i: number; j: number }; facing?: number };
+type RoomData = { room?: RoomId; spawn?: { i: number; j: number }; facing?: number; cam?: { x: number; y: number } };
 
 // The world scene. Owns this room's models and views, runs the per-frame loop, and handles moving
 // between rooms. Restarted (scene.restart) on every room change, so all per-room state is built in create().
+// With ?edit=1 the same scene runs as the map editor: no player, free camera, EditorController on top.
 export class GameController extends Scene {
     private data0!: RoomData;
     private room!: RoomModel;
@@ -29,7 +31,8 @@ export class GameController extends Scene {
     private playerView!: PlayerView;
     private lighting!: LightingView;
     private occluders!: Occluders;
-    private input0!: InputController;
+    private input0: InputController | null = null;
+    private editor: EditorController | null = null;
     private leaving = false;
     // skytrain scenery (station plaza only)
     private trains: TrainModel | null = null;
@@ -54,8 +57,9 @@ export class GameController extends Scene {
         makeGroundTextures(this);
         this.leaving = false;
 
-        // --- models
-        this.room = new RoomModel(this.data0.room ?? roomFromUrl());
+        // --- models (the editor draws its working copy of the room instead of the saved one)
+        const id = this.data0.room ?? roomFromUrl();
+        this.room = new RoomModel(world.edit ? editorRoom(id) : ROOMS[id]);
         world.roomName = this.room.room.name;
         const spawn = this.data0.spawn ?? this.room.room.spawn;
         const p = this.room.grid.toWorld(spawn.i, spawn.j);
@@ -79,6 +83,17 @@ export class GameController extends Scene {
         // --- camera
         const cam = this.cameras.main;
         cam.setBounds(0, 0, this.room.grid.worldW, this.room.grid.worldH).setZoom(world.zoom).setRoundPixels(true);
+
+        if (world.edit) {
+            this.playerView.setVisible(false);
+            const c = this.data0.cam ?? savedCamera(id);
+            if (c) cam.setScroll(c.x, c.y); else cam.centerOn(p.x, p.y);
+            this.editor = new EditorController(this, this.room.grid, () =>
+                this.scene.restart({ room: id, cam: { x: cam.scrollX, y: cam.scrollY } } satisfies RoomData));
+            this.input0 = null;
+            return;
+        }
+        this.editor = null;
         cam.startFollow(this.playerView.gameObject, true, 0.12, 0.12);
         cam.setFollowOffset(0, 50); // look a bit upward so tall buildings fit
         cam.fadeIn(250, 11, 15, 18);
@@ -90,18 +105,23 @@ export class GameController extends Scene {
     update(time: number, delta: number) {
         const dt = delta / 1000;
         tickClock(dt);
-        this.input0.update();
+        this.input0?.update();
+        this.editor?.update(dt);
 
         // --- model
-        this.player.update(dt, this.input0.moveVector(!this.leaving), (x, y) => this.room.walkable(x, y));
-        if (this.player.moving) this.checkExit();
+        if (this.input0) {
+            this.player.update(dt, this.input0.moveVector(!this.leaving), (x, y) => this.room.walkable(x, y));
+            if (this.player.moving) this.checkExit();
+        }
         this.trains?.update(dt);
         this.npcs?.update(dt, world.minutes);
         this.traffic?.update(dt, world.minutes, this.onCrosswalk());
 
         // --- view
-        const t = this.room.tileAt(this.player.x, this.player.y);
-        const depth = this.occluders.update(this.player.x, this.player.y, t.i, t.j);
+        // in the editor, whatever covers the cursor turns see-through instead of whatever covers the player
+        const focus = this.editor ? this.editor.focusPoint : this.player;
+        const t = this.room.tileAt(focus.x, focus.y);
+        const depth = this.occluders.update(focus.x, focus.y, t.i, t.j);
         this.playerView.sync(this.player, depth);
         this.lighting.update(time);
         if (this.trains) this.trainView!.update(this.trains);

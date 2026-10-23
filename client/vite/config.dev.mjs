@@ -19,6 +19,8 @@ export default defineConfig({
     server: {
         port: 8080,
         host: true,  // also serve on the local network so phones on the same Wi-Fi can open the game
-        fs: { allow: ['..', shared] }
+        fs: { allow: ['..', shared] },
+        // the game and the API share one origin in dev (map editor saves through /api)
+        proxy: { '/api': { target: 'http://localhost:2567', xfwd: true } }   // xfwd: server can tell phones from this PC
     }
 });
