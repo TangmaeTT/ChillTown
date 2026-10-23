@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.log
+# downloaded API spec and regenerable test input
+art-test/pixellab/openapi.json
+art-test/pixelfix-test/fake_ai.png
+__pycache__/

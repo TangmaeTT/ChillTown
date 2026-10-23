@@ -1,0 +1,100 @@
+{
+ "usage": {
+  "type": "generations",
+  "generations": 1.0
+ },
+ "id": "e215b436-eb28-4d63-85b4-3928731529e5",
+ "status": "completed",
+ "created_at": "2026-10-23T08:10:31.489651+00:00",
+ "last_response": {
+  "seed": 7,
+  "type": "done",
+  "view": "low top-down",
+  "usage": {
+   "seconds": 45.770684003829956
+  },
+  "images": {
+   "east": {
+    "type": "base64",
+    "width": 92,
+    "base64": "<b64>",
+    "height": 92
+   },
+   "west": {
+    "type": "base64",
+    "width": 92,
+    "base64": "<b64>",
+    "height": 92
+   },
+   "north": {
+    "type": "base64",
+    "width": 92,
+    "base64": "<b64>",
+    "height": 92
+   },
+   "south": {
+    "type": "base64",
+    "width": 92,
+    "base64": "<b64>",
+    "height": 92
+   }
+  },
+  "image_width": 92,
+  "template_id": "mannequin",
+  "character_id": "09054b22-c0a0-4877-a4f7-b7dd642cdb26",
+  "image_height": 92,
+  "storage_urls": {
+   "east": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/09054b22-c0a0-4877-a4f7-b7dd642cdb26/rotations/east.png",
+   "west": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/09054b22-c0a0-4877-a4f7-b7dd642cdb26/rotations/west.png",
+   "north": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/09054b22-c0a0-4877-a4f7-b7dd642cdb26/rotations/north.png",
+   "south": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/09054b22-c0a0-4877-a4f7-b7dd642cdb26/rotations/south.png"
+  },
+  "billing_usage": {
+   "usd": 0.0,
+   "type": "generations",
+   "generations": 1
+  },
+  "generation_id": "5d22212c-a5e2-4f66-90f6-a846b7e19d34",
+  "character_name": "young Thai woman, shoulder-length black hair, dark red hoodie, dark jeans, white sneakers, quiet calm look",
+  "billing_charged": true,
+  "directions_type": "4-directions",
+  "directions_count": 4,
+  "quantized_images": {
+   "east": {
+    "type": "base64",
+    "width": 92,
+    "base64": "<b64>",
+    "height": 92
+   },
+   "west": {
+    "type": "base64",
+    "width": 92,
+    "base64": "<b64>",
+    "height": 92
+   },
+   "north": {
+    "type": "base64",
+    "width": 92,
+    "base64": "<b64>",
+    "height": 92
+   },
+   "south": {
+    "type": "base64",
+    "width": 92,
+    "base64": "<b64>",
+    "height": 92
+   }
+  },
+  "saved_to_storage": true,
+  "uploaded_directions": [
+   "south",
+   "east",
+   "north",
+   "west"
+  ],
+  "character_description": "young Thai woman, shoulder-length black hair, dark red hoodie, dark jeans, white sneakers, quiet calm look",
+  "generation_started_at": "2026-10-23T08:10:42.547997+00:00",
+  "original_image_n_colors": 26,
+  "quantized_image_n_colors": 5
+ }
+}

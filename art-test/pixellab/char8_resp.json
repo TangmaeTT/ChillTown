@@ -1,0 +1,162 @@
+{
+ "usage": {
+  "type": "generations",
+  "generations": 1.0
+ },
+ "id": "0548b1e7-5836-473a-b03c-71a7660036c8",
+ "status": "completed",
+ "created_at": "2026-10-23T08:12:32.073250+00:00",
+ "last_response": {
+  "seed": 7,
+  "type": "done",
+  "view": "low top-down",
+  "usage": {
+   "seconds": 46.29809856414795
+  },
+  "images": {
+   "east": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "west": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "north": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "south": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "north-east": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "north-west": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "south-east": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "south-west": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   }
+  },
+  "status": "initializing",
+  "progress": 1.0,
+  "image_width": 68,
+  "template_id": "mannequin",
+  "character_id": "301bb576-806d-4722-be64-420a2a59a980",
+  "image_height": 68,
+  "n_directions": 8,
+  "storage_urls": {
+   "east": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/301bb576-806d-4722-be64-420a2a59a980/rotations/east.png",
+   "west": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/301bb576-806d-4722-be64-420a2a59a980/rotations/west.png",
+   "north": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/301bb576-806d-4722-be64-420a2a59a980/rotations/north.png",
+   "south": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/301bb576-806d-4722-be64-420a2a59a980/rotations/south.png",
+   "north-east": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/301bb576-806d-4722-be64-420a2a59a980/rotations/north-east.png",
+   "north-west": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/301bb576-806d-4722-be64-420a2a59a980/rotations/north-west.png",
+   "south-east": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/301bb576-806d-4722-be64-420a2a59a980/rotations/south-east.png",
+   "south-west": "https://backblaze.pixellab.ai/file/pixellab-characters/027f6cf7-9c10-47e5-8b9e-5348e6bc8c98/301bb576-806d-4722-be64-420a2a59a980/rotations/south-west.png"
+  },
+  "billing_usage": {
+   "usd": 0.0,
+   "type": "generations",
+   "generations": 1
+  },
+  "generation_id": "ec15bb9c-c887-4267-9a95-75fb4de38324",
+  "character_name": "young Thai woman, shoulder-length black hair, deep crimson red hoodie, dark navy jeans, white sneakers, calm expression, night street lighting, warm light from top-left",
+  "queue_position": 0,
+  "billing_charged": true,
+  "directions_type": "8-directions",
+  "directions_count": 8,
+  "number_of_frames": 1,
+  "quantized_images": {
+   "east": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "west": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "north": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "south": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "north-east": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "north-west": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "south-east": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   },
+   "south-west": {
+    "type": "base64",
+    "width": 68,
+    "base64": "<b64>",
+    "height": 68
+   }
+  },
+  "saved_to_storage": true,
+  "uploaded_directions": [
+   "south",
+   "south-east",
+   "east",
+   "north-east",
+   "north",
+   "north-west",
+   "west",
+   "south-west"
+  ],
+  "character_description": "young Thai woman, shoulder-length black hair, deep crimson red hoodie, dark navy jeans, white sneakers, calm expression, night street lighting, warm light from top-left",
+  "generation_started_at": "2026-10-23T08:12:32.103994+00:00",
+  "estimated_wait_seconds": 0,
+  "original_image_n_colors": 205,
+  "quantized_image_n_colors": 27
+ }
+}

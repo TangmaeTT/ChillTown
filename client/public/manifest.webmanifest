@@ -1,0 +1,10 @@
+{
+    "name": "Chill Town",
+    "short_name": "Chill Town",
+    "start_url": "/",
+    "display": "fullscreen",
+    "orientation": "landscape",
+    "background_color": "#0b0f12",
+    "theme_color": "#0b0f12",
+    "icons": [{ "src": "/favicon.png", "sizes": "any", "type": "image/png" }]
+}
