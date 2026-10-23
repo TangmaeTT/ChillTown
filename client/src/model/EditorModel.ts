@@ -18,17 +18,20 @@ export class EditorModel {
     selection: Selection = null;
     path: [number, number][] | null = null;     // walkway being drawn
     problems: Problem[] = [];
-    dirty = false;
+    private savedJson: string;                   // what's on disk, to tell whether there's anything to save
     version = 0;                                 // bumps when the room data changes; the scene rebuilds when it moves
     private undoStack: string[] = [];
     private redoStack: string[] = [];
 
     constructor(room: Room) {
         this.room = structuredClone(room);
+        this.savedJson = JSON.stringify(this.room);
         this.validate();
     }
 
     get id(): RoomId { return this.room.id; }
+    /** differs from the saved file (undoing back to it counts as clean) */
+    get dirty() { return JSON.stringify(this.room) !== this.savedJson; }
     get canUndo() { return this.undoStack.length > 0; }
     get canRedo() { return this.redoStack.length > 0; }
     get hasErrors() { return this.problems.some(p => p.level === 'error'); }
@@ -44,7 +47,6 @@ export class EditorModel {
     }
     /** call after changing the room */
     private changed() {
-        this.dirty = true;
         this.version++;
         this.validate();
     }
@@ -62,7 +64,7 @@ export class EditorModel {
         this.undoStack.push(JSON.stringify(this.room));
         this.room = JSON.parse(s); this.selection = null; this.changed();
     }
-    markSaved() { this.dirty = false; }
+    markSaved() { this.savedJson = JSON.stringify(this.room); }
 
     validate() {
         const others = ROOM_IDS.filter(id => id !== this.room.id).map(id => ROOMS[id]);

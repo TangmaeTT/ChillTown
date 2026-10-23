@@ -37,7 +37,7 @@ export class EditorController {
     private hover: Hover = null;
     private drag: { start: { i: number; j: number }; orig: Rect } | null = null;
     private exitStart: { i: number; j: number } | null = null;
-    private stroke: { changed: boolean; tiles: Set<string> } | null = null;
+    private stroke: { changed: boolean; tiles: Set<string>; last: { i: number; j: number } | null } | null = null;
     private pan: { x: number; y: number } | null = null;
     private held = new Set<string>();
     private builtVersion: number;
@@ -154,7 +154,7 @@ export class EditorController {
                 break;
             }
             case 'place': { const r = this.placeRect(h.i, h.j); if (r && m.template) m.place(m.template, r.i0, r.j0); break; }
-            case 'paint': m.beginStroke(); this.stroke = { changed: false, tiles: new Set() }; this.paint(); break;
+            case 'paint': m.beginStroke(); this.stroke = { changed: false, tiles: new Set(), last: null }; this.paint(); break;
             case 'lamp': m.toggleLamp(h.i, h.j); break;
             case 'exit': this.exitStart = { i: h.i, j: h.j }; break;
             case 'spawn': m.setSpawn(h.i, h.j); break;
@@ -177,10 +177,17 @@ export class EditorController {
 
     private paint() {
         if (!this.hover || !this.stroke) return;
-        this.stroke.changed = this.m.paintAt(this.hover.i, this.hover.j) || this.stroke.changed;
-        const r = Math.floor(this.m.brush / 2), { i, j } = this.hover;
-        for (let y = j - r; y <= j + r; y++) for (let x = i - r; x <= i + r; x++)
-            if (x >= 0 && y >= 0 && x < this.m.room.w && y < this.m.room.h) this.stroke.tiles.add(`${x},${y}`);
+        // fill every tile between the last mouse position and this one, so fast drags don't leave gaps
+        const s = this.stroke, to = this.hover, from = s.last ?? to;
+        const steps = Math.max(Math.abs(to.i - from.i), Math.abs(to.j - from.j), 1);
+        const r = Math.floor(this.m.brush / 2);
+        for (let k = 0; k <= steps; k++) {
+            const i = Math.round(from.i + (to.i - from.i) * k / steps), j = Math.round(from.j + (to.j - from.j) * k / steps);
+            s.changed = this.m.paintAt(i, j) || s.changed;
+            for (let y = j - r; y <= j + r; y++) for (let x = i - r; x <= i + r; x++)
+                if (x >= 0 && y >= 0 && x < this.m.room.w && y < this.m.room.h) s.tiles.add(`${x},${y}`);
+        }
+        s.last = { i: to.i, j: to.j };
     }
 
     // ---------------------------------------------------------------- keyboard

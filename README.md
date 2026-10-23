@@ -28,6 +28,15 @@ cd server && npm install && npm start             # API: http://localhost:2567/a
 ทดสอบ: `?room=soi` กระโดดไปห้อง · `?zoom=0.75` · `?time=18:30` เริ่มที่เวลานั้น · `?rain=0` ไม่มีฝน
 API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?i=16&j=3`
 
+## Map editor
+
+เปิด server ก่อน (`cd server && npm run dev`) แล้วเข้า http://localhost:8080/?edit=1&room=plaza
+- เครื่องมือ: 1 เลือก/ย้าย · 2 วางของ · 3 ระบายพื้น · 4 ไฟถนน · 5 ทางออก · 6 จุดเกิด · 7 ทางคนเดิน
+- Ctrl+Z / Ctrl+Y ย้อน/ทำซ้ำ · Ctrl+S บันทึก · Del ลบ · R หมุน · WASD หรือลากเมาส์ขวา เลื่อนกล้อง · ล้อเมาส์ ซูม
+- บันทึกลง `shared/rooms/<ห้อง>.json` (ผ่าน server ซึ่งตรวจห้องก่อน: จุดเกิด ทางออก หน้าร้าน ของทับกัน) แล้วเกมโหลดห้องใหม่เอง
+- บันทึกได้เฉพาะจากเครื่องนี้ และปิดเองเมื่อ `NODE_ENV=production`
+- ของที่วางได้อยู่ใน `client/src/model/editorCatalog.ts`
+
 ## Git
 
 ทำงานบน feature branch (`feature/...`) แล้วเปิด Pull Request เข้า `main` ไม่ commit ตรงเข้า `main`
