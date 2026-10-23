@@ -60,9 +60,9 @@
 
 | ID | ชิ้น | ช่อง (i×j) | ขนาดในเกม | Canvas | ไฟ | คำอธิบายให้ ChatGPT |
 |---|---|---|---|---|---|---|
-| P01 | ตู้รถไฟฟ้า หัวขบวน | 3×1 | 128×120 | 1024×1024 | ✓ | elevated metro train car, front cab with windshield and headlights facing bottom-right, silver body with a muted teal stripe, sliding doors, windows |
-| P02 | ตู้รถไฟฟ้า กลางขบวน | 3×1 | 128×120 | 1024×1024 | ✓ | same metro car, middle car, no cab, gangway connectors at both ends |
-| P03 | ตู้รถไฟฟ้า ท้ายขบวน | 3×1 | 128×120 | 1024×1024 | ✓ | same metro car, rear cab facing bottom-right with red tail lights |
+| P01 ✅ | ตู้รถไฟฟ้า หัวขบวน | 5.7×1.3 | 224×177 | 1024×1024 | ✓ | elevated metro train car, front cab with windshield and headlights facing bottom-right, silver body with a muted teal stripe, sliding doors, windows |
+| P02 ✅ | ตู้รถไฟฟ้า กลางขบวน | 5.7×1.3 | 224×179 | 1024×1024 | ✓ | same metro car, middle car, no cab, gangway connectors at both ends |
+| P03 ✅ | ตู้รถไฟฟ้า ท้ายขบวน | 5.7×1.3 | 224×176 | 1024×1024 | ✓ | same metro car, rear cab facing bottom-right with red tail lights |
 | P04 | แท็กซี่สีชมพู `_front` / `_rear` | 1.8×0.8 | 83×74 | 1024×1024 | ✓ | Bangkok taxi, muted pink sedan, small roof sign (no text) |
 | P05 | แท็กซี่เขียว-เหลือง `_front` / `_rear` | 1.8×0.8 | 83×74 | 1024×1024 | ✓ | Bangkok taxi, green lower body, yellow upper body/roof |
 | P06 | รถเก๋งขาว `_front` / `_rear` | 1.8×0.8 | 83×74 | 1024×1024 | ✓ | ordinary white sedan, a bit dusty |
@@ -96,6 +96,9 @@
 
 **รวมเฟส 1:** 23 รายการ = 29 แบบ (ยานพาหนะคันละ 2 มุม) × กลางวัน/กลางคืน = **58 ภาพ** (ร้านก๋วยเตี๋ยวมีภาพกลางคืนแล้ว เหลือทำ 57 ภาพ)
 ช่อง "ไฟ" ✓ = ภาพกลางคืนต้องมีไฟติด ส่วนชิ้นที่ไม่มี ✓ ยังต้องมีภาพกลางคืน แค่ไม่มีไฟของตัวเอง
+
+> ✅ P01–P03 อยู่ในเกมแล้ว (23 ต.ค.) ภาพ 1254×1254 จาก ChatGPT ย่อเหลือ 224 px ด้วย `tools/prep_asset.py` · ขนาดเดิม 128 px เล็กเกินเมื่อเทียบกับตัวละคร จึงขยายสถานีเป็น 18 ช่อง
+> **บทเรียน:** ภาพจาก ChatGPT ไม่มีตารางพิกเซลที่แน่นอน ใช้ `--width` (ย่อตามความกว้าง) แทน `--scale` · ภาพกลางคืนที่ edit จากภาพกลางวันซ้อนกันได้ 99.6–99.9%
 
 ## 5. ลำดับที่แนะนำ
 

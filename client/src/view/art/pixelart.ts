@@ -191,33 +191,6 @@ export function paint(base: number, amt = 0.06): Material {
     return s => ({ c: tint(c0, grain(s, amt)) });
 }
 
-/** Skytrain car: silver body, livery stripe, window band, doors. `front` lights the visible end. */
-export function trainCar(livery: number, front: 'head' | 'tail' | 'none'): Material {
-    const L = hex(livery);
-    return s => {
-        if (s.face === 'top') {
-            const ac = s.u > s.W * 0.3 && s.u < s.W * 0.7 && s.v > s.D * 0.25 && s.v < s.D * 0.75;
-            return { c: tint([150, 156, 160], ac ? 1.1 : grain(s, 0.05)) };
-        }
-        const v = s.v, H = s.H;
-        if (s.face === 'right') {                                               // car end
-            if (front !== 'none' && v > H * 0.45 && v < H * 0.8 && s.u > 3 && s.u < s.D - 3) return { c: [40, 52, 60], glow: [200, 220, 235], glowA: 0.6 };
-            if (front === 'head' && v > H * 0.2 && v < H * 0.32 && (s.u < 6 || s.u > s.D - 6)) return { c: [230, 230, 210], glow: [255, 250, 220] };
-            if (front === 'tail' && v > H * 0.2 && v < H * 0.32 && (s.u < 6 || s.u > s.D - 6)) return { c: [150, 30, 30], glow: [255, 40, 40] };
-            return { c: tint([196, 200, 202], 0.95) };
-        }
-        if (v < 3) return { c: [70, 74, 78] };                                     // underframe
-        if (v > H * 0.22 && v < H * 0.34) return { c: L };                          // livery stripe
-        const door = (s.u % 26) < 9 && (s.u % 26) > 2;
-        if (v > H * 0.45 && v < H * 0.82) {
-            if (door) return { c: [64, 80, 90], glow: [215, 230, 240], glowA: 0.7 };
-            if (s.u % 26 > 11 && s.u % 26 < 24) return { c: [52, 68, 80], glow: [225, 235, 240], glowA: 0.8 };
-        }
-        if (door && v < H * 0.82) return { c: [178, 182, 186] };
-        return { c: tint([206, 210, 212], grain(s, 0.03)) };
-    };
-}
-
 /** Car body or cabin; cabin gets window band. `end` = what the visible (+i) end shows. */
 export function carPart(base: number, part: 'body' | 'cabin', end: 'head' | 'tail'): Material {
     const c0 = hex(base);

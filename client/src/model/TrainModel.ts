@@ -2,7 +2,8 @@
 // Positions are in tiles along i. Pure logic.
 import { SKYTRAIN } from '@shared/skytrain';
 
-export const CAR_LEN = 2.6, CAR_GAP = 0.15, CARS = 3;
+// car size follows the art (assets/props/train_*.png, 224 px wide = 7 tiles of i + j): 5.7 long x 1.3 wide
+export const CAR_LEN = 5.7, CAR_W = 1.3, CAR_GAP = 0.12, CARS = 3;
 export const TRAIN_LEN = CARS * CAR_LEN + (CARS - 1) * CAR_GAP;
 const VMAX = 7, ACCEL = 3, DWELL = 8;
 const ENTER = -1, EXIT = SKYTRAIN.roadLength + 1;

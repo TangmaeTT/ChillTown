@@ -3,23 +3,24 @@ import type { IsoGrid } from '@shared/iso';
 import { SKYTRAIN } from '@shared/skytrain';
 import { CAR_LEN, CAR_GAP, CARS, type TrainModel } from '../model/TrainModel';
 import {
-    prismTexture, placePrism, prismXY, concrete, trackTop, platformTop, glassWall, metalRoof, trainCar, concourse, stairStep,
-    type PrismTex, type Placed,
+    prismTexture, placePrism, concrete, trackTop, platformTop, glassWall, metalRoof, concourse, stairStep,
+    type Placed,
 } from './art/pixelart';
 import type { LightingView } from './LightingView';
 import type { Occluders } from './Occluders';
 
-// The skytrain, drawn in code as pixel art: viaduct, piers, three-level station, stairs, and the trains.
+// The skytrain: viaduct, piers, three-level station and stairs drawn in code as pixel art; the cars are
+// ChatGPT art (assets/props/train_{head,mid,tail}_{day,night,glow}.png, made with tools/prep_asset.py).
 // Depth bands for elevated parts (all above anything on the ground):
 const D = { deck: 40000, farWall: 40500, train: 41000, nearWall: 41500, roof: 42000 };
-const LIVERY = 0x2f8f8a;                // fictional line colour (teal), not a real operator's
-const CONCRETE = 0x9a9d96, CAR_W = 0.85, CAR_H = 22, TRAIN_Z = SKYTRAIN.deck.z + SKYTRAIN.deck.h;
+const CONCRETE = 0x9a9d96, TRAIN_Z = SKYTRAIN.deck.z + SKYTRAIN.deck.h;
 
-type TrainSprites = { cars: { img: GameObjects.Image; glow: GameObjects.Image | null; tex: PrismTex }[] };
+// one car = day sprite, night sprite cross-faded on top of it, and the additive glow of its lit windows
+type CarSprites = { day: GameObjects.Image; night: GameObjects.Image; glow: GameObjects.Image };
+type TrainSprites = { cars: CarSprites[] };
 
 export class SkytrainView {
     private trains = new Map<number, TrainSprites>();
-    private carTex: Record<'head' | 'tail' | 'none', PrismTex>;
 
     constructor(private scene: Scene, private grid: IsoGrid, private lighting: LightingView, occluders: Occluders) {
         const { deck, station: st } = SKYTRAIN;
@@ -108,13 +109,15 @@ export class SkytrainView {
                 occluders.addSolid({ depth: p.groundY, objects: [p.img], left: p.left, right: p.right, top: p.top, bottom: p.groundY }, tileRect(s.i0, s.j0, s.i1, s.j1));
             }
         }
+    }
 
-        // --- train cars (one texture per visible end)
-        this.carTex = {
-            head: prismTexture(scene, 'car_head', CAR_LEN, CAR_W, CAR_H, trainCar(LIVERY, 'head')),
-            tail: prismTexture(scene, 'car_tail', CAR_LEN, CAR_W, CAR_H, trainCar(LIVERY, 'tail')),
-            none: prismTexture(scene, 'car_mid', CAR_LEN, CAR_W, CAR_H, trainCar(LIVERY, 'none')),
+    private car(kind: 'head' | 'mid' | 'tail'): CarSprites {
+        const add = (v: string) => {
+            const img = this.scene.add.image(0, 0, `train_${kind}_${v}`);
+            // origin = the car's footprint centre on the rails: x = middle, y = bottom - (i+j extent) * 8
+            return img.setOrigin(0.5, (img.height - img.width / 4) / img.height);
         };
+        return { day: add('day'), night: add('night'), glow: add('glow').setBlendMode('ADD').setDepth(50002) };
     }
 
     update(model: TrainModel) {
@@ -123,32 +126,28 @@ export class SkytrainView {
             seen.add(t.id);
             let s = this.trains.get(t.id);
             if (!s) {
-                // the car at the highest i shows its +i end: headlights when moving +i, tail lights when moving -i
-                const kinds = Array.from({ length: CARS }, (_, k) => k === CARS - 1 ? (t.dir === 1 ? 'head' : 'tail') : 'none') as ('head' | 'tail' | 'none')[];
-                s = {
-                    cars: kinds.map(k => {
-                        const tex = this.carTex[k];
-                        const img = this.scene.add.image(0, 0, tex.key).setOrigin(0, 0);
-                        const glow = tex.glowKey ? this.scene.add.image(0, 0, tex.glowKey).setOrigin(0, 0).setDepth(50002).setBlendMode('ADD') : null;
-                        return { img, glow, tex };
-                    }),
-                };
+                // the car at the highest i shows its +i end: headlights when moving +i, tail lights when moving -i;
+                // the others show a gangway there
+                const kinds = Array.from({ length: CARS }, (_, k) => k === CARS - 1 ? (t.dir === 1 ? 'head' : 'tail') : 'mid') as ('head' | 'mid' | 'tail')[];
+                s = { cars: kinds.map(k => this.car(k)) };
                 this.trains.set(t.id, s);
             }
-            const track = SKYTRAIN.tracks[t.track];
+            const track = SKYTRAIN.tracks[t.track], night = this.lighting.current.lights;
             s.cars.forEach((car, k) => {
                 const i = t.tail + k * (CAR_LEN + CAR_GAP);
-                const { x, y } = prismXY(this.grid, car.tex, i, track.j - CAR_W / 2, CAR_LEN, CAR_W, TRAIN_Z);
+                const p = this.grid.toWorld(i + CAR_LEN / 2, track.j);
+                const x = Math.round(p.x), y = Math.round(p.y - TRAIN_Z), depth = D.train + i * 0.001;
                 // fade in/out at the ends of the viaduct instead of popping
                 const a = PMath.Clamp(Math.min(i + 0.5, SKYTRAIN.roadLength - 0.5 - (i + CAR_LEN)) / 1.5 + 1, 0, 1);
-                car.img.setPosition(Math.round(x), Math.round(y)).setDepth(D.train + i * 0.001).setAlpha(a);
+                car.day.setPosition(x, y).setDepth(depth).setAlpha(a);
+                car.night.setPosition(x, y).setDepth(depth + 0.0001).setAlpha(a * night);
                 // glow layers sit above everything, so a car under the station roof must not shine through it
                 const underRoof = i + CAR_LEN > SKYTRAIN.station.roof.i0 && i < SKYTRAIN.station.roof.i1;
-                car.glow?.setPosition(Math.round(x), Math.round(y)).setAlpha(underRoof ? 0 : a * this.lighting.current.lights);
+                car.glow.setPosition(x, y).setAlpha(underRoof ? 0 : a * night);
             });
         }
         for (const [id, s] of this.trains) if (!seen.has(id)) {
-            s.cars.forEach(c => { c.img.destroy(); c.glow?.destroy(); });
+            s.cars.forEach(c => { c.day.destroy(); c.night.destroy(); c.glow.destroy(); });
             this.trains.delete(id);
         }
     }

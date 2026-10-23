@@ -49,6 +49,8 @@ export class GameController extends Scene {
     preload() {
         this.load.setPath('assets');
         this.load.image('noodle_shop', 'noodle_shop.png');
+        for (const car of ['head', 'mid', 'tail']) for (const v of ['day', 'night', 'glow'])
+            this.load.image(`train_${car}_${v}`, `props/train_${car}_${v}.png`);
         this.load.spritesheet(PLAYER_SHEET.key, PLAYER_SHEET.file, { frameWidth: PLAYER_SHEET.frame, frameHeight: PLAYER_SHEET.frame });
     }
 
@@ -61,7 +63,9 @@ export class GameController extends Scene {
         const id = this.data0.room ?? roomFromUrl();
         this.room = new RoomModel(world.edit ? editorRoom(id) : ROOMS[id]);
         world.roomName = this.room.room.name;
-        const spawn = this.data0.spawn ?? this.room.room.spawn;
+        // ?at=i,j starts at that tile (testing)
+        const at = new URLSearchParams(location.search).get('at')?.split(',').map(Number);
+        const spawn = this.data0.spawn ?? (at?.length === 2 ? { i: at[0], j: at[1] } : this.room.room.spawn);
         const p = this.room.grid.toWorld(spawn.i, spawn.j);
         this.player = new PlayerModel(p.x, p.y, this.data0.facing);
 

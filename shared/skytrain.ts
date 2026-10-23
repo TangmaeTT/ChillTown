@@ -10,9 +10,10 @@ export const SKYTRAIN = {
     pillars: [2, 7, 12, 20, 25, 30],                            // hammerhead piers on the median (i); none on the crosswalk
     pillarJ: 9.5,
     station: {
-        platform: { i0: 10.5, i1: 21.5, j0: 6.2, j1: 12.8, z: 96, h: 16 },
-        concourse: { i0: 8.5, i1: 21.5, j0: 6.5, j1: 12.5, z: 56, h: 40 },
-        roof: { i0: 10.2, i1: 21.8, j0: 5.9, j1: 13.1, z: 156, h: 10 },
+        // 18 tiles: long enough for a 3-car train (client/src/model/TrainModel.ts)
+        platform: { i0: 7, i1: 25, j0: 6.2, j1: 12.8, z: 96, h: 16 },
+        concourse: { i0: 7, i1: 25, j0: 6.5, j1: 12.5, z: 56, h: 40 },
+        roof: { i0: 6.7, i1: 25.3, j0: 5.9, j1: 13.1, z: 200, h: 10 },   // clears the train (~70 px tall)
         stopI: 16,                                              // trains stop with their middle here
     },
     // stairs from the sidewalks up to the concourse; `up` = direction the steps climb (+j or -j)

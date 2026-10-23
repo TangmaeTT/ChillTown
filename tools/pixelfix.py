@@ -9,6 +9,7 @@ Examples:
   python pixelfix.py shop_ai.png shop.png --scale 4 --colors 32
   python pixelfix.py player.png player_moody.png --scale 1 --pull 0.35 --sat 0.8 --keep-size
                                                               # already-pixel art (PixelLab): recolour only
+  python pixelfix.py train_ai.png train.png --width 160       # no clean pixel grid (ChatGPT): resample to a target width
   python pixelfix.py any.png --check                          # just report size, colours, brightness
 
 Needs Pillow + NumPy (Miniconda).
@@ -98,6 +99,22 @@ def downscale(rgba, s, ox, oy):
     return out
 
 
+def resample(rgba, width):
+    """For AI images without a regular fake-pixel grid: trim, then area-average down to `width`.
+    Colour is averaged over opaque pixels only, so edges don't pick up the background."""
+    rgba = trim(rgba)
+    h = max(1, round(rgba.shape[0] * width / rgba.shape[1]))
+    a = rgba[..., 3:4].astype(np.float32) / 255
+    pre = np.concatenate([rgba[..., :3] * a, a], axis=-1)        # premultiplied
+    small = np.array(Image.fromarray((pre[..., :3]).astype(np.uint8)).resize((width, h), Image.Resampling.BOX)).astype(np.float32)
+    cov = np.array(Image.fromarray((a[..., 0] * 255).astype(np.uint8)).resize((width, h), Image.Resampling.BOX)).astype(np.float32) / 255
+    rgb = np.clip(small / np.maximum(cov[..., None], 1e-3), 0, 255)
+    out = np.zeros((h, width, 4), np.uint8)
+    out[..., :3] = rgb.round().astype(np.uint8)
+    out[..., 3] = np.where(cov >= 0.5, 255, 0)
+    return out
+
+
 def adjust(rgba, pull, sat, palette):
     rgb = rgba[..., :3].astype(np.float32)
     if sat != 1.0:
@@ -172,6 +189,7 @@ def main():
     ap.add_argument("src")
     ap.add_argument("dst", nargs="?")
     ap.add_argument("--scale", type=int, default=4, help="AI pixels per real pixel (project standard: 4; 1 = already true pixel art)")
+    ap.add_argument("--width", type=int, help="resample to this width instead of --scale (images with no clean pixel grid)")
     ap.add_argument("--colors", type=int, default=48, help="max colours (0 = no reduction)")
     ap.add_argument("--bg", default="#ff00ff", help="background key colour, or 'none'")
     ap.add_argument("--tol", type=float, default=90, help="background key tolerance (RGB distance)")
@@ -193,10 +211,13 @@ def main():
 
     if a.bg.lower() != "none":
         img = key_background(img, hex_rgb(a.bg), a.tol)
-    ox, oy = best_offset(img, a.scale)
-    if a.scale > 1:
-        print(f"grid offset: x={ox} y={oy}")
-    img = downscale(img, a.scale, ox, oy)
+    if a.width:
+        img = resample(img, a.width)
+    else:
+        ox, oy = best_offset(img, a.scale)
+        if a.scale > 1:
+            print(f"grid offset: x={ox} y={oy}")
+        img = downscale(img, a.scale, ox, oy)
     img = adjust(img, a.pull, a.sat, palette)
     img = snap_to_palette(img, palette) if a.snap else (reduce_colours(img, a.colors) if a.colors else img)
     img[..., 3] = np.where(img[..., 3] >= 128, 255, 0)
