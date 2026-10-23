@@ -1,6 +1,6 @@
 import { Scene, GameObjects } from 'phaser';
 import type { IsoGrid } from '@shared/iso';
-import { WALK_FRAMES } from '../model/PlayerModel';
+import { WALK_FRAMES, WALK_FPS } from '../model/PlayerModel';
 import type { NpcModel } from '../model/NpcModel';
 import { PLAYER_SHEET } from './PlayerView';
 
@@ -23,7 +23,7 @@ export class NpcView {
                 this.sprites.set(n.id, s);
             }
             const p = this.grid.toWorld(n.i, n.j);
-            const frame = n.walkT > 0 ? 1 + (Math.floor(n.walkT * 10) % WALK_FRAMES) : 0;
+            const frame = n.walkT > 0 ? 1 + (Math.floor(n.walkT * WALK_FPS) % WALK_FRAMES) : 0;
             s.setPosition(Math.round(p.x), Math.round(p.y)).setFrame(n.facing * (WALK_FRAMES + 1) + frame).setDepth(p.y);
             // fade at the map edge instead of popping in
             s.setAlpha(Math.min(1, (n.i + 0.6) / 0.8, (this.grid.w - 0.4 - n.i) / 0.8, (n.j + 0.6) / 0.8, (this.grid.h - 0.4 - n.j) / 0.8));

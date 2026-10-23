@@ -1,6 +1,8 @@
 // Local player: position, facing, walking. Pure logic; the view reads it, the controller feeds it input.
 
-export const WALK_FRAMES = 8;
+// must match player.png (tools/char_sheet.py prints the count): col 0 standing + WALK_FRAMES walk cycle
+export const WALK_FRAMES = 18;
+export const WALK_FPS = 20;
 const SPEED = 70; // world px per second
 
 export class PlayerModel {
@@ -37,6 +39,6 @@ export class PlayerModel {
 
     /** 0 = standing, 1..WALK_FRAMES = walk cycle */
     get frame() {
-        return this.moving ? 1 + (Math.floor(this.walkT * 10) % WALK_FRAMES) : 0;
+        return this.moving ? 1 + (Math.floor(this.walkT * WALK_FPS) % WALK_FRAMES) : 0;
     }
 }

@@ -1,6 +1,11 @@
 """char_sheet - turn a ChatGPT character sheet (magenta background) into the game's player sprite sheet.
 
   python tools/char_sheet.py art-in/char/man1.png client/public/assets/player.png --height 52
+  python tools/char_sheet.py --iso-down down.png --iso-up up.png client/public/assets/player.png --height 52
+
+--iso-down / --iso-up: two walk-cycle grids (e.g. from Autosprite, transparent background, frames in a
+regular grid): one walking toward the camera-left (down-left), one walking away to the right (up-right).
+They're mirrored for down-right and up-left; every frame of the cycle is used.
 
 Expected input layout (what ChatGPT gave us for man1.png):
   row 1: front, front, left, back, right, front          (standing, 4 directions)
@@ -85,12 +90,61 @@ def place(sheet, img, col, row, dy=0, mirror=False):
     region[mask] = img[mask]
 
 
+def grid_frames(path, cols, rows, count):
+    """frames laid out in a regular grid (Autosprite exports), trimmed"""
+    a = np.array(Image.open(path).convert("RGBA"))
+    a[..., 3] = np.where(a[..., 3] >= 128, 255, 0)          # soft edges -> hard pixel edges
+    cw, ch = a.shape[1] // cols, a.shape[0] // rows
+    out = []
+    for k in range(count):
+        cell = a[(k // cols) * ch:(k // cols + 1) * ch, (k % cols) * cw:(k % cols + 1) * cw]
+        if cell[..., 3].any():
+            out.append(pf.trim(cell))
+    return out
+
+
+def iso_pair(a):
+    down = grid_frames(a.iso_down, a.cols, a.rows, a.count)
+    up = grid_frames(a.iso_up, a.cols, a.rows, a.count)
+    print(f"walk frames: down {len(down)}, up {len(up)}")
+    scale = np.median([f.shape[0] for f in down]) / a.height
+    small = lambda im: pf.resample(im, max(1, round(im.shape[1] / scale)))
+    down, up = [small(f) for f in down], [small(f) for f in up]
+    n = min(len(down), len(up))
+
+    def standing(frames):
+        # the frame with the feet closest together
+        def spread(im):
+            feet = im[int(im.shape[0] * 0.85):, :, 3] > 0
+            xs = np.nonzero(feet.any(0))[0]
+            return xs.max() - xs.min() if len(xs) else 99
+        return min(frames, key=spread)
+
+    sheet = np.zeros((8 * FRAME, (n + 1) * FRAME, 4), np.uint8)
+    # rows: E SE S SW W NW N NE -> (cycle, mirrored)
+    views = [(down, True), (down, True), (down, False), (down, False), (down, False), (up, True), (up, False), (up, False)]
+    for r, (cycle, mirror) in enumerate(views):
+        place(sheet, standing(cycle), 0, r, mirror=mirror)
+        for f in range(n):
+            place(sheet, cycle[f], f + 1, r, mirror=mirror)
+    sheet = pf.reduce_colours(sheet, a.colors)
+    Image.fromarray(sheet).save(a.out)
+    pf.report(sheet, "player")
+    print(f"saved {a.out}: {n} walk frames per direction (set WALK_FRAMES = {n} in client/src/model/PlayerModel.ts)")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("src"); ap.add_argument("out")
+    ap.add_argument("src", nargs="?", help="single ChatGPT sheet (layout above)")
+    ap.add_argument("out")
+    ap.add_argument("--iso-down"); ap.add_argument("--iso-up")
+    ap.add_argument("--cols", type=int, default=5); ap.add_argument("--rows", type=int, default=4)
+    ap.add_argument("--count", type=int, default=18, help="frames in each grid")
     ap.add_argument("--height", type=int, default=52, help="standing height in game pixels")
     ap.add_argument("--colors", type=int, default=32)
     a = ap.parse_args()
+    if a.iso_down and a.iso_up:
+        return iso_pair(a)
 
     rgba = pf.key_background(np.array(Image.open(a.src).convert("RGBA")), [255, 0, 255], 110)
     rows = frames(rgba)

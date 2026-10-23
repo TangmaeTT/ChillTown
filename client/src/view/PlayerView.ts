@@ -1,7 +1,7 @@
 import { Scene, GameObjects } from 'phaser';
 import { WALK_FRAMES, type PlayerModel } from '../model/PlayerModel';
 
-// player.png (PixelLab): 68x68 frames, col 0 = standing, cols 1-8 = walk cycle;
+// player.png (tools/char_sheet.py): 68x68 frames, col 0 = standing, then the walk cycle;
 // rows clockwise from screen angle: E, SE, S, SW, W, NW, N, NE
 export const PLAYER_SHEET = { key: 'player', file: 'player.png', frame: 68 };
 const FEET_Y = 60;
