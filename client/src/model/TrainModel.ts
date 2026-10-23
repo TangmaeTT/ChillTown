@@ -2,9 +2,15 @@
 // Positions are in tiles along i. Pure logic.
 import { SKYTRAIN } from '@shared/skytrain';
 
-// car size follows the art (assets/props/train_*.png, 224 px wide = 7 tiles of i + j): 5.7 long x 1.3 wide
-export const CAR_LEN = 5.7, CAR_W = 1.3, CAR_GAP = 0.12, CARS = 3;
-export const TRAIN_LEN = CARS * CAR_LEN + (CARS - 1) * CAR_GAP;
+import layout from './train_layout.json';
+
+// Car lengths come from the art: train_layout.json (tools/train_align.py) has each sprite's roof edge.
+// A train = two middle cars + a head (moving +i) or tail (moving -i) car at the +i end.
+export const TRAIN_LAYOUT = layout as Record<'head' | 'mid' | 'tail', { w: number; h: number; rear: [number, number]; front: [number, number] }>;
+const tiles = (c: { rear: [number, number]; front: [number, number] }) => (c.front[0] - c.rear[0]) / 32;
+export const CARS = 3, CAR_W = 1.3;
+export const MID_LEN = tiles(TRAIN_LAYOUT.mid);
+export const TRAIN_LEN = (CARS - 1) * MID_LEN + Math.max(tiles(TRAIN_LAYOUT.head), tiles(TRAIN_LAYOUT.tail));
 const VMAX = 7, ACCEL = 3, DWELL = 8;
 const ENTER = -1, EXIT = SKYTRAIN.roadLength + 1;
 

@@ -1,7 +1,7 @@
 import { Scene, GameObjects, Math as PMath } from 'phaser';
 import type { IsoGrid } from '@shared/iso';
 import { SKYTRAIN } from '@shared/skytrain';
-import { CAR_LEN, CAR_GAP, CARS, type TrainModel } from '../model/TrainModel';
+import { CARS, MID_LEN, TRAIN_LAYOUT, type TrainModel } from '../model/TrainModel';
 import {
     prismTexture, placePrism, concrete, trackTop, platformTop, glassWall, metalRoof, concourse, stairStep,
     type Placed,
@@ -16,7 +16,8 @@ const D = { deck: 40000, farWall: 40500, train: 41000, nearWall: 41500, roof: 42
 const CONCRETE = 0x9a9d96, TRAIN_Z = SKYTRAIN.deck.z + SKYTRAIN.deck.h;
 
 // one car = day sprite, night sprite cross-faded on top of it, and the additive glow of its lit windows
-type CarSprites = { day: GameObjects.Image; night: GameObjects.Image; glow: GameObjects.Image };
+type CarKind = 'head' | 'mid' | 'tail';
+type CarSprites = { kind: CarKind; day: GameObjects.Image; night: GameObjects.Image; glow: GameObjects.Image };
 type TrainSprites = { cars: CarSprites[] };
 
 export class SkytrainView {
@@ -111,13 +112,9 @@ export class SkytrainView {
         }
     }
 
-    private car(kind: 'head' | 'mid' | 'tail'): CarSprites {
-        const add = (v: string) => {
-            const img = this.scene.add.image(0, 0, `train_${kind}_${v}`);
-            // origin = the car's footprint centre on the rails: x = middle, y = bottom - (i+j extent) * 8
-            return img.setOrigin(0.5, (img.height - img.width / 4) / img.height);
-        };
-        return { day: add('day'), night: add('night'), glow: add('glow').setBlendMode('ADD').setDepth(50002) };
+    private car(kind: CarKind): CarSprites {
+        const add = (v: string) => this.scene.add.image(0, 0, `train_${kind}_${v}`).setOrigin(0, 0);
+        return { kind, day: add('day'), night: add('night'), glow: add('glow').setBlendMode('ADD').setDepth(50002) };
     }
 
     update(model: TrainModel) {
@@ -128,22 +125,30 @@ export class SkytrainView {
             if (!s) {
                 // the car at the highest i shows its +i end: headlights when moving +i, tail lights when moving -i;
                 // the others show a gangway there
-                const kinds = Array.from({ length: CARS }, (_, k) => k === CARS - 1 ? (t.dir === 1 ? 'head' : 'tail') : 'mid') as ('head' | 'mid' | 'tail')[];
+                const kinds = Array.from({ length: CARS }, (_, k) => k === CARS - 1 ? (t.dir === 1 ? 'head' : 'tail') : 'mid') as CarKind[];
                 s = { cars: kinds.map(k => this.car(k)) };
                 this.trains.set(t.id, s);
             }
             const track = SKYTRAIN.tracks[t.track], night = this.lighting.current.lights;
+            // first car: centred on the rails; every next car: its roof edge starts where the previous one ends
+            const first = TRAIN_LAYOUT[s.cars[0].kind], c0 = this.grid.toWorld(t.tail + MID_LEN / 2, track.j);
+            let x = c0.x - first.w / 2, y = c0.y - TRAIN_Z - (first.h - first.w / 4);
             s.cars.forEach((car, k) => {
-                const i = t.tail + k * (CAR_LEN + CAR_GAP);
-                const p = this.grid.toWorld(i + CAR_LEN / 2, track.j);
-                const x = Math.round(p.x), y = Math.round(p.y - TRAIN_Z), depth = D.train + i * 0.001;
+                const L = TRAIN_LAYOUT[car.kind];
+                if (k > 0) {
+                    const P = TRAIN_LAYOUT[s.cars[k - 1].kind];
+                    x += P.front[0] - L.rear[0]; y += P.front[1] - L.rear[1];
+                }
+                const i = t.tail + k * MID_LEN, len = (L.front[0] - L.rear[0]) / 32;
+                const depth = D.train + i * 0.001;
                 // fade in/out at the ends of the viaduct instead of popping
-                const a = PMath.Clamp(Math.min(i + 0.5, SKYTRAIN.roadLength - 0.5 - (i + CAR_LEN)) / 1.5 + 1, 0, 1);
-                car.day.setPosition(x, y).setDepth(depth).setAlpha(a);
-                car.night.setPosition(x, y).setDepth(depth + 0.0001).setAlpha(a * night);
+                const a = PMath.Clamp(Math.min(i + 0.5, SKYTRAIN.roadLength - 0.5 - (i + len)) / 1.5 + 1, 0, 1);
+                const rx = Math.round(x), ry = Math.round(y);
+                car.day.setPosition(rx, ry).setDepth(depth).setAlpha(a);
+                car.night.setPosition(rx, ry).setDepth(depth + 0.0001).setAlpha(a * night);
                 // glow layers sit above everything, so a car under the station roof must not shine through it
-                const underRoof = i + CAR_LEN > SKYTRAIN.station.roof.i0 && i < SKYTRAIN.station.roof.i1;
-                car.glow.setPosition(x, y).setAlpha(underRoof ? 0 : a * night);
+                const underRoof = i + len > SKYTRAIN.station.roof.i0 && i < SKYTRAIN.station.roof.i1;
+                car.glow.setPosition(rx, ry).setAlpha(underRoof ? 0 : a * night);
             });
         }
         for (const [id, s] of this.trains) if (!seen.has(id)) {
