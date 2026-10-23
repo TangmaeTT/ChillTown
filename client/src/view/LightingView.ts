@@ -6,8 +6,8 @@ import { lighting, type Light } from './lighting';
 export class LightingView {
     private overlay: GameObjects.Rectangle;
     private lights: { img: GameObjects.Image; base: number; phase: number }[] = [];
-    private glows: GameObjects.Image[] = [];
-    private shadows: { obj: GameObjects.Components.Alpha; base: number }[] = [];
+    private glows: { glow: GameObjects.Image; owner: GameObjects.Image | null }[] = [];
+    private shadows: { obj: { setAlpha(a: number): unknown }; base: number }[] = [];
     current: Light = lighting();
 
     constructor(private scene: Scene) {
@@ -22,11 +22,12 @@ export class LightingView {
         return img;
     }
 
-    /** A glow layer made with its sprite (see art/pixelart.ts); alpha follows `lights`. */
-    addGlow(img: GameObjects.Image) { this.glows.push(img); }
+    /** A glow layer made with its sprite (see art/pixelart.ts); alpha follows `lights` x the owner's alpha
+     *  (so a building that turns see-through takes its lit windows with it). */
+    addGlow(glow: GameObjects.Image, owner: GameObjects.Image | null = null) { this.glows.push({ glow, owner }); }
 
     /** A daylight shadow; alpha = base * sun. */
-    addShadow(obj: GameObjects.Components.Alpha, base: number) { this.shadows.push({ obj, base }); }
+    addShadow(obj: { setAlpha(a: number): unknown }, base: number) { this.shadows.push({ obj, base }); }
 
     update(time: number) {
         const L = this.current = lighting();
@@ -36,7 +37,7 @@ export class LightingView {
             const flicker = 0.92 + 0.08 * Math.sin(time / 90 + l.phase) * Math.sin(time / 37 + l.phase * 2);
             l.img.setAlpha(Math.min(1, L.lights * 1.2) * l.base * flicker);
         }
-        for (const g of this.glows) g.setAlpha(L.lights);
+        for (const g of this.glows) g.glow.setAlpha(L.lights * (g.owner ? g.owner.alpha : 1));
         for (const s of this.shadows) s.obj.setAlpha(s.base * L.sun);
     }
 }

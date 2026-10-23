@@ -2,13 +2,9 @@ import { Scene, GameObjects, Math as PMath } from 'phaser';
 import { TH, type IsoGrid } from '@shared/iso';
 import type { Box, Ground, Room, Rect } from '@shared/rooms';
 import { groundAt } from '@shared/collision';
+import { groundKey, GROUND_VARIANTS } from './ground';
 
-// Blockout drawing: flat muted ground colours and grey boxes, so scale and layout read before real art exists.
-const GROUND: Record<Ground, [number, number]> = {
-    plaza: [0x4a4d47, 0x46493f], sidewalk: [0x55574f, 0x4f5149], road: [0x2a2e31, 0x282c2f],
-    crosswalk: [0x2a2e31, 0xa9ab9c], soi: [0x35393a, 0x333738], water: [0x17364f, 0x152d47],
-    wood: [0x5a4636, 0x544130], grass: [0x3b5849, 0x37533f],
-};
+// Room drawing helpers: textured ground, grey boxes for buildings that don't have art yet, exits, labels.
 
 // Graphics.fillPoints is typed for Vector2[] but only reads x/y
 const pts = (p: { x: number; y: number }[]) => p as PMath.Vector2[];
@@ -25,18 +21,12 @@ export function corners(grid: IsoGrid, f: Rect, z = 0) {
 }
 
 export function drawGround(scene: Scene, grid: IsoGrid, room: Room) {
-    const g = scene.add.graphics().setDepth(-10000);
     for (let i = 0; i < room.w; i++) for (let j = 0; j < room.h; j++) {
-        const type = groundAt(room, i, j);
-        const [a, b] = GROUND[type];
-        // crosswalk: stripes across the road; everything else: subtle checker
-        const c = type === 'crosswalk' ? (j % 2 === 0 ? b : a) : ((i + j) % 2 ? a : b);
-        const { N, E, S, W } = corners(grid, { i0: i, j0: j, i1: i, j1: j });
-        g.fillStyle(c, 1).fillPoints(pts([N, E, S, W]), true);
+        const type: Ground = groundAt(room, i, j);
+        const variant = Math.floor(Math.abs(Math.sin(i * 91.7 + j * 37.3)) * 1000) % GROUND_VARIANTS;
+        const p = grid.toWorld(i, j);
+        scene.add.image(p.x, p.y, groundKey(type, variant)).setDepth(-10000);
     }
-    g.lineStyle(1, 0x000000, 0.12);
-    for (let i = 0; i <= room.w; i++) { const a = grid.toWorld(i - 0.5, -0.5), b = grid.toWorld(i - 0.5, room.h - 0.5); g.lineBetween(a.x, a.y, b.x, b.y); }
-    for (let j = 0; j <= room.h; j++) { const a = grid.toWorld(-0.5, j - 0.5), b = grid.toWorld(room.w - 0.5, j - 0.5); g.lineBetween(a.x, a.y, b.x, b.y); }
 }
 
 export type DrawnObject = GameObjects.Graphics | GameObjects.Image | GameObjects.Text;

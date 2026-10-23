@@ -25,6 +25,7 @@ export type Room = {
     boxes: Box[]; exits: Exit[]; lamps: { i: number; j: number }[];
     spawn: { i: number; j: number };
     scenery?: 'skytrain';   // extra code-drawn structure (layout in skytrain.ts)
+    walkways?: [number, number][][];   // routes ambient pedestrians follow (tile coords, start/end off the edge)
 };
 
 export const BLOCKING_GROUND: Ground[] = ['road', 'water'];
@@ -34,7 +35,7 @@ const r = (i0: number, j0: number, i1: number, j1: number): Rect => ({ i0, j0, i
 
 // ---------------------------------------------------------------- 1. station plaza
 const plaza: Room = {
-    id: 'plaza', name: 'ลานสถานีสยาม', w: 32, h: 20, base: 'plaza', spawn: { i: 16, j: 3 }, scenery: 'skytrain',
+    id: 'plaza', name: 'ลานสถานีสยาม', w: 32, h: 20, base: 'plaza', spawn: { i: 15, j: 15 }, scenery: 'skytrain',
     areas: [
         { ...r(0, 6, 31, 7), g: 'sidewalk' },
         { ...r(0, 8, 31, 11), g: 'road' },
@@ -58,6 +59,16 @@ const plaza: Room = {
         { ...r(14, 19, 18, 19), to: 'soi', spawn: { i: 11, j: 2 }, label: '↓ ซอยสแควร์' },
     ],
     lamps: [{ i: 4, j: 6 }, { i: 27, j: 6 }, { i: 4, j: 13 }, { i: 20, j: 13 }, { i: 28, j: 13 }],
+    walkways: [
+        [[-0.6, 7], [31.6, 7]],                                         // north sidewalk, both ways
+        [[31.6, 7.4], [-0.6, 7.4]],
+        [[-0.6, 12.4], [31.6, 12.4]],                                   // south sidewalk, both ways
+        [[31.6, 12], [-0.6, 12]],
+        [[16, -0.6], [16, 6.5], [16, 12.5], [15, 15], [16, 19.6]],      // over the crosswalk to the soi
+        [[15.5, 19.6], [15.5, 13], [15.5, 7], [15.5, -0.6]],            // and back up to the mall
+        [[-0.6, 3.5], [12, 3.5], [12.6, 2.8], [31.6, 4]],               // stroll past the meeting clock
+        [[-0.6, 15], [12, 15], [15, 17.5], [15.5, 19.6]],               // south plaza into the soi
+    ],
 };
 
 // ---------------------------------------------------------------- 2. Siam Square soi grid

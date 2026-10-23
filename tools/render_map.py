@@ -25,7 +25,8 @@ FONT_B = "C:/Windows/Fonts/LeelaUIb.ttf"
 
 
 def load_rooms():
-    js = "import('./shared/rooms.ts').then(m => console.log(JSON.stringify(m.ROOMS)))"
+    js = ("Promise.all([import('./shared/rooms.ts'), import('./shared/skytrain.ts')])"
+          ".then(([r, s]) => console.log(JSON.stringify({ rooms: r.ROOMS, skytrain: s.SKYTRAIN })))")
     out = subprocess.run(["node", "--experimental-strip-types", "--no-warnings", "-e", js],
                          cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True).stdout
     return json.loads(out)
@@ -36,7 +37,8 @@ def hexrgb(c):
 
 
 def main():
-    rooms = load_rooms()
+    data = load_rooms()
+    rooms, sky = data["rooms"], data["skytrain"]
     W = max(x + rooms[k]["w"] for k, (x, y) in LAYOUT.items()) + 4
     H = max(y + rooms[k]["h"] for k, (x, y) in LAYOUT.items()) + 4
     img = Image.new("RGB", (W * T, H * T), "#0f1316")
@@ -70,6 +72,30 @@ def main():
                 tw = d.textlength(label, font=f_small)
                 d.text(((x0 + x1 - tw) / 2, (y0 + y1) / 2 - 7), label, font=f_small, fill="#f2f2e6",
                        stroke_width=2, stroke_fill="#0e1014")
+        if r.get("scenery") == "skytrain":   # drawn in code from shared/skytrain.ts, not boxes
+            ex = lambda i, j: ((ox + i + 0.5) * T, (oy + j + 0.5) * T)   # tile-edge coords -> px
+            def over(i0, j0, i1, j1, label=None):
+                (x0, y0), (x1, y1) = ex(i0, j0), ex(i1, j1)
+                d.rectangle([x0, y0, x1, y1], outline="#c9cdc4", width=2)
+                for k in range(int(x0 - (y1 - y0)), int(x1), 10):
+                    d.line([max(k, x0), y0 + max(0, x0 - k), min(k + (y1 - y0), x1), y0 + min(y1 - y0, x1 - k)], fill="#6f736d")
+                if label:
+                    tw = d.textlength(label, font=f_small)
+                    d.text(((x0 + x1 - tw) / 2, (y0 + y1) / 2 - 7), label, font=f_small, fill="#f2f2e6", stroke_width=2, stroke_fill="#0e1014")
+            dk, st = sky["deck"], sky["station"]
+            over(-0.5, dk["j0"], r["w"] - 0.5, dk["j1"], "รางรถไฟฟ้าลอยฟ้า")
+            c = st["concourse"]; over(c["i0"], c["j0"], c["i1"], c["j1"], "สถานี (ชั้นขายตั๋ว + ชานชาลา)")
+            for i in sky["pillars"]:
+                (x0, y0), (x1, y1) = ex(i - 0.3, sky["pillarJ"] - 0.3), ex(i + 0.3, sky["pillarJ"] + 0.3)
+                d.rectangle([x0, y0, x1, y1], fill="#9a9d96", outline="#0e1014")
+            for stp in sky["stairs"]:
+                (x0, y0), (x1, y1) = ex(stp["i0"], stp["j0"]), ex(stp["i1"], stp["j1"])
+                d.rectangle([x0, y0, x1, y1], fill="#b0b2aa", outline="#0e1014")
+                for k in range(1, 10):
+                    yy = y0 + (y1 - y0) * k / 10
+                    d.line([x0, yy, x1, yy], fill="#80827a")
+                tw = d.textlength("บันได", font=f_small)
+                d.text(((x0 + x1 - tw) / 2, (y0 + y1) / 2 - 7), "บันได", font=f_small, fill="#f2f2e6", stroke_width=2, stroke_fill="#0e1014")
         for l in r["lamps"]:
             x, y = px(l["i"], l["j"])
             d.ellipse([x + 4, y + 4, x + T - 5, y + T - 5], fill="#d3ca90")

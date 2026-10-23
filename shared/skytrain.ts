@@ -7,7 +7,7 @@ export type Span = { i0: number; i1: number; j0: number; j1: number };
 export const SKYTRAIN = {
     deck: { j0: 7.6, j1: 11.4, z: 96, h: 16 },                 // viaduct over the road, full room length
     tracks: [{ j: 8.6, dir: 1 as const }, { j: 10.4, dir: -1 as const }],
-    pillars: [2, 7, 12, 16, 20, 25, 30],                        // hammerhead piers on the median (i)
+    pillars: [2, 7, 12, 20, 25, 30],                            // hammerhead piers on the median (i); none on the crosswalk
     pillarJ: 9.5,
     station: {
         platform: { i0: 10.5, i1: 21.5, j0: 6.2, j1: 12.8, z: 96, h: 16 },

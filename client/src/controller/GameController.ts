@@ -3,7 +3,15 @@ import type { RoomId } from '@shared/rooms';
 import { world, tickClock } from '../model/WorldModel';
 import { RoomModel, roomFromUrl } from '../model/RoomModel';
 import { PlayerModel } from '../model/PlayerModel';
+import { TrainModel } from '../model/TrainModel';
+import { TrafficModel } from '../model/TrafficModel';
+import { NpcModel } from '../model/NpcModel';
+import { SKYTRAIN } from '@shared/skytrain';
 import { makeSharedTextures } from '../view/art/textures';
+import { makeGroundTextures } from '../view/art/ground';
+import { SkytrainView } from '../view/SkytrainView';
+import { TrafficView } from '../view/TrafficView';
+import { NpcView, NPC_TINTS } from '../view/NpcView';
 import { RoomView } from '../view/RoomView';
 import { PlayerView, PLAYER_SHEET } from '../view/PlayerView';
 import { LightingView } from '../view/LightingView';
@@ -23,6 +31,13 @@ export class GameController extends Scene {
     private occluders!: Occluders;
     private input0!: InputController;
     private leaving = false;
+    // skytrain scenery (station plaza only)
+    private trains: TrainModel | null = null;
+    private traffic: TrafficModel | null = null;
+    private trainView: SkytrainView | null = null;
+    private trafficView: TrafficView | null = null;
+    private npcs: NpcModel | null = null;
+    private npcView: NpcView | null = null;
 
     constructor() { super('Game'); }
 
@@ -36,6 +51,7 @@ export class GameController extends Scene {
 
     create() {
         makeSharedTextures(this);
+        makeGroundTextures(this);
         this.leaving = false;
 
         // --- models
@@ -50,6 +66,15 @@ export class GameController extends Scene {
         this.occluders = new Occluders();
         new RoomView(this, this.room, this.lighting, this.occluders);
         this.playerView = new PlayerView(this, this.player, 'คุณ');
+        if (this.room.room.scenery === 'skytrain') {
+            this.trains = new TrainModel();
+            this.traffic = new TrafficModel(world.minutes);
+            this.trainView = new SkytrainView(this, this.room.grid, this.lighting, this.occluders);
+            this.trafficView = new TrafficView(this, this.room.grid, this.lighting);
+        } else this.trains = this.traffic = this.trainView = this.trafficView = null;
+        const routes = this.room.room.walkways;
+        this.npcs = routes ? new NpcModel(routes, world.minutes, NPC_TINTS.length) : null;
+        this.npcView = routes ? new NpcView(this, this.room.grid) : null;
 
         // --- camera
         const cam = this.cameras.main;
@@ -70,14 +95,27 @@ export class GameController extends Scene {
         // --- model
         this.player.update(dt, this.input0.moveVector(!this.leaving), (x, y) => this.room.walkable(x, y));
         if (this.player.moving) this.checkExit();
+        this.trains?.update(dt);
+        this.npcs?.update(dt, world.minutes);
+        this.traffic?.update(dt, world.minutes, this.onCrosswalk());
 
         // --- view
         const t = this.room.tileAt(this.player.x, this.player.y);
         const depth = this.occluders.update(this.player.x, this.player.y, t.i, t.j);
         this.playerView.sync(this.player, depth);
         this.lighting.update(time);
+        if (this.trains) this.trainView!.update(this.trains);
+        if (this.traffic) this.trafficView!.update(this.traffic);
+        if (this.npcs) this.npcView!.update(this.npcs);
         const cam = this.cameras.main;
         if (Math.abs(cam.zoom - world.zoom) > 0.001) cam.setZoom(PMath.Linear(cam.zoom, world.zoom, 0.25));
+    }
+
+    /** someone (the player or a pedestrian) is on the zebra crossing: cars wait */
+    private onCrosswalk() {
+        const t = this.room.tileAt(this.player.x, this.player.y), cw = SKYTRAIN.crosswalk, d = SKYTRAIN.deck;
+        const i0 = cw.i0 - 0.3, i1 = cw.i1 + 0.3, j0 = d.j0 - 0.6, j1 = d.j1 + 0.6;
+        return (t.fi > i0 && t.fi < i1 && t.fj > j0 && t.fj < j1) || !!this.npcs?.anyIn(i0, i1, j0, j1);
     }
 
     private checkExit() {

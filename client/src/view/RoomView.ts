@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import type { RoomModel } from '../model/RoomModel';
 import { drawGround, drawBox, drawExit, corners } from './art/blockout';
+import { drawArt } from './art/props';
 import type { LightingView } from './LightingView';
 import type { Occluders } from './Occluders';
 
@@ -11,7 +12,7 @@ export class RoomView {
         drawGround(scene, grid, room);
 
         for (const b of room.boxes) {
-            const d = drawBox(scene, grid, b);
+            const d = b.art ? drawArt(scene, grid, b, lights) : drawBox(scene, grid, b);
             if (b.elevated) { occluders.addRoof(d, b); continue; }
             occluders.addSolid(d, b);
             if (b.glow) { // warm spill from an open shop front + upstairs window
