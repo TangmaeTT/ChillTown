@@ -91,7 +91,7 @@
 
 # อัปเดต: เป้าหมายใหม่ = ตัวละครหลากหลาย ปรับแต่งเองได้ (หน้า ผม ผิว เสื้อผ้า)
 
-> 23 ต.ค. 2026 (หลังคุยต่อ) · A (เซ็ตล้วน) ไม่ตอบโจทย์ เพราะหน้าและผมผูกกับชุด · **ยังไม่ได้ตัดสินใจ** รอ torad เลือก
+> 23 ต.ค. 2026 (หลังคุยต่อ) · A (เซ็ตล้วน) ไม่ตอบโจทย์ เพราะหน้าและผมผูกกับชุด · **24 ต.ค.: torad เลือกแบบ 3** (ดูหัวข้อ "สถานะ" ท้ายไฟล์)
 
 ## ทางเลือก
 
@@ -123,3 +123,33 @@
 2. ชิ้นหัวชุดแรก: หน้า 3 + ผม 3 (Claude ทำแม่แบบหัวขนาดจริงให้วาด/แก้ทับ)
 3. ระบบ: หาตำแหน่งหัวทุกเฟรม · ลำดับชั้น (หันหลังผมหลังอยู่บน) · เปลี่ยนสีผิว/ผม · หน้าสร้างตัวละครง่าย ๆ
 4. ลองเดินในเกม: ถ้าหัวกับตัวดูเป็นชิ้นเดียวกัน → ขยายต่อ
+
+---
+
+# สถานะ: แบบ 3 (หัวแยกชิ้น + ตัวเป็นเซ็ต) · เริ่ม 24 ต.ค. 2026 · branch `feature/avatar-head`
+
+## ทำแล้ว (ระบบ ทดสอบกับตัวละครเดิมที่มีผม)
+- `tools/char_rig.py <player.png>` วัดตำแหน่งหัวทุกเฟรม (เทียบกับท่ายืนของทิศเดียวกัน) และหาสีผิวในชีต → `client/src/model/player_rig.json` · ต้องรันใหม่ทุกครั้งที่เปลี่ยน `player.png` · `--debug out.png` ดูกรอบหัว (ฟ้า) และสีผิว (ชมพู)
+  - ผลกับชีต Autosprite: หัวกระเด้ง 0–2 px ลง และเลื่อนข้าง 0–4 px ระหว่างเดิน · ตรวจสีผิวได้ครบทั้งหน้าและมือ
+- `shared/avatar.ts`: ช่องชิ้นส่วน (ผมหลัง หน้า ผมหน้า แว่น หมวก) · รายการชิ้นส่วน · สีผิว 6 · สีผม 8 · สีของ 7 · look แบบข้อความ `ผิว.ผม.สีของ.ชิ้น...` ที่ server ตรวจได้ (`lookError`)
+- เกม: ย้อมสีผิวบนตัว + ย้อมสีชิ้นหัวตามความสว่าง (ไล่เงาเดิมไว้) · ชิ้นหัวเลื่อนตามหัวทุกเฟรม · ผมหลังอยู่หลังตัวเมื่อหันหน้า อยู่บนตัวเมื่อหันหลัง
+- ทดสอบ: `?look=2.1.2.beanie.round_glasses` (หมวกไหมพรมกับแว่นกลม วาดด้วยสคริปต์ เป็นชิ้นทดสอบเท่านั้น)
+
+## รูปแบบไฟล์ชิ้นหัว
+- `client/public/assets/head/<id>.png` = 4 ช่อง 68×68 เรียงแถวเดียว: ท่ายืนหัน **SE, SW, NW, NE** (แถว 1, 3, 5, 7 ของ `player.png`)
+- วาดทับ template: `python tools/head_parts.py template art-in/head/template.png` (ตัวละครจาง ๆ + มุมกรอบหัว) · ใน Aseprite ทำ 1 layer ต่อชิ้น แล้วซ่อน template ตอน export
+- ชิ้นที่ย้อมสีได้ (ผม หมวก ฯลฯ) **วาดเป็นสีเทา** เข้มสุด = เส้นขอบ · ลงทะเบียนใน `PARTS` ของ `shared/avatar.ts`
+- ดูผลทุกเฟรมโดยไม่ต้องเปิดเกม: `python tools/head_parts.py preview out.png <id> <id>`
+
+## ขั้นต่อไป: ตัวฐานหัวโล้น (torad ทำใน ChatGPT + Autosprite)
+1. **ChatGPT** แนบภาพตัวละครปัจจุบัน (`art-in/char/` หรือภาพที่ใช้ส่ง Autosprite ครั้งก่อน) แล้วสั่ง:
+   > Same character, same art style, same proportions, same pixel size and same camera angle as the reference.
+   > Change only the head: completely bald, a smooth round head with no hair at all, and a blank face with no eyes,
+   > no eyebrows, no nose and no mouth, just skin with simple soft shading lit from the top-left and a dark outline.
+   > Keep the head exactly the same size and shape as the reference (big chibi head). Clothes: plain light grey t-shirt,
+   > dark trousers, simple shoes, no bag, no accessories. Each clothing piece one flat colour. Full body, standing,
+   > facing the viewer at a 3/4 angle, plain magenta background, no text.
+   - ถ้าหน้าเปล่าแล้ว Autosprite ทำท่าเพี้ยน ให้ลองแบบมีตาจุดเล็ก ๆ 2 จุดแทน (เราวาดหน้าทับได้)
+2. **Autosprite** ส่งภาพนั้นทำท่าเดินแบบ isometric 2 ชีตเหมือนครั้งก่อน (down-left และ up-right)
+3. ส่งไฟล์ให้ Claude แล้วรัน: `char_sheet.py --iso-down ... --iso-up ...` → `char_rig.py` → Claude ทำ template + ชิ้นหัวชุดแรก (หน้า 3 + ผม 3)
+4. ลองเดินในเกม: ถ้าหัวกับตัวดูเป็นชิ้นเดียวกัน → ขยายต่อ (หน้าสร้างตัวละคร · ร้านตัดผมในซอยสแควร์)

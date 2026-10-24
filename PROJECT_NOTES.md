@@ -49,6 +49,7 @@
   - ตัววาด prism: `client/src/view/art/pixelart.ts` (material = ฟังก์ชันสีต่อพิกเซล) · ผังรถไฟฟ้า: `shared/skytrain.ts`
 - [x] asset ชุดแรกจาก ChatGPT: รถไฟฟ้า P01–P03 (branch `feature/train-art`, 23 ต.ค.) · `python tools/prep_asset.py <day> <night> <out> --width N` ทำภาพ `_day` / `_night` (หารด้วยแสงกลางคืนของเกม) / `_glow` (ส่วนที่เป็นไฟ) · ในเกมเฟดกลางวัน→กลางคืนตามเวลา · ทดสอบ `?at=i,j` เลือกจุดเกิด
 - [x] Map editor ในเกม (branch `feature/map-editor`, 23 ต.ค.): `?edit=1` · ห้องเก็บเป็น `shared/rooms/*.json` (พื้นเป็นกริดตัวอักษร) · ตรวจห้องด้วย `shared/validate.ts` ทั้งใน editor และ server · บันทึกผ่าน `PUT /api/rooms/:id` (dev เท่านั้น) · วิธีใช้ใน README
+- [x] ระบบแต่งตัวแบบหัวแยกชิ้น ส่วนระบบ (branch `feature/avatar-head`, 24 ต.ค.): ชิ้นหัวเลื่อนตามหัวทุกเฟรม · ย้อมสีผิว/ผม/ของ · ทดสอบ `?look=2.1.2.beanie.round_glasses` · รอตัวฐานหัวโล้นจาก Autosprite (prompt อยู่ใน `design/outfit-system.md` ท้ายไฟล์)
 - [x] มือถือเต็มจอ: Scale.EXPAND + ปุ่ม ⛶ (Android) + PWA "เพิ่มไปยังหน้าจอโฮม" (iPhone)
 - [x] ตั้ง Vite ให้มือถือใน Wi-Fi เดียวกันเข้าเล่นได้ (`host: true`)
 

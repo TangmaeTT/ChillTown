@@ -25,7 +25,7 @@ server/   หลังบ้าน (Node 24 รัน TypeScript ตรง ไ�
 cd client && npm install && npm run dev-nolog     # เกม: http://localhost:8080
 cd server && npm install && npm start             # API: http://localhost:2567/api/time
 ```
-ทดสอบ: `?room=soi` กระโดดไปห้อง · `?zoom=0.75` · `?time=18:30` เริ่มที่เวลานั้น · `?rain=0` ไม่มีฝน
+ทดสอบ: `?look=2.1.2.beanie.round_glasses` ลองชุด (`shared/avatar.ts`) · `?room=soi` กระโดดไปห้อง · `?zoom=0.75` · `?time=18:30` เริ่มที่เวลานั้น · `?rain=0` ไม่มีฝน
 API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?i=16&j=3`
 
 ## Map editor
@@ -45,3 +45,5 @@ API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?
 
 - `tools/pixelfix.py`: แปลงภาพ AI เป็น pixel art จริง (`--help`)
 - `tools/render_map.py`: วาดผังมุมบนจาก `shared/rooms.ts`
+- `tools/char_rig.py`: วัดตำแหน่งหัวทุกเฟรมและสีผิวของ `player.png` → `client/src/model/player_rig.json` (รันใหม่ทุกครั้งที่เปลี่ยนตัวละคร)
+- `tools/head_parts.py`: template สำหรับวาดชิ้นหัว · ดูชิ้นหัวบนตัวละครทุกเฟรม (`preview`)

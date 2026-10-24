@@ -1,5 +1,6 @@
 // World state shared by every scene: clock, weather, player preferences. No Phaser in here.
 import { gameTime, phaseOf, PHASE_TH, clockLabel, DAY_SECONDS } from '@shared/clock';
+import { DEFAULT_LOOK, decodeLook } from '@shared/avatar';
 
 const params = new URLSearchParams(location.search);
 
@@ -13,6 +14,8 @@ export const world = {
     // camera zoom, kept across room changes. ?zoom=0.75 in the URL sets the starting value
     zoom: Number(params.get('zoom')) || 2,
     edit: params.get('edit') === '1',   // ?edit=1 opens the map editor
+    // the player's avatar; ?look=1.1.0.beanie (see shared/avatar.ts) until there is a dressing room
+    look: decodeLook(params.get('look') ?? '') ?? DEFAULT_LOOK,
 };
 
 // ?time=18:30 starts at that in-game time (testing/screenshots)

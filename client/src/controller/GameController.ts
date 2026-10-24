@@ -14,7 +14,8 @@ import { TrainCarsView } from '../view/TrainCarsView';
 import { TrafficView } from '../view/TrafficView';
 import { NpcView, NPC_TINTS } from '../view/NpcView';
 import { RoomView } from '../view/RoomView';
-import { PlayerView, PLAYER_SHEET } from '../view/PlayerView';
+import { PlayerView, PLAYER_SHEET, PART_KEY } from '../view/PlayerView';
+import { PARTS } from '@shared/avatar';
 import { LightingView } from '../view/LightingView';
 import { Occluders } from '../view/Occluders';
 import { InputController } from './InputController';
@@ -53,6 +54,7 @@ export class GameController extends Scene {
         for (const car of ['head', 'mid', 'tail']) for (const v of ['day', 'night', 'glow'])
             this.load.image(`train_${car}_${v}`, `props/train_${car}_${v}.png`);
         this.load.spritesheet(PLAYER_SHEET.key, PLAYER_SHEET.file, { frameWidth: PLAYER_SHEET.frame, frameHeight: PLAYER_SHEET.frame });
+        for (const p of PARTS) this.load.spritesheet(PART_KEY(p.id), `head/${p.id}.png`, { frameWidth: PLAYER_SHEET.frame, frameHeight: PLAYER_SHEET.frame });
     }
 
     create() {
@@ -74,7 +76,7 @@ export class GameController extends Scene {
         this.lighting = new LightingView(this, this.room.room.indoor);
         this.occluders = new Occluders();
         new RoomView(this, this.room, this.lighting, this.occluders);
-        this.playerView = new PlayerView(this, this.player, 'คุณ');
+        this.playerView = new PlayerView(this, this.player, 'คุณ', world.look);
         this.trains = this.traffic = this.trainView = this.trafficView = null;
         const scenery = this.room.room.scenery, grid = this.room.grid;
         if (scenery === 'skytrain') {
