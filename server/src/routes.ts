@@ -2,6 +2,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { getTime } from './controllers/TimeController.ts';
 import { getRooms, getRoomLayout, getWalkable, putRoom } from './controllers/RoomController.ts';
+import { putParts } from './controllers/PartController.ts';
 
 type Handler = (req: IncomingMessage, res: ServerResponse, params: Record<string, string>, query: URLSearchParams) => void;
 type Route = { method: string; pattern: RegExp; keys: string[]; handler: Handler };
@@ -20,6 +21,7 @@ route('GET', '/api/rooms', getRooms);
 route('GET', '/api/rooms/:id', getRoomLayout);
 route('GET', '/api/rooms/:id/walkable', getWalkable);
 route('PUT', '/api/rooms/:id', putRoom);   // map editor (dev only)
+route('PUT', '/api/parts', putParts);      // avatar editor (dev only)
 
 /** Find the handler for a request; false if nothing matched. */
 export function dispatch(req: IncomingMessage, res: ServerResponse): boolean {

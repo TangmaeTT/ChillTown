@@ -14,8 +14,7 @@ import { TrainCarsView } from '../view/TrainCarsView';
 import { TrafficView } from '../view/TrafficView';
 import { NpcView, NPC_TINTS } from '../view/NpcView';
 import { RoomView } from '../view/RoomView';
-import { PlayerView, PLAYER_SHEET, PART_KEY } from '../view/PlayerView';
-import { PARTS } from '@shared/avatar';
+import { PlayerView, preloadAvatar } from '../view/PlayerView';
 import { LightingView } from '../view/LightingView';
 import { Occluders } from '../view/Occluders';
 import { InputController } from './InputController';
@@ -53,8 +52,7 @@ export class GameController extends Scene {
         this.load.image('noodle_shop', 'noodle_shop.png');
         for (const car of ['head', 'mid', 'tail']) for (const v of ['day', 'night', 'glow'])
             this.load.image(`train_${car}_${v}`, `props/train_${car}_${v}.png`);
-        this.load.spritesheet(PLAYER_SHEET.key, PLAYER_SHEET.file, { frameWidth: PLAYER_SHEET.frame, frameHeight: PLAYER_SHEET.frame });
-        for (const p of PARTS) this.load.spritesheet(PART_KEY(p.id), `head/${p.id}.png`, { frameWidth: PLAYER_SHEET.frame, frameHeight: PLAYER_SHEET.frame });
+        preloadAvatar(this);
     }
 
     create() {

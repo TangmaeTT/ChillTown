@@ -37,6 +37,15 @@ API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?
 - บันทึกได้เฉพาะจากเครื่องนี้ และปิดเองเมื่อ `NODE_ENV=production`
 - ของที่วางได้อยู่ใน `client/src/model/editorCatalog.ts`
 
+## Avatar editor
+
+เปิด server ก่อน (`cd server && npm run dev`) แล้วเข้า http://localhost:8080/?avatar=1
+- เห็นตัวละคร 4 ทิศ (SE SW NW NE) ท่ายืน กับตัวที่เล่นท่า · กรอบฟ้า = ตำแหน่งหัวจาก `player_rig.json`
+- ติ๊กเพื่อใส่/ถอดชิ้น · คลิกชื่อชิ้นเพื่อเลือก แล้วลากชิ้นบนตัวละคร หรือกดลูกศร (Shift = 4 px) · 1–4 เลือกทิศ
+- "คัดลอกไปทิศกระจก" = ใช้ค่าของทิศนี้กับทิศคู่ (SE↔SW, NW↔NE) โดยกลับ x
+- Ctrl+Z / Ctrl+Y ย้อน/ทำซ้ำ · Ctrl+S บันทึกลง `shared/parts.json` (server ตรวจก่อน: ชิ้นต้องมีภาพใน `client/public/assets/head/`)
+- เพิ่มชิ้นใหม่: วางภาพ `head/<id>.png` แล้วเพิ่มบรรทัดใน `shared/parts.json` เอง (editor ยังสร้างชิ้นใหม่ไม่ได้)
+
 ## Git
 
 ทำงานบน feature branch (`feature/...`) แล้วเปิด Pull Request เข้า `main` ไม่ commit ตรงเข้า `main`
@@ -47,3 +56,4 @@ API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?
 - `tools/render_map.py`: วาดผังมุมบนจาก `shared/rooms.ts`
 - `tools/char_rig.py`: วัดตำแหน่งหัวทุกเฟรมและสีผิวของ `player.png` → `client/src/model/player_rig.json` (รันใหม่ทุกครั้งที่เปลี่ยนตัวละคร)
 - `tools/head_parts.py`: template สำหรับวาดชิ้นหัว · ดูชิ้นหัวบนตัวละครทุกเฟรม (`preview`)
+- `tools/blank_face.py`: ลบหน้าที่ Autosprite วาดมาออกจากชีตตัวละคร ให้เหลือหัวเปล่าไว้ซ้อนชิ้นหน้า

@@ -1,23 +1,28 @@
 // Avatar look: skin tone, hair colour, item colour and the head parts the player wears.
 // Shared so the server can check a look before passing it to other players (only ids and indexes travel).
 //
-// Body = a set sheet (Autosprite, drawn with a plain bald head) recoloured to the skin tone.
+// Body = a set sheet (Autosprite, face painted off by tools/blank_face.py) recoloured to the skin tone.
 // Head = parts drawn on the standing frame of each view, moved with the head every frame (player_rig.json).
+// The part list lives in parts.json, written by the avatar editor (?avatar=1) and checked by partsError.
+import parts from './parts.json' with { type: 'json' };
 
 export type Slot = 'hairBack' | 'face' | 'hairFront' | 'glasses' | 'hat';
 // front-to-back order on top of the body; hairBack goes behind the body when facing the camera
 export const SLOTS: Slot[] = ['hairBack', 'face', 'hairFront', 'glasses', 'hat'];
+export const TINTS = ['hair', 'item'] as const;
+
+// the 4 drawn views of a part, in its sheet order (player.png rows 1, 3, 5, 7)
+export const VIEWS = ['SE', 'SW', 'NW', 'NE'] as const;
+export const MAX_OFFSET = 20;  // px a part may be nudged from where it was drawn
 
 export type Part = {
     id: string;             // file: client/public/assets/head/<id>.png (4 views of 68x68: SE, SW, NW, NE)
     slot: Slot;
     tint?: 'hair' | 'item'; // recoloured by brightness onto that ramp; none = drawn colours as they are
+    offset: [number, number][];   // per view: px moved from where it was drawn, set in the avatar editor
 };
 
-export const PARTS: Part[] = [
-    { id: 'beanie', slot: 'hat', tint: 'item' },
-    { id: 'round_glasses', slot: 'glasses', tint: 'item' },
-];
+export const PARTS: Part[] = parts as Part[];
 
 // Ramps run shadow to highlight. Kept muted to sit in the game palette (PROJECT_NOTES §3).
 export const SKIN_TONES: string[][] = [
@@ -75,6 +80,29 @@ export function lookError(l: Look): string | null {
         slots.add(p.slot);
     }
     return null;
+}
+
+/** what's wrong with a part list from the avatar editor, or null. `known` = the ids that have art */
+export function partsError(list: Part[], known: string[]): string | null {
+    if (!Array.isArray(list)) return 'not a list';
+    const seen = new Set<string>();
+    for (const p of list) {
+        if (!known.includes(p.id)) return `unknown part ${p.id}`;
+        if (seen.has(p.id)) return `${p.id} twice`;
+        seen.add(p.id);
+        if (!SLOTS.includes(p.slot)) return `${p.id}: bad slot`;
+        if (p.tint !== undefined && !TINTS.includes(p.tint)) return `${p.id}: bad tint`;
+        const ok = (v: unknown) => Number.isInteger(v) && Math.abs(v as number) <= MAX_OFFSET;
+        if (!Array.isArray(p.offset) || p.offset.length !== VIEWS.length || !p.offset.every(o => Array.isArray(o) && o.length === 2 && o.every(ok)))
+            return `${p.id}: offset must be ${VIEWS.length} [x, y] pairs within ${MAX_OFFSET} px`;
+    }
+    return null;
+}
+
+/** parts.json as the editor writes it: one part per line */
+export function formatParts(list: Part[]): string {
+    const clean = list.map(({ id, slot, tint, offset }) => ({ id, slot, ...(tint ? { tint } : {}), offset }));
+    return '[\n' + clean.map(p => '  ' + JSON.stringify(p)).join(',\n') + '\n]\n';
 }
 
 // Wire / URL form: "<skin>.<hair>.<item>[.<part id>...]", e.g. "1.1.0.beanie.round_glasses"

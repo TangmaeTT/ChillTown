@@ -1,5 +1,5 @@
 import { Scene, GameObjects } from 'phaser';
-import { SLOTS, SKIN_TONES, HAIR_COLORS, ITEM_COLORS, partById, type Look, type Slot } from '@shared/avatar';
+import { SLOTS, SKIN_TONES, HAIR_COLORS, ITEM_COLORS, PARTS, type Look, type Part } from '@shared/avatar';
 import { WALK_FRAMES, type PlayerModel } from '../model/PlayerModel';
 import rig from '../model/player_rig.json';
 import { recolored } from './art/recolor';
@@ -11,16 +11,24 @@ const FEET_Y = 60;
 
 // Head parts (head/<id>.png) have one standing view per diagonal: SE, SW, NW, NE.
 export const PART_KEY = (id: string) => `head_${id}`;
-const VIEW_OF_ROW = [0, 0, 1, 1, 1, 2, 3, 3];
+export const VIEW_OF_ROW = [0, 0, 1, 1, 1, 2, 3, 3];
 const facesAway = (row: number) => VIEW_OF_ROW[row] >= 2;
 const RAMPS = { hair: HAIR_COLORS, item: ITEM_COLORS };
 
+/** load the body sheet and every head part (call from a scene's preload, with the path set to assets/) */
+export function preloadAvatar(scene: Scene) {
+    const f = PLAYER_SHEET.frame;
+    scene.load.spritesheet(PLAYER_SHEET.key, PLAYER_SHEET.file, { frameWidth: f, frameHeight: f });
+    for (const p of PARTS) scene.load.spritesheet(PART_KEY(p.id), `head/${p.id}.png`, { frameWidth: f, frameHeight: f });
+}
+
 export class PlayerView {
     private sprite: GameObjects.Sprite;
-    private parts: { slot: Slot; sprite: GameObjects.Sprite }[] = [];
+    private parts: { part: Part; sprite: GameObjects.Sprite }[] = [];
     private nameTag: GameObjects.Text;
 
-    constructor(private scene: Scene, model: PlayerModel, name: string, look: Look) {
+    // catalog: the avatar editor passes its working copy, so nudged offsets show at once
+    constructor(private scene: Scene, model: PlayerModel, name: string, look: Look, private catalog: Part[] = PARTS) {
         this.sprite = scene.add.sprite(model.x, model.y, PLAYER_SHEET.key, 0).setOrigin(0.5, FEET_Y / PLAYER_SHEET.frame);
         this.nameTag = scene.add.text(model.x, model.y - 56, name, {
             fontFamily: 'Tahoma, sans-serif', fontSize: '8px', color: '#e8f0c8', resolution: 4,
@@ -36,28 +44,31 @@ export class PlayerView {
         for (const p of this.parts) p.sprite.setVisible(on);
     }
 
-    setLook(look: Look) {
+    setLook(look: Look, catalog = this.catalog) {
+        this.catalog = catalog;
         const f = PLAYER_SHEET.frame;
         this.sprite.setTexture(recolored(this.scene, PLAYER_SHEET.key, `player@skin${look.skin}`, f, SKIN_TONES[look.skin], rig.skin), this.sprite.frame.name);
         for (const p of this.parts) p.sprite.destroy();
         this.parts = look.parts.map(id => {
-            const part = partById(id)!;
+            const part = this.catalog.find(p => p.id === id)!;
             const key = part.tint
                 ? recolored(this.scene, PART_KEY(id), `${PART_KEY(id)}@${part.tint}${look[part.tint]}`, f, RAMPS[part.tint][look[part.tint]])
                 : PART_KEY(id);
-            return { slot: part.slot, sprite: this.scene.add.sprite(0, 0, key, 0).setOrigin(this.sprite.originX, this.sprite.originY) };
-        }).sort((a, b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
+            return { part, sprite: this.scene.add.sprite(0, 0, key, 0).setOrigin(this.sprite.originX, this.sprite.originY) };
+        }).sort((a, b) => SLOTS.indexOf(a.part.slot) - SLOTS.indexOf(b.part.slot));
     }
 
     sync(model: PlayerModel, depth: number) {
         const row = model.facing, col = model.frame;
         this.sprite.setPosition(model.x, model.y).setFrame(row * (WALK_FRAMES + 1) + col).setDepth(depth);
         const [dx, dy] = rig.offset[row][col];
-        for (const { slot, sprite } of this.parts) {
-            const n = SLOTS.indexOf(slot) + 1;
+        const view = VIEW_OF_ROW[row];
+        for (const { part, sprite } of this.parts) {
+            const slot = part.slot, n = SLOTS.indexOf(slot) + 1;
+            const [ox, oy] = part.offset[view];
             // long hair hangs behind the shoulders when facing the camera, over the back when facing away
             const d = slot === 'hairBack' && !facesAway(row) ? depth - 0.01 : depth + n * 0.01;
-            sprite.setPosition(model.x + dx, model.y + dy).setFrame(VIEW_OF_ROW[row]).setDepth(d);
+            sprite.setPosition(model.x + dx + ox, model.y + dy + oy).setFrame(view).setDepth(d);
         }
         this.nameTag.setPosition(Math.round(model.x), Math.round(model.y - 56)).setDepth(depth + 0.5);
     }

@@ -1,6 +1,7 @@
 import { AUTO, Game, Scale, Types } from 'phaser';
 import { GameController } from './controller/GameController';
 import { HudScene } from './view/HudScene';
+import { AvatarEditorController } from './controller/AvatarEditorController';
 
 // Phaser bootstrap. Code layout: model/ (state, no Phaser) · view/ (drawing) · controller/ (input + loop),
 // plus ../../shared (room layouts, collision, clock) used by the server too.
@@ -19,7 +20,8 @@ const config: Types.Core.GameConfig = {
         autoCenter: Scale.CENTER_BOTH,
         fullscreenTarget: 'app'
     },
-    scene: [GameController, HudScene]
+    // ?avatar=1 opens the avatar editor instead of the world
+    scene: new URLSearchParams(location.search).get('avatar') === '1' ? [AvatarEditorController] : [GameController, HudScene]
 };
 
 const StartGame = (parent: string) => new Game({ ...config, parent });
