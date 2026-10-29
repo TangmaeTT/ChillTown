@@ -1,11 +1,11 @@
 // Avatar editor state (?avatar=1): a working copy of the head parts, the look being tried on, and which
 // part/view is being nudged. No Phaser; the controller changes it, the views read it.
-import { PARTS, MAX_OFFSET, SLOTS, VIEWS, formatParts, type Look, type Part } from '@shared/avatar';
+import { PARTS, DEFAULT_LOOK, MAX_OFFSET, SLOTS, VIEWS, formatParts, type Look, type Part } from '@shared/avatar';
 
 export class AvatarEditorModel {
     parts: Part[] = structuredClone(PARTS);
     // start with a face and hair on (the first part of each), hats and glasses off
-    look: Look = { skin: 1, hair: 2, item: 0, parts: (['hairBack', 'face', 'hairFront'] as const)
+    look: Look = { ...DEFAULT_LOOK, hair: 2, parts: (['hairBack', 'face', 'hairFront'] as const)
         .map(s => PARTS.find(p => p.slot === s)?.id).filter((id): id is string => !!id) };
     selected: string | null = PARTS[0]?.id ?? null;   // the part that dragging / arrow keys move
     view = 0;                                          // which of the 4 views (VIEWS) arrow keys move
@@ -54,6 +54,12 @@ export class AvatarEditorModel {
     private slotOf(id: string) { return this.parts.find(p => p.id === id)!.slot; }
 
     colour(which: 'skin' | 'hair' | 'item', n: number) { this.show(() => { this.look[which] = n; }); }
+    /** clothes: which top/bottom, and the colour of top, bottom or shoes */
+    cloth(field: 'top' | 'bottom', id: string): void;
+    cloth(field: 'topColor' | 'bottomColor' | 'shoes', n: number): void;
+    cloth(field: 'top' | 'bottom' | 'topColor' | 'bottomColor' | 'shoes', v: string | number) {
+        this.show(() => { (this.look as Record<string, unknown>)[field] = v; });
+    }
     setView(v: number) { this.show(() => { this.view = v; }); }
     setPlaying(on: boolean) { this.show(() => { this.playing = on; }); }
     setPreviewRow(r: number) { this.show(() => { this.previewRow = r; }); }

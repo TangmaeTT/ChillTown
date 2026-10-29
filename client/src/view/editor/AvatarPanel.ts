@@ -1,11 +1,12 @@
 // Avatar editor side panel (plain DOM on top of the canvas). Draws the editor model; every input calls an action.
-import { SKIN_TONES, HAIR_COLORS, ITEM_COLORS, VIEWS, MAX_OFFSET } from '@shared/avatar';
+import { SKIN_TONES, HAIR_COLORS, ITEM_COLORS, CLOTH_COLORS, TOPS, BOTTOMS, VIEWS, MAX_OFFSET } from '@shared/avatar';
 import type { AvatarEditorModel } from '../../model/AvatarEditorModel';
 
 export type AvatarActions = {
     select(id: string): void; wear(id: string, on: boolean): void;
     view(v: number): void; offset(x: number, y: number): void; mirror(): void; reset(): void;   // offset/mirror/reset: selected part, current view
     colour(which: 'skin' | 'hair' | 'item', n: number): void;
+    garment(field: 'top' | 'bottom', id: string): void; clothColour(field: 'topColor' | 'bottomColor' | 'shoes', n: number): void;
     sway(key: 'stiffness' | 'damping' | 'gain', value: number): void;
     play(on: boolean): void; previewRow(r: number): void;
     undo(): void; redo(): void; save(): void;
@@ -53,6 +54,8 @@ export class AvatarPanel {
 
     render(m: AvatarEditorModel) {
         const p = m.part;
+        const cloth = (field: 'topColor' | 'bottomColor' | 'shoes') => CLOTH_COLORS.map((r, n) =>
+            `<button class="sw${m.look[field] === n ? ' on' : ''}" data-cloth="${field}" data-n="${n}" style="background:${r[2]}" title="${n}"></button>`).join('');
         const swatches = (which: 'skin' | 'hair' | 'item', ramps: string[][]) => ramps.map((r, n) =>
             `<button class="sw${m.look[which] === n ? ' on' : ''}" data-colour="${which}" data-n="${n}" style="background:${r[2]}" title="${n}"></button>`).join('');
         this.el.innerHTML = `
@@ -85,6 +88,13 @@ ${SWAY_UI.map(s => `<div class="row"><label style="width:70px">${s.name}</label>
   <span style="width:34px;text-align:right">${p.sway![s.key]}</span></div>`).join('')}
 <div class="tip">${p.sway.poses} ท่า · กด ▶ ให้ตัวอย่างวิ่ง แล้ว ❚❚ ให้หยุด ดูหางแกว่งกลับ · เลือกทิศ → หรือ ← จะเห็นชัด</div>` : ''}
 
+<h3>เสื้อผ้า</h3>
+<div class="row">เสื้อ</div><div>${TOPS.map(x => `<button class="${m.look.top === x.id ? 'on' : ''}" data-top="${x.id}">${x.name}</button>`).join('')}</div>
+<div>${cloth('topColor')}</div>
+<div class="row">กางเกง</div><div>${BOTTOMS.map(x => `<button class="${m.look.bottom === x.id ? 'on' : ''}" data-bottom="${x.id}">${x.name}</button>`).join('')}</div>
+<div>${cloth('bottomColor')}</div>
+<div class="row">รองเท้า</div><div>${cloth('shoes')}</div>
+
 <h3>สี</h3>
 <div class="row">ผิว</div><div>${swatches('skin', SKIN_TONES)}</div>
 <div class="row">ผม</div><div>${swatches('hair', HAIR_COLORS)}</div>
@@ -107,6 +117,9 @@ ${SWAY_UI.map(s => `<div class="row"><label style="width:70px">${s.name}</label>
         else if (d.select) a.select(d.select);
         else if (d.view) a.view(Number(d.view));
         else if (d.colour) a.colour(d.colour as 'skin' | 'hair' | 'item', Number(d.n));
+        else if (d.cloth) a.clothColour(d.cloth as 'topColor' | 'bottomColor' | 'shoes', Number(d.n));
+        else if (d.top) a.garment('top', d.top);
+        else if (d.bottom) a.garment('bottom', d.bottom);
         else if (d.act === 'undo') a.undo();
         else if (d.act === 'redo') a.redo();
         else if (d.act === 'save') a.save();

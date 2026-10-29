@@ -58,6 +58,8 @@ export class AvatarEditorController extends Scene {
             reset: () => this.m.resetOffsets(),
             colour: (w, n) => this.m.colour(w, n),
             sway: (k, v) => this.m.setSway(k, v),
+            garment: (f, id) => this.m.cloth(f, id),
+            clothColour: (f, n) => this.m.cloth(f, n),
             play: on => this.m.setPlaying(on),
             previewRow: r => this.m.setPreviewRow(r),
             undo: () => this.m.undo(),

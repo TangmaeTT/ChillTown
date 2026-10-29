@@ -1,10 +1,11 @@
 import { Scene, GameObjects } from 'phaser';
-import { SLOTS, SKIN_TONES, HAIR_COLORS, ITEM_COLORS, PARTS, VIEWS, type Look, type Part } from '@shared/avatar';
+import { SLOTS, HAIR_COLORS, ITEM_COLORS, PARTS, VIEWS, type Look, type Part } from '@shared/avatar';
 import { WALK_FRAMES, WALK_FPS, SPEED, type PlayerModel } from '../model/PlayerModel';
 import { SwaySpring } from '../model/SwaySpring';
 import { world } from '../model/WorldModel';
 import rig from '../model/player_rig.json';
 import { recolored } from './art/recolor';
+import { dressed, REGIONS_KEY } from './art/outfit';
 
 // player.png (tools/char_sheet.py): 68x68 frames, col 0 = standing, then the walk cycle;
 // rows clockwise from screen angle: E, SE, S, SW, W, NW, N, NE
@@ -28,6 +29,7 @@ const wind = (t: number) => (world.raining ? 0.22 : 0.08) * (0.6 + Math.sin(t * 
 export function preloadAvatar(scene: Scene) {
     const f = PLAYER_SHEET.frame;
     scene.load.spritesheet(PLAYER_SHEET.key, PLAYER_SHEET.file, { frameWidth: f, frameHeight: f });
+    scene.load.image(REGIONS_KEY, 'player_regions.png');
     for (const p of PARTS) scene.load.spritesheet(PART_KEY(p.id), `head/${p.id}.png`, { frameWidth: f, frameHeight: f });
 }
 
@@ -58,7 +60,7 @@ export class PlayerView {
     setLook(look: Look, catalog = this.catalog) {
         this.catalog = catalog;
         const f = PLAYER_SHEET.frame;
-        this.sprite.setTexture(recolored(this.scene, PLAYER_SHEET.key, `player@skin${look.skin}`, f, SKIN_TONES[look.skin], rig.skin), this.sprite.frame.name);
+        this.sprite.setTexture(dressed(this.scene, PLAYER_SHEET.key, look, f, rig.skin), this.sprite.frame.name);
         for (const p of this.parts) p.sprite.destroy();
         this.parts = look.parts.map(id => {
             const part = this.catalog.find(p => p.id === id)!;

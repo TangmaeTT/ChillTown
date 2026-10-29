@@ -3,8 +3,15 @@ import { Scene } from 'phaser';
 // Palette swap for the avatar: make a copy of a loaded sprite sheet where chosen colours are moved onto a
 // ramp (shadow -> highlight) by their brightness, so the shading of the original art survives.
 
-const hex = (s: string) => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
-const luma = (r: number, g: number, b: number) => 0.299 * r + 0.587 * g + 0.114 * b;
+export const hex = (s: string) => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
+export const luma = (r: number, g: number, b: number) => 0.299 * r + 0.587 * g + 0.114 * b;
+
+/** write the colour at t (0 shadow .. 1 highlight) along a ramp of [r, g, b] stops into px at i */
+export function onRamp(px: Uint8ClampedArray, i: number, stops: number[][], t: number) {
+    t = Math.max(0, Math.min(1, t));
+    const f = t * (stops.length - 1), k = Math.min(stops.length - 2, Math.floor(f)), u = f - k;
+    for (let c = 0; c < 3; c++) px[i + c] = Math.round(stops[k][c] * (1 - u) + stops[k + 1][c] * u);
+}
 
 /**
  * Copy sheet `src` (frames of `frame` px) to `key` with colours recoloured onto `ramp`.
@@ -32,8 +39,7 @@ export function recolored(scene: Scene, src: string, key: string, frame: number,
     for (let i = 0; i < px.length; i += 4) {
         if (!chosen(i)) continue;
         const t = hi > lo ? (luma(px[i], px[i + 1], px[i + 2]) - lo) / (hi - lo) : 0.5;
-        const f = t * (stops.length - 1), k = Math.min(stops.length - 2, Math.floor(f)), u = f - k;
-        for (let c = 0; c < 3; c++) px[i + c] = Math.round(stops[k][c] * (1 - u) + stops[k + 1][c] * u);
+        onRamp(px, i, stops, t);
     }
     ctx.putImageData(data, 0, 0);
     tex.refresh();

@@ -65,14 +65,49 @@ export const ITEM_COLORS: string[][] = [
     ['#2e2430', '#51444a', '#67565a', '#8f7068'],   // mauve
 ];
 
+// Clothes: the base body's shirt, trousers and shoes are re-drawn per pixel from a region map
+// (tools/body_regions.py), so any top goes with any bottom in every frame of every animation.
+export type Top = { id: string; name: string; sleeves: 'short' | 'long'; pattern: 'plain' | 'stripes' };
+export const TOPS: Top[] = [
+    { id: 'tee', name: 'เสื้อยืด', sleeves: 'short', pattern: 'plain' },
+    { id: 'tee_stripe', name: 'เสื้อยืดลายขวาง', sleeves: 'short', pattern: 'stripes' },
+    { id: 'long', name: 'แขนยาว', sleeves: 'long', pattern: 'plain' },
+    { id: 'long_stripe', name: 'แขนยาวลายขวาง', sleeves: 'long', pattern: 'stripes' },
+];
+export type Bottom = { id: string; name: string; length: 'long' | 'short' };
+export const BOTTOMS: Bottom[] = [
+    { id: 'pants', name: 'ขายาว', length: 'long' },
+    { id: 'shorts', name: 'ขาสั้น', length: 'short' },
+];
+
+// cloth ramps, shadow to highlight; muted to sit in the game palette (PROJECT_NOTES §3)
+export const CLOTH_COLORS: string[][] = [
+    ['#5f5b58', '#8d8984', '#b5b0a9', '#dedad2'],   // light grey
+    ['#7a756e', '#aaa49a', '#d3cdc1', '#f3efe6'],   // off-white
+    ['#141414', '#222122', '#323031', '#47444a'],   // black
+    ['#1c2638', '#2a3a55', '#3d5274', '#5a7396'],   // denim
+    ['#152d47', '#17364f', '#285265', '#3f6f80'],   // teal navy
+    ['#1f3326', '#3b5849', '#4d6c55', '#648566'],   // moss
+    ['#5a4f2a', '#8f8250', '#b8ab6e', '#d3ca90'],   // mustard
+    ['#3a1d18', '#6a3428', '#8f4a36', '#b06a4f'],   // brick
+    ['#4a1c22', '#7a2f36', '#9e4049', '#bf6168'],   // wine
+    ['#2e2430', '#51444a', '#67565a', '#8f7068'],   // mauve
+    ['#3b2e22', '#5e4a36', '#806649', '#a3865f'],   // khaki brown
+];
+
 export type Look = {
     skin: number;
     hair: number;
     item: number;
+    top: string;            // TOPS id
+    topColor: number;       // CLOTH_COLORS index (stripes use the next-lightest of it plus off-white)
+    bottom: string;         // BOTTOMS id
+    bottomColor: number;
+    shoes: number;          // CLOTH_COLORS index
     parts: string[];        // part ids, at most one per slot
 };
 
-export const DEFAULT_LOOK: Look = { skin: 1, hair: 1, item: 0, parts: [] };
+export const DEFAULT_LOOK: Look = { skin: 1, hair: 1, item: 0, top: 'tee', topColor: 0, bottom: 'pants', bottomColor: 2, shoes: 2, parts: [] };
 
 export const partById = (id: string) => PARTS.find(p => p.id === id);
 
@@ -82,6 +117,10 @@ export function lookError(l: Look): string | null {
     if (!idx(l.skin, SKIN_TONES)) return 'skin';
     if (!idx(l.hair, HAIR_COLORS)) return 'hair';
     if (!idx(l.item, ITEM_COLORS)) return 'item';
+    if (!TOPS.some(x => x.id === l.top)) return 'top';
+    if (!BOTTOMS.some(x => x.id === l.bottom)) return 'bottom';
+    if (!idx(l.topColor, CLOTH_COLORS) || !idx(l.bottomColor, CLOTH_COLORS) || !idx(l.shoes, CLOTH_COLORS)) return 'cloth colour';
+    if (!Array.isArray(l.parts)) return 'parts';
     const slots = new Set<Slot>();
     for (const id of l.parts) {
         const p = partById(id);
@@ -124,13 +163,19 @@ export function formatParts(list: Part[]): string {
     return '[\n' + clean.map(p => '  ' + JSON.stringify(p)).join(',\n') + '\n]\n';
 }
 
-// Wire / URL form: "<skin>.<hair>.<item>[.<part id>...]", e.g. "1.1.0.beanie.round_glasses"
+// Wire / URL form: "<skin>.<hair>.<item>.<top>-<colour>.<bottom>-<colour>.<shoes>[.<part id>...]",
+// e.g. "1.1.0.tee_stripe-4.shorts-3.2.face_default". The older "<skin>.<hair>.<item>[.<part>...]" still reads,
+// with the default clothes.
 export function encodeLook(l: Look): string {
-    return [l.skin, l.hair, l.item, ...l.parts].join('.');
+    return [l.skin, l.hair, l.item, `${l.top}-${l.topColor}`, `${l.bottom}-${l.bottomColor}`, l.shoes, ...l.parts].join('.');
 }
 
 export function decodeLook(s: string): Look | null {
-    const [skin, hair, item, ...parts] = s.split('.');
-    const l: Look = { skin: Number(skin), hair: Number(hair), item: Number(item), parts };
+    const [skin, hair, item, ...rest] = s.split('.');
+    const l: Look = { ...DEFAULT_LOOK, skin: Number(skin), hair: Number(hair), item: Number(item), parts: rest };
+    if (rest[0]?.includes('-') && rest[1]?.includes('-')) {
+        const [top, topColor] = rest[0].split('-'), [bottom, bottomColor] = rest[1].split('-');
+        Object.assign(l, { top, topColor: Number(topColor), bottom, bottomColor: Number(bottomColor), shoes: Number(rest[2]), parts: rest.slice(3) });
+    }
     return lookError(l) ? null : l;
 }

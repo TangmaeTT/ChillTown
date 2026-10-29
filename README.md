@@ -25,7 +25,7 @@ server/   หลังบ้าน (Node 24 รัน TypeScript ตรง ไ�
 cd client && npm install && npm run dev-nolog     # เกม: http://localhost:8080
 cd server && npm install && npm start             # API: http://localhost:2567/api/time
 ```
-ทดสอบ: `?look=2.1.2.beanie.round_glasses` ลองชุด (`shared/avatar.ts`) · `?room=soi` กระโดดไปห้อง · `?zoom=0.75` · `?time=18:30` เริ่มที่เวลานั้น · `?rain=0` ไม่มีฝน
+ทดสอบ: `?look=1.2.0.tee_stripe-4.shorts-3.2.face_default.pony.pony_tail` ลองชุด (ผิว.ผม.ของ.เสื้อ-สี.กางเกง-สี.รองเท้า.ชิ้นหัว… ดู `shared/avatar.ts`) · `?room=soi` กระโดดไปห้อง · `?zoom=0.75` · `?time=18:30` เริ่มที่เวลานั้น · `?rain=0` ไม่มีฝน
 API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?i=16&j=3`
 
 ## Map editor
@@ -44,6 +44,7 @@ API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?
 - ติ๊กเพื่อใส่/ถอดชิ้น · คลิกชื่อชิ้นเพื่อเลือก แล้วลากชิ้นบนตัวละคร หรือกดลูกศร (Shift = 4 px) · 1–4 เลือกทิศ
 - "คัดลอกไปทิศกระจก" = ใช้ค่าของทิศนี้กับทิศคู่ (SE↔SW, NW↔NE) โดยกลับ x
 - Ctrl+Z / Ctrl+Y ย้อน/ทำซ้ำ · Ctrl+S บันทึกลง `shared/parts.json` (server ตรวจก่อน: ชิ้นต้องมีภาพใน `client/public/assets/head/`)
+- เสื้อผ้า: เลือกเสื้อ (ยืด/แขนยาว/ลายขวาง) กางเกง (ขายาว/ขาสั้น) และสีของเสื้อ กางเกง รองเท้า แยกกัน · ชนิดเสื้อผ้าและสีอยู่ใน `TOPS` `BOTTOMS` `CLOTH_COLORS` ของ `shared/avatar.ts`
 - ชิ้นที่มี `sway` (หางม้า ผ้าพันคอ): แผง "ฟิสิกส์" ปรับความแข็ง/ความหน่วง/แรงขับของสปริง · กด ▶ ให้ตัวอย่างวิ่ง แล้ว ❚❚ ดูหางแกว่งกลับ
 - เพิ่มชิ้นใหม่: วางภาพ `head/<id>.png` แล้วเพิ่มบรรทัดใน `shared/parts.json` เอง (editor ยังสร้างชิ้นใหม่ไม่ได้)
 
@@ -58,5 +59,6 @@ API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?
 - `tools/char_rig.py`: วัดตำแหน่งหัวทุกเฟรมและสีผิวของ `player.png` → `client/src/model/player_rig.json` (รันใหม่ทุกครั้งที่เปลี่ยนตัวละคร)
 - `tools/head_parts.py`: template สำหรับวาดชิ้นหัว · ดูชิ้นหัวบนตัวละครทุกเฟรม (`preview`)
 - `tools/blank_face.py`: ลบหน้าที่ Autosprite วาดมาออกจากชีตตัวละคร ให้เหลือหัวเปล่าไว้ซ้อนชิ้นหน้า
+- `tools/body_regions.py`: แผนที่พื้นที่ของตัวฐาน (แขน มือ เสื้อ กางเกง หน้าแข้ง รองเท้า) → `client/public/assets/player_regions.png` เกมใช้วาดเสื้อผ้าแบบผสมได้ (รันใหม่ทุกครั้งที่เปลี่ยน `player.png`)
 - `tools/hair_part.py`: วาดทรงผมทดสอบจากรูปหัวจริง (`pony` ตัวผม + `pony_tail` หางม้า 5 ท่าพลิ้ว) เป็นสีเทา เกมย้อมเป็นสีผม
 - `tools/face_part.py`: ดึงหน้าที่ Autosprite วาดมาเป็นชิ้นหน้า (`head/<id>.png`) พร้อมเฟรมครึ่งหลับ/หลับตา ใส่ `"blink": true` ใน `shared/parts.json` แล้วเกมกะพริบให้เอง
