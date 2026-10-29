@@ -1,4 +1,8 @@
 {
-  "walkFrames": 12,
-  "walkFps": 10
+  "walkFrames": 8,
+  "walkFps": 8,
+  "frame": 96,
+  "feet": 90,
+  "height": 72,
+  "speed": 38
 }
