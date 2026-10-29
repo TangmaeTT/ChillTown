@@ -20,6 +20,7 @@ export type Part = {
     slot: Slot;
     tint?: 'hair' | 'item'; // recoloured by brightness onto that ramp; none = drawn colours as they are
     offset: [number, number][];   // per view: px moved from where it was drawn, set in the avatar editor
+    blink?: boolean;        // sheet has 3 rows: open, half closed, closed (tools/face_part.py); the game blinks it
 };
 
 export const PARTS: Part[] = parts as Part[];
@@ -92,6 +93,7 @@ export function partsError(list: Part[], known: string[]): string | null {
         seen.add(p.id);
         if (!SLOTS.includes(p.slot)) return `${p.id}: bad slot`;
         if (p.tint !== undefined && !TINTS.includes(p.tint)) return `${p.id}: bad tint`;
+        if (p.blink !== undefined && typeof p.blink !== 'boolean') return `${p.id}: blink must be true or false`;
         const ok = (v: unknown) => Number.isInteger(v) && Math.abs(v as number) <= MAX_OFFSET;
         if (!Array.isArray(p.offset) || p.offset.length !== VIEWS.length || !p.offset.every(o => Array.isArray(o) && o.length === 2 && o.every(ok)))
             return `${p.id}: offset must be ${VIEWS.length} [x, y] pairs within ${MAX_OFFSET} px`;
@@ -101,7 +103,7 @@ export function partsError(list: Part[], known: string[]): string | null {
 
 /** parts.json as the editor writes it: one part per line */
 export function formatParts(list: Part[]): string {
-    const clean = list.map(({ id, slot, tint, offset }) => ({ id, slot, ...(tint ? { tint } : {}), offset }));
+    const clean = list.map(({ id, slot, tint, offset, blink }) => ({ id, slot, ...(tint ? { tint } : {}), ...(blink ? { blink } : {}), offset }));
     return '[\n' + clean.map(p => '  ' + JSON.stringify(p)).join(',\n') + '\n]\n';
 }
 

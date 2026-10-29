@@ -57,3 +57,4 @@ API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?
 - `tools/char_rig.py`: วัดตำแหน่งหัวทุกเฟรมและสีผิวของ `player.png` → `client/src/model/player_rig.json` (รันใหม่ทุกครั้งที่เปลี่ยนตัวละคร)
 - `tools/head_parts.py`: template สำหรับวาดชิ้นหัว · ดูชิ้นหัวบนตัวละครทุกเฟรม (`preview`)
 - `tools/blank_face.py`: ลบหน้าที่ Autosprite วาดมาออกจากชีตตัวละคร ให้เหลือหัวเปล่าไว้ซ้อนชิ้นหน้า
+- `tools/face_part.py`: ดึงหน้าที่ Autosprite วาดมาเป็นชิ้นหน้า (`head/<id>.png`) พร้อมเฟรมครึ่งหลับ/หลับตา ใส่ `"blink": true` ใน `shared/parts.json` แล้วเกมกะพริบให้เอง

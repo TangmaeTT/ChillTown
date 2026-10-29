@@ -62,7 +62,7 @@ export class AvatarPanel {
 ${m.parts.map(q => `<div class="part">
   <input type="checkbox" data-wear="${q.id}" ${m.look.parts.includes(q.id) ? 'checked' : ''} title="ใส่/ถอด">
   <button class="${q.id === m.selected ? 'on' : ''}" data-select="${q.id}">${q.id}</button>
-  <span class="slot">${SLOT_TH[q.slot] ?? q.slot}${q.tint ? ' · ย้อมสี' + (q.tint === 'hair' ? 'ผม' : 'ของ') : ''}</span>
+  <span class="slot">${SLOT_TH[q.slot] ?? q.slot}${q.tint ? ' · ย้อมสี' + (q.tint === 'hair' ? 'ผม' : 'ของ') : ''}${q.blink ? ' · กะพริบ' : ''}</span>
 </div>`).join('')}
 
 <h3>ตำแหน่ง ${p ? `· ${p.id}` : ''}</h3>

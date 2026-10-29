@@ -1,4 +1,5 @@
 [
+  {"id":"face_default","slot":"face","blink":true,"offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"beanie","slot":"hat","tint":"item","offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"round_glasses","slot":"glasses","tint":"item","offset":[[0,0],[0,0],[0,0],[0,0]]}
 ]
