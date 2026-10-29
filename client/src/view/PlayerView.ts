@@ -1,9 +1,10 @@
 import { Scene, GameObjects } from 'phaser';
-import { SLOTS, HAIR_COLORS, ITEM_COLORS, PARTS, VIEWS, type Look, type Part } from '@shared/avatar';
+import { SLOTS, HAIR_COLORS, ITEM_COLORS, CLOTH_COLORS, BOTTOMS, PARTS, VIEWS, type Look, type Part } from '@shared/avatar';
 import { WALK_FRAMES, WALK_FPS, SPEED, type PlayerModel } from '../model/PlayerModel';
 import { SwaySpring } from '../model/SwaySpring';
 import { world } from '../model/WorldModel';
 import rig from '../model/player_rig.json';
+import body from '../model/player_body.json';
 import { recolored } from './art/recolor';
 import { dressed, REGIONS_KEY } from './art/outfit';
 
@@ -16,7 +17,13 @@ const FEET_Y = 60;
 export const PART_KEY = (id: string) => `head_${id}`;
 export const VIEW_OF_ROW = [0, 0, 1, 1, 1, 2, 3, 3];
 const facesAway = (row: number) => VIEW_OF_ROW[row] >= 2;
-const RAMPS = { hair: HAIR_COLORS, item: ITEM_COLORS };
+/** the ramp a tinted part is recoloured to, and a short name for it (texture cache key) */
+const tintOf = (tint: NonNullable<Part['tint']>, l: Look): [string[], string] => ({
+    hair: [HAIR_COLORS[l.hair], `hair${l.hair}`],
+    item: [ITEM_COLORS[l.item], `item${l.item}`],
+    top: [CLOTH_COLORS[l.topColor], `cloth${l.topColor}`],
+    bottom: [CLOTH_COLORS[l.bottomColor], `cloth${l.bottomColor}`],
+} as Record<string, [string[], string]>)[tint];
 
 // Blink: ms since the blink started -> sheet row (0 open, 1 half, 2 closed). Every 2-6 s, now and then twice.
 const BLINK: [number, number][] = [[45, 1], [125, 2], [180, 1]];
@@ -62,11 +69,16 @@ export class PlayerView {
         const f = PLAYER_SHEET.frame;
         this.sprite.setTexture(dressed(this.scene, PLAYER_SHEET.key, look, f, rig.skin), this.sprite.frame.name);
         for (const p of this.parts) p.sprite.destroy();
-        this.parts = look.parts.map(id => {
+        // the head parts chosen, plus whatever the clothes bring with them (a skirt over the legs)
+        const overlay = BOTTOMS.find(b => b.id === look.bottom)?.overlay;
+        const ids = [...new Set([...look.parts, ...(overlay ? [overlay] : [])])].filter(id => this.catalog.some(p => p.id === id));
+        this.parts = ids.map(id => {
             const part = this.catalog.find(p => p.id === id)!;
-            const key = part.tint
-                ? recolored(this.scene, PART_KEY(id), `${PART_KEY(id)}@${part.tint}${look[part.tint]}`, f, RAMPS[part.tint][look[part.tint]])
-                : PART_KEY(id);
+            let key = PART_KEY(id);
+            if (part.tint) {
+                const [ramp, name] = tintOf(part.tint, look);
+                key = recolored(this.scene, PART_KEY(id), `${PART_KEY(id)}@${name}`, f, ramp);
+            }
             return { part, spring: new SwaySpring(), sprite: this.scene.add.sprite(0, 0, key, 0).setOrigin(this.sprite.originX, this.sprite.originY) };
         }).sort((a, b) => SLOTS.indexOf(a.part.slot) - SLOTS.indexOf(b.part.slot));
     }
@@ -74,7 +86,7 @@ export class PlayerView {
     sync(model: PlayerModel, depth: number) {
         const row = model.facing, col = model.frame;
         this.sprite.setPosition(model.x, model.y).setFrame(row * (WALK_FRAMES + 1) + col).setDepth(depth);
-        const [dx, dy] = rig.offset[row][col];
+        const head = rig.offset[row][col], waist = body.offset[row][col];
         const view = VIEW_OF_ROW[row];
         const now = this.scene.time.now;
         if (now - this.blinkAt > 200) {
@@ -96,6 +108,7 @@ export class PlayerView {
             if (part.blink) r = eyes;
             else if (part.sway) { spring.update(dt, drive * part.sway.gain, part.sway); r = spring.pose(part.sway); }
             const frame = r * VIEWS.length + view;
+            const [dx, dy] = part.anchor === 'waist' ? waist : head;
             sprite.setPosition(model.x + dx + ox, model.y + dy + oy).setFrame(frame).setDepth(d);
         }
         this.nameTag.setPosition(Math.round(model.x), Math.round(model.y - 56)).setDepth(depth + 0.5);

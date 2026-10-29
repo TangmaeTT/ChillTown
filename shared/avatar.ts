@@ -6,10 +6,11 @@
 // The part list lives in parts.json, written by the avatar editor (?avatar=1) and checked by partsError.
 import parts from './parts.json' with { type: 'json' };
 
-export type Slot = 'hairBack' | 'face' | 'hairFront' | 'glasses' | 'hat';
+export type Slot = 'hairBack' | 'skirt' | 'face' | 'hairFront' | 'glasses' | 'hat';
 // front-to-back order on top of the body; hairBack goes behind the body when facing the camera
-export const SLOTS: Slot[] = ['hairBack', 'face', 'hairFront', 'glasses', 'hat'];
-export const TINTS = ['hair', 'item'] as const;
+export const SLOTS: Slot[] = ['hairBack', 'skirt', 'face', 'hairFront', 'glasses', 'hat'];
+export const TINTS = ['hair', 'item', 'top', 'bottom'] as const;   // top/bottom = that garment's cloth colour
+export const ANCHORS = ['head', 'waist'] as const;
 
 // the 4 drawn views of a part, in its sheet order (player.png rows 1, 3, 5, 7)
 export const VIEWS = ['SE', 'SW', 'NW', 'NE'] as const;
@@ -18,7 +19,8 @@ export const MAX_OFFSET = 20;  // px a part may be nudged from where it was draw
 export type Part = {
     id: string;             // file: client/public/assets/head/<id>.png (4 views of 68x68: SE, SW, NW, NE)
     slot: Slot;
-    tint?: 'hair' | 'item'; // recoloured by brightness onto that ramp; none = drawn colours as they are
+    tint?: typeof TINTS[number];   // recoloured by brightness onto that ramp; none = drawn colours as they are
+    anchor?: 'head' | 'waist';     // what it moves with frame to frame (player_rig.json / player_body.json); default head
     offset: [number, number][];   // per view: px moved from where it was drawn, set in the avatar editor
     blink?: boolean;        // sheet has 3 rows: open, half closed, closed (tools/face_part.py); the game blinks it
     sway?: Sway;            // sheet rows are poses swung screen-left -> right; a spring picks one (hair, scarves)
@@ -74,10 +76,12 @@ export const TOPS: Top[] = [
     { id: 'long', name: 'แขนยาว', sleeves: 'long', pattern: 'plain' },
     { id: 'long_stripe', name: 'แขนยาวลายขวาง', sleeves: 'long', pattern: 'stripes' },
 ];
-export type Bottom = { id: string; name: string; length: 'long' | 'short' };
+// overlay: a part (shared/parts.json) worn with it that changes the outline, e.g. a skirt over bare legs
+export type Bottom = { id: string; name: string; length: 'long' | 'short'; overlay?: string };
 export const BOTTOMS: Bottom[] = [
     { id: 'pants', name: 'ขายาว', length: 'long' },
     { id: 'shorts', name: 'ขาสั้น', length: 'short' },
+    { id: 'skirt', name: 'กระโปรง', length: 'short', overlay: 'skirt' },
 ];
 
 // cloth ramps, shadow to highlight; muted to sit in the game palette (PROJECT_NOTES §3)
@@ -142,6 +146,7 @@ export function partsError(list: Part[], known: string[]): string | null {
         if (!SLOTS.includes(p.slot)) return `${p.id}: bad slot`;
         if (p.tint !== undefined && !TINTS.includes(p.tint)) return `${p.id}: bad tint`;
         if (p.blink !== undefined && typeof p.blink !== 'boolean') return `${p.id}: blink must be true or false`;
+        if (p.anchor !== undefined && !ANCHORS.includes(p.anchor)) return `${p.id}: bad anchor`;
         if (p.sway !== undefined) {
             for (const [k, [lo, hi]] of Object.entries(SWAY_LIMITS)) {
                 const v = (p.sway as Record<string, unknown>)[k];
@@ -158,8 +163,8 @@ export function partsError(list: Part[], known: string[]): string | null {
 
 /** parts.json as the editor writes it: one part per line */
 export function formatParts(list: Part[]): string {
-    const clean = list.map(({ id, slot, tint, offset, blink, sway }) =>
-        ({ id, slot, ...(tint ? { tint } : {}), ...(blink ? { blink } : {}), ...(sway ? { sway } : {}), offset }));
+    const clean = list.map(({ id, slot, tint, anchor, offset, blink, sway }) =>
+        ({ id, slot, ...(tint ? { tint } : {}), ...(anchor ? { anchor } : {}), ...(blink ? { blink } : {}), ...(sway ? { sway } : {}), offset }));
     return '[\n' + clean.map(p => '  ' + JSON.stringify(p)).join(',\n') + '\n]\n';
 }
 

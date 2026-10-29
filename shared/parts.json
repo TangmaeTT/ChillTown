@@ -2,6 +2,7 @@
   {"id":"face_default","slot":"face","blink":true,"offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"pony","slot":"hairFront","tint":"hair","offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"pony_tail","slot":"hairBack","tint":"hair","sway":{"poses":5,"stiffness":40,"damping":5,"gain":0.9},"offset":[[0,0],[0,0],[0,0],[0,0]]},
+  {"id":"skirt","slot":"skirt","tint":"bottom","anchor":"waist","sway":{"poses":5,"stiffness":60,"damping":6,"gain":0.6},"offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"beanie","slot":"hat","tint":"item","offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"round_glasses","slot":"glasses","tint":"item","offset":[[0,0],[0,0],[0,0],[0,0]]}
 ]

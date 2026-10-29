@@ -12,7 +12,7 @@ export type AvatarActions = {
     undo(): void; redo(): void; save(): void;
 };
 
-const SLOT_TH: Record<string, string> = { hairBack: 'ผมหลัง', face: 'หน้า', hairFront: 'ผมหน้า', glasses: 'แว่น', hat: 'หมวก' };
+const SLOT_TH: Record<string, string> = { hairBack: 'ผมหลัง', skirt: 'กระโปรง', face: 'หน้า', hairFront: 'ผมหน้า', glasses: 'แว่น', hat: 'หมวก' };
 const VIEW_TH = ['↘ SE', '↙ SW', '↖ NW', '↗ NE'];
 const SWAY_UI = [
     { key: 'stiffness', name: 'ความแข็ง', min: 5, max: 150, step: 1 },
@@ -71,7 +71,7 @@ export class AvatarPanel {
 ${m.parts.map(q => `<div class="part">
   <input type="checkbox" data-wear="${q.id}" ${m.look.parts.includes(q.id) ? 'checked' : ''} title="ใส่/ถอด">
   <button class="${q.id === m.selected ? 'on' : ''}" data-select="${q.id}">${q.id}</button>
-  <span class="slot">${SLOT_TH[q.slot] ?? q.slot}${q.tint ? ' · ย้อมสี' + (q.tint === 'hair' ? 'ผม' : 'ของ') : ''}${q.blink ? ' · กะพริบ' : ''}</span>
+  <span class="slot">${SLOT_TH[q.slot] ?? q.slot}${q.tint ? ' · ย้อมสี' + ({ hair: 'ผม', item: 'ของ', top: 'เสื้อ', bottom: 'กางเกง' })[q.tint] : ''}${q.blink ? ' · กะพริบ' : ''}</span>
 </div>`).join('')}
 
 <h3>ตำแหน่ง ${p ? `· ${p.id}` : ''}</h3>

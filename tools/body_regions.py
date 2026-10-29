@@ -12,11 +12,13 @@ frame, below the head (char_rig.head_box):
   shoe   grey within SHOE rows of the bottom of its column
   line   near-black: the outline, kept as drawn
 Head and neck pixels are left out (region 0): the game recolours them by skin colour as before.
-Output: same size as the sheet, one flat colour per region (REGIONS below; client/src/view/art/outfit.ts reads them).
-Run it again whenever player.png changes.
+Output: same size as the sheet, one flat colour per region (REGIONS below; client/src/view/art/outfit.ts reads them),
+plus client/src/model/player_body.json: the waist in each standing view and how it moves in every frame
+(body parts like skirts follow it, as head parts follow the head). Run it again whenever player.png changes.
 """
 import argparse
 import colorsys
+import json
 import sys
 from pathlib import Path
 
@@ -31,6 +33,7 @@ from blank_face import skin_like  # noqa: E402
 REGIONS = {'arm': (255, 0, 0), 'hand': (255, 160, 0), 'shirt': (0, 120, 255), 'pants': (0, 200, 0),
            'shin': (160, 255, 0), 'shoe': (160, 0, 255), 'line': (40, 40, 40)}
 KNEE = 5
+BODY_JSON = Path(__file__).parent.parent / 'client/src/model/player_body.json'
 SHOE = 4
 
 
@@ -96,6 +99,16 @@ def regions(f):
     return out
 
 
+def waist_point(reg):
+    """the middle of the top row of the trousers: [x, y] in frame px"""
+    pants = (reg[..., :3] == REGIONS['pants']).all(2) & (reg[..., 3] > 0)
+    ys, xs = np.nonzero(pants)
+    if not len(ys):
+        return [FRAME // 2, FRAME // 2]
+    y = int(ys.min())
+    return [int(round(xs[ys == y].mean())), y]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('sheet')
@@ -105,11 +118,19 @@ def main():
 
     img = np.array(Image.open(a.sheet).convert('RGBA'))
     res = np.zeros_like(img)
-    for r in range(img.shape[0] // FRAME):
-        for c in range(img.shape[1] // FRAME):
+    rows, cols = img.shape[0] // FRAME, img.shape[1] // FRAME
+    waist, offset = [], []
+    for r in range(rows):
+        points = []
+        for c in range(cols):
             sl = np.s_[r * FRAME:(r + 1) * FRAME, c * FRAME:(c + 1) * FRAME]
             res[sl] = regions(img[sl])
+            points.append(waist_point(res[sl]))
+        waist.append(points[0])
+        offset.append([[p[0] - points[0][0], p[1] - points[0][1]] for p in points])
     Image.fromarray(res).save(a.out)
+    BODY_JSON.write_text(json.dumps({'frame': FRAME, 'waist': waist, 'offset': offset}, separators=(',', ':')) + '\n')
+    print('wrote', BODY_JSON.name, 'waist per row', waist)
     counts = {k: int((res[..., :3] == v).all(2).sum()) for k, v in REGIONS.items()}
     print('saved', a.out, counts)
     if a.debug:
