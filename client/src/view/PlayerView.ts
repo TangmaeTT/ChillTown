@@ -1,5 +1,5 @@
 import { Scene, GameObjects } from 'phaser';
-import { SLOTS, HAIR_COLORS, ITEM_COLORS, CLOTH_COLORS, BOTTOMS, PARTS, VIEWS, type Look, type Part } from '@shared/avatar';
+import { SLOTS, HAIR_COLORS, ITEM_COLORS, CLOTH_COLORS, TOPS, BOTTOMS, PARTS, VIEWS, type Look, type Part } from '@shared/avatar';
 import { WALK_FRAMES, WALK_FPS, SPEED, type PlayerModel } from '../model/PlayerModel';
 import { SwaySpring } from '../model/SwaySpring';
 import { world } from '../model/WorldModel';
@@ -69,9 +69,10 @@ export class PlayerView {
         const f = PLAYER_SHEET.frame;
         this.sprite.setTexture(dressed(this.scene, PLAYER_SHEET.key, look, f, rig.skin), this.sprite.frame.name);
         for (const p of this.parts) p.sprite.destroy();
-        // the head parts chosen, plus whatever the clothes bring with them (a skirt over the legs)
-        const overlay = BOTTOMS.find(b => b.id === look.bottom)?.overlay;
-        const ids = [...new Set([...look.parts, ...(overlay ? [overlay] : [])])].filter(id => this.catalog.some(p => p.id === id));
+        // the head parts chosen, plus whatever the clothes bring with them (a hood, a skirt over the legs)
+        const overlays = [TOPS.find(x => x.id === look.top)?.overlay, BOTTOMS.find(x => x.id === look.bottom)?.overlay]
+            .filter((id): id is string => !!id);
+        const ids = [...new Set([...look.parts, ...overlays])].filter(id => this.catalog.some(p => p.id === id));
         this.parts = ids.map(id => {
             const part = this.catalog.find(p => p.id === id)!;
             let key = PART_KEY(id);
@@ -102,8 +103,10 @@ export class PlayerView {
         for (const { part, sprite, spring } of this.parts) {
             const slot = part.slot, n = SLOTS.indexOf(slot) + 1;
             const [ox, oy] = part.offset[view];
-            // long hair hangs behind the shoulders when facing the camera, over the back when facing away
-            const d = slot === 'hairBack' && !facesAway(row) ? depth - 0.01 : depth + n * 0.01;
+            // long hair and hoods hang behind the shoulders when facing the camera, over the back when facing away
+            // (a hood under the hair)
+            const behind = (slot === 'hairBack' || slot === 'hood') && !facesAway(row);
+            const d = behind ? depth - (slot === 'hood' ? 0.02 : 0.01) : depth + n * 0.01;
             let r = 0;
             if (part.blink) r = eyes;
             else if (part.sway) { spring.update(dt, drive * part.sway.gain, part.sway); r = spring.pose(part.sway); }

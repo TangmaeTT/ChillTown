@@ -12,7 +12,7 @@ export type AvatarActions = {
     undo(): void; redo(): void; save(): void;
 };
 
-const SLOT_TH: Record<string, string> = { hairBack: 'ผมหลัง', skirt: 'กระโปรง', face: 'หน้า', hairFront: 'ผมหน้า', glasses: 'แว่น', hat: 'หมวก' };
+const SLOT_TH: Record<string, string> = { hood: 'ฮู้ด', hairBack: 'ผมหลัง', skirt: 'กระโปรง', face: 'หน้า', hairFront: 'ผมหน้า', glasses: 'แว่น', hat: 'หมวก' };
 const VIEW_TH = ['↘ SE', '↙ SW', '↖ NW', '↗ NE'];
 const SWAY_UI = [
     { key: 'stiffness', name: 'ความแข็ง', min: 5, max: 150, step: 1 },

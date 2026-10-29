@@ -60,6 +60,6 @@ API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?
 - `tools/head_parts.py`: template สำหรับวาดชิ้นหัว · ดูชิ้นหัวบนตัวละครทุกเฟรม (`preview`)
 - `tools/blank_face.py`: ลบหน้าที่ Autosprite วาดมาออกจากชีตตัวละคร ให้เหลือหัวเปล่าไว้ซ้อนชิ้นหน้า
 - `tools/body_regions.py`: แผนที่พื้นที่ของตัวฐาน (แขน มือ เสื้อ กางเกง หน้าแข้ง รองเท้า) → `client/public/assets/player_regions.png` เกมใช้วาดเสื้อผ้าแบบผสมได้ (รันใหม่ทุกครั้งที่เปลี่ยน `player.png`)
-- `tools/cloth_part.py`: วาดกระโปรงจีบทดสอบให้พอดีสะโพกตัวฐาน 5 ท่าพลิ้ว (ชิ้นที่ `"anchor": "waist"` ขยับตามเอวจาก `player_body.json`)
+- `tools/cloth_part.py`: วาดชิ้นเสื้อผ้าทดสอบ: `skirt` กระโปรงจีบ 5 ท่าพลิ้ว · `hood` หมวกฮู้ดหลังคอ (ชิ้นที่ `"anchor": "waist"` ขยับตามเอวจาก `player_body.json`)
 - `tools/hair_part.py`: วาดทรงผมทดสอบจากรูปหัวจริง (`pony` ตัวผม + `pony_tail` หางม้า 5 ท่าพลิ้ว) เป็นสีเทา เกมย้อมเป็นสีผม
 - `tools/face_part.py`: ดึงหน้าที่ Autosprite วาดมาเป็นชิ้นหน้า (`head/<id>.png`) พร้อมเฟรมครึ่งหลับ/หลับตา ใส่ `"blink": true` ใน `shared/parts.json` แล้วเกมกะพริบให้เอง
