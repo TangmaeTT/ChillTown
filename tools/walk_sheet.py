@@ -6,7 +6,7 @@
 Each strip: 9 figures in a row on magenta (frame 1 standing, then the walk; see tools/pose_template.py), as
 ChatGPT returned it. Steps: pixelfix at --scale (the AI's pixel grid) -> cut the figures -> one 96 px cell each,
 feet on one line. The 5 drawn directions are mirrored for the other 3 (SE from SW, E from W, NE from NW).
-A direction not given yet borrows the nearest one that is (S, SW, W, NW, N in a ring), so the game always has 8.
+A direction not given yet borrows the nearest one that is (diagonals prefer front/back), so the game always has 8.
 Writes the sheet and client/src/model/player_sheet.json (frame, feet, height, walk frames).
 """
 import argparse
@@ -55,12 +55,12 @@ def main():
         hs = [f.shape[0] for f in fr]
         print(f'{d:>2}: {len(fr)} figures, height {min(hs)}-{max(hs)} px')
 
+    # a missing direction borrows the closest drawn one: diagonals prefer front/back over the side view
+    BORROW = {'s': ['sw', 'w', 'nw', 'n'], 'sw': ['s', 'w', 'nw', 'n'], 'w': ['sw', 'nw', 's', 'n'],
+              'nw': ['n', 'w', 'sw', 's'], 'n': ['nw', 'w', 'sw', 's']}
+
     def nearest(d):
-        i = DRAWN.index(d)
-        for step in range(len(DRAWN)):
-            for j in (i - step, i + step):
-                if 0 <= j < len(DRAWN) and DRAWN[j] in got:
-                    return DRAWN[j]
+        return d if d in got else next(x for x in BORROW[d] if x in got)
     walk_n = min(len(f) for f in got.values()) - 1
     sheet = np.zeros((8 * CELL, (walk_n + 1) * CELL, 4), np.uint8)
     for r, (d, mirror) in enumerate(ROWS):
