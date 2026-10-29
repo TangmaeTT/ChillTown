@@ -70,6 +70,7 @@ export function dressed(scene: Scene, src: string, look: Look, frame: number, sk
     const ramp = (k: number) => CLOTH_COLORS[k].map(hex);
     const skinRamp = SKIN_TONES[look.skin].map(hex), topRamp = ramp(look.topColor), bottomRamp = ramp(look.bottomColor);
     const stripeRamp = ramp(look.topColor <= LIGHT ? NAVY : LIGHT), shoeRamp = ramp(look.shoes);
+    const sleeveRamp = top.sleeveColors?.map(hex);
     const topAt = (p: number) => {
         if (top.pattern !== 'stripes') return topRamp;
         const y = Math.floor(p / w);
@@ -82,7 +83,7 @@ export function dressed(scene: Scene, src: string, look: Look, frame: number, sk
         if (r === 'line') continue;
         if (r === 'shirt') onRamp(px, i, topAt(p), tShirt(p));
         // long sleeves: the arm takes the top's colour, shaded by how light the skin was there
-        else if (r === 'arm' && top.sleeves === 'long') onRamp(px, i, topAt(p), tSkin(p) * 0.85 + 0.1);
+        else if (r === 'arm' && top.sleeves === 'long') onRamp(px, i, sleeveRamp ?? topAt(p), tSkin(p) * 0.85 + 0.1);
         // shorts: bare shins, shaded from the trousers that were drawn there
         else if (r === 'shin' && bottom.length === 'short') onRamp(px, i, skinRamp, tPants(p) * 0.7 + 0.3);
         else if (r === 'pants' || r === 'shin') onRamp(px, i, bottomRamp, tPants(p));

@@ -6,9 +6,9 @@
 // The part list lives in parts.json, written by the avatar editor (?avatar=1) and checked by partsError.
 import parts from './parts.json' with { type: 'json' };
 
-export type Slot = 'hood' | 'hairBack' | 'skirt' | 'face' | 'hairFront' | 'glasses' | 'hat';
+export type Slot = 'skirt' | 'torso' | 'hood' | 'hairBack' | 'face' | 'hairFront' | 'glasses' | 'hat';
 // front-to-back order on top of the body; hairBack goes behind the body when facing the camera
-export const SLOTS: Slot[] = ['hood', 'hairBack', 'skirt', 'face', 'hairFront', 'glasses', 'hat'];
+export const SLOTS: Slot[] = ['skirt', 'torso', 'hood', 'hairBack', 'face', 'hairFront', 'glasses', 'hat'];
 export const TINTS = ['hair', 'item', 'top', 'bottom'] as const;   // top/bottom = that garment's cloth colour
 export const ANCHORS = ['head', 'waist'] as const;
 
@@ -69,13 +69,20 @@ export const ITEM_COLORS: string[][] = [
 
 // Clothes: the base body's shirt, trousers and shoes are re-drawn per pixel from a region map
 // (tools/body_regions.py), so any top goes with any bottom in every frame of every animation.
-export type Top = { id: string; name: string; sleeves: 'short' | 'long'; pattern: 'plain' | 'stripes'; overlay?: string };
+export type Top = {
+    id: string; name: string; sleeves: 'short' | 'long'; pattern: 'plain' | 'stripes';
+    overlay?: string;           // a part worn with it (shared/parts.json): a hood, or a whole drawn torso
+    sleeveColors?: string[];    // a drawn top's own sleeve ramp (tools/top_from_ai.py), instead of the chosen colour
+};
 export const TOPS: Top[] = [
     { id: 'tee', name: 'เสื้อยืด', sleeves: 'short', pattern: 'plain' },
     { id: 'tee_stripe', name: 'เสื้อยืดลายขวาง', sleeves: 'short', pattern: 'stripes' },
     { id: 'long', name: 'แขนยาว', sleeves: 'long', pattern: 'plain' },
     { id: 'long_stripe', name: 'แขนยาวลายขวาง', sleeves: 'long', pattern: 'stripes' },
     { id: 'hoodie', name: 'ฮู้ด', sleeves: 'long', pattern: 'plain', overlay: 'hood' },
+    // drawn tops (ChatGPT -> tools/top_from_ai.py): their own colours, so the top colour doesn't apply
+    { id: 'denim_jacket', name: 'แจ็กเก็ตยีนส์', sleeves: 'long', pattern: 'plain', overlay: 'denim_jacket',
+      sleeveColors: ['#365067', '#496f90', '#6c97b7', '#8eb2ca'] },
 ];
 // overlay (tops and bottoms): a part (shared/parts.json) worn with it that changes the outline,
 // e.g. a hood at the neck or a skirt over bare legs

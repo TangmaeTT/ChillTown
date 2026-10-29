@@ -1,8 +1,9 @@
 [
   {"id":"face_default","slot":"face","blink":true,"offset":[[0,0],[0,0],[0,0],[0,0]]},
-  {"id":"hair_messy","slot":"hairFront","tint":"hair","sway":{"poses":5,"stiffness":70,"damping":6,"gain":0.6},"offset":[[0,0],[0,0],[0,0],[0,0]]},
+  {"id":"hair_messy","slot":"hairFront","tint":"hair","sway":{"poses":5,"stiffness":70,"damping":6,"gain":0.6},"offset":[[-1,-1],[0,-1],[0,0],[0,0]]},
   {"id":"pony","slot":"hairFront","tint":"hair","offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"pony_tail","slot":"hairBack","tint":"hair","sway":{"poses":5,"stiffness":40,"damping":5,"gain":0.9},"offset":[[0,0],[0,0],[0,0],[0,0]]},
+  {"id":"denim_jacket","slot":"torso","anchor":"waist","offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"hood","slot":"hood","tint":"top","offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"skirt","slot":"skirt","tint":"bottom","anchor":"waist","sway":{"poses":5,"stiffness":60,"damping":6,"gain":0.6},"offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"beanie","slot":"hat","tint":"item","offset":[[0,0],[0,0],[0,0],[0,0]]},

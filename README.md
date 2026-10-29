@@ -62,6 +62,7 @@ API: `/api/health` · `/api/time` · `/api/rooms` · `/api/rooms/plaza/walkable?
 - `tools/body_regions.py`: แผนที่พื้นที่ของตัวฐาน (แขน มือ เสื้อ กางเกง หน้าแข้ง รองเท้า) → `client/public/assets/player_regions.png` เกมใช้วาดเสื้อผ้าแบบผสมได้ (รันใหม่ทุกครั้งที่เปลี่ยน `player.png`)
 - `tools/cloth_part.py`: วาดชิ้นเสื้อผ้าทดสอบ: `skirt` กระโปรงจีบ 5 ท่าพลิ้ว · `hood` หมวกฮู้ดหลังคอ (ชิ้นที่ `"anchor": "waist"` ขยับตามเอวจาก `player_body.json`)
 - `tools/hair_from_ai.py`: ตัดทรงผมจากภาพที่ ChatGPT เติมผมให้ภาพอ้างอิง `art-in/char/hair_ref.png` (ใช้ได้แม้ AI วาดใหม่ทั้งภาพหรือเปลี่ยนขนาด) → ชิ้นผมสีเทา 4 ทิศ
+- `tools/top_from_ai.py`: ตัดเสื้อจากภาพที่ ChatGPT แต่งตัวให้ภาพอ้างอิง → ชิ้นลำตัว (slot `torso` ติดเอว สีตามภาพ) + พิมพ์สีแขนเสื้อ 4 โทนให้ใส่ใน `sleeveColors` ของเสื้อใน `TOPS`
 - `tools/sway_poses.py`: ทำท่าพลิ้วให้ชิ้นที่วาดนิ่ง (เลื่อนปลายผมทีละพิกเซล โคนนิ่ง) แล้วใส่ `sway` ใน `parts.json` · รันซ้ำได้ (ใช้แถวกลางเป็นต้นแบบ)
 - `tools/hair_part.py`: วาดทรงผมทดสอบจากรูปหัวจริง (`pony` ตัวผม + `pony_tail` หางม้า 5 ท่าพลิ้ว) เป็นสีเทา เกมย้อมเป็นสีผม
 - `tools/face_part.py`: ดึงหน้าที่ Autosprite วาดมาเป็นชิ้นหน้า (`head/<id>.png`) พร้อมเฟรมครึ่งหลับ/หลับตา ใส่ `"blink": true` ใน `shared/parts.json` แล้วเกมกะพริบให้เอง
