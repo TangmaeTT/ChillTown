@@ -9,8 +9,8 @@ const s = sheet as { frame?: number; feet?: number; height?: number };
 export const FRAME: number = s.frame ?? 68;
 export const FEET_Y: number = s.feet ?? 60;
 export const BODY_H: number = s.height ?? 52;
+export const SPEED: number = (sheet as { speed?: number }).speed ?? 70;   // world px per second
 export const WALK_FPS: number = sheet.walkFps;
-export const SPEED = 70; // world px per second
 
 export class PlayerModel {
     facing = 2;          // 0..7 clockwise from screen east (E, SE, S, SW, W, NW, N, NE)
