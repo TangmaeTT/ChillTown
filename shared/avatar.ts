@@ -21,7 +21,16 @@ export type Part = {
     tint?: 'hair' | 'item'; // recoloured by brightness onto that ramp; none = drawn colours as they are
     offset: [number, number][];   // per view: px moved from where it was drawn, set in the avatar editor
     blink?: boolean;        // sheet has 3 rows: open, half closed, closed (tools/face_part.py); the game blinks it
+    sway?: Sway;            // sheet rows are poses swung screen-left -> right; a spring picks one (hair, scarves)
 };
+
+export type Sway = {
+    poses: number;          // rows in the sheet (odd: the middle one hangs straight)
+    stiffness: number;      // spring pull back to the drive (higher = snappier)
+    damping: number;        // how fast the swing dies out (low = swings longer)
+    gain: number;           // how far walking pushes it
+};
+export const SWAY_LIMITS = { poses: [2, 9], stiffness: [1, 300], damping: [0, 50], gain: [0, 3] } as const;
 
 export const PARTS: Part[] = parts as Part[];
 
@@ -94,6 +103,13 @@ export function partsError(list: Part[], known: string[]): string | null {
         if (!SLOTS.includes(p.slot)) return `${p.id}: bad slot`;
         if (p.tint !== undefined && !TINTS.includes(p.tint)) return `${p.id}: bad tint`;
         if (p.blink !== undefined && typeof p.blink !== 'boolean') return `${p.id}: blink must be true or false`;
+        if (p.sway !== undefined) {
+            for (const [k, [lo, hi]] of Object.entries(SWAY_LIMITS)) {
+                const v = (p.sway as Record<string, unknown>)[k];
+                if (typeof v !== 'number' || !(v >= lo && v <= hi) || (k === 'poses' && !Number.isInteger(v)))
+                    return `${p.id}: sway.${k} must be ${lo}-${hi}`;
+            }
+        }
         const ok = (v: unknown) => Number.isInteger(v) && Math.abs(v as number) <= MAX_OFFSET;
         if (!Array.isArray(p.offset) || p.offset.length !== VIEWS.length || !p.offset.every(o => Array.isArray(o) && o.length === 2 && o.every(ok)))
             return `${p.id}: offset must be ${VIEWS.length} [x, y] pairs within ${MAX_OFFSET} px`;
@@ -103,7 +119,8 @@ export function partsError(list: Part[], known: string[]): string | null {
 
 /** parts.json as the editor writes it: one part per line */
 export function formatParts(list: Part[]): string {
-    const clean = list.map(({ id, slot, tint, offset, blink }) => ({ id, slot, ...(tint ? { tint } : {}), ...(blink ? { blink } : {}), offset }));
+    const clean = list.map(({ id, slot, tint, offset, blink, sway }) =>
+        ({ id, slot, ...(tint ? { tint } : {}), ...(blink ? { blink } : {}), ...(sway ? { sway } : {}), offset }));
     return '[\n' + clean.map(p => '  ' + JSON.stringify(p)).join(',\n') + '\n]\n';
 }
 

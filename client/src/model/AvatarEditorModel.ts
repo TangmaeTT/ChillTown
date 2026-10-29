@@ -4,7 +4,9 @@ import { PARTS, MAX_OFFSET, SLOTS, VIEWS, formatParts, type Look, type Part } fr
 
 export class AvatarEditorModel {
     parts: Part[] = structuredClone(PARTS);
-    look: Look = { skin: 1, hair: 1, item: 0, parts: PARTS.length ? [PARTS[0].id] : [] };   // wear the first part to start
+    // start with a face and hair on (the first part of each), hats and glasses off
+    look: Look = { skin: 1, hair: 2, item: 0, parts: (['hairBack', 'face', 'hairFront'] as const)
+        .map(s => PARTS.find(p => p.slot === s)?.id).filter((id): id is string => !!id) };
     selected: string | null = PARTS[0]?.id ?? null;   // the part that dragging / arrow keys move
     view = 0;                                          // which of the 4 views (VIEWS) arrow keys move
     playing = true;                                    // preview figure animates
@@ -79,6 +81,12 @@ export class AvatarEditorModel {
         if (!p) return;
         const other = [1, 0, 3, 2][view], [x, y] = p.offset[view];
         this.edit(() => { p.offset[other] = [-x, y]; });
+    }
+
+    /** tune the selected part's spring (sliders send this on release, so each is one undo step) */
+    setSway(key: 'stiffness' | 'damping' | 'gain', value: number) {
+        const p = this.part;
+        if (p?.sway) this.edit(() => { p.sway![key] = value; });
     }
 
     resetOffsets() {

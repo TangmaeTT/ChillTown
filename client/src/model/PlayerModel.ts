@@ -5,12 +5,13 @@ import sheet from './player_sheet.json';
 // player.png layout, written by tools/char_sheet.py together with the sheet: col 0 standing + WALK_FRAMES walk cycle
 export const WALK_FRAMES: number = sheet.walkFrames;
 export const WALK_FPS: number = sheet.walkFps;
-const SPEED = 70; // world px per second
+export const SPEED = 70; // world px per second
 
 export class PlayerModel {
     facing = 2;          // 0..7 clockwise from screen east (E, SE, S, SW, W, NW, N, NE)
     walkT = 0;
     moving = false;
+    vx = 0;              // screen-x speed this frame (px/s): swaying parts trail behind it
     target: { x: number; y: number } | null = null;   // click/tap destination
 
     constructor(public x: number, public y: number, facing?: number) {
@@ -27,8 +28,9 @@ export class PlayerModel {
         }
         const len = Math.hypot(vx, vy);
         this.moving = len > 0;
-        if (!this.moving) { this.walkT = 0; return; }
+        if (!this.moving) { this.walkT = 0; this.vx = 0; return; }
 
+        const x0 = this.x;
         const mx = (vx / len) * SPEED * dt, my = (vy / len) * SPEED * dt;
         // slide along walls instead of stopping dead
         if (canWalk(this.x + mx, this.y + my)) { this.x += mx; this.y += my; }
@@ -37,6 +39,7 @@ export class PlayerModel {
         else this.target = null;
         this.facing = (Math.round(Math.atan2(vy, vx) / (Math.PI / 4)) + 8) % 8;
         this.walkT += dt;
+        this.vx = (this.x - x0) / dt;
     }
 
     /** 0 = standing, 1..WALK_FRAMES = walk cycle */

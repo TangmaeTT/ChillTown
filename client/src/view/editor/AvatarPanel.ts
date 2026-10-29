@@ -6,12 +6,18 @@ export type AvatarActions = {
     select(id: string): void; wear(id: string, on: boolean): void;
     view(v: number): void; offset(x: number, y: number): void; mirror(): void; reset(): void;   // offset/mirror/reset: selected part, current view
     colour(which: 'skin' | 'hair' | 'item', n: number): void;
+    sway(key: 'stiffness' | 'damping' | 'gain', value: number): void;
     play(on: boolean): void; previewRow(r: number): void;
     undo(): void; redo(): void; save(): void;
 };
 
 const SLOT_TH: Record<string, string> = { hairBack: 'ผมหลัง', face: 'หน้า', hairFront: 'ผมหน้า', glasses: 'แว่น', hat: 'หมวก' };
 const VIEW_TH = ['↘ SE', '↙ SW', '↖ NW', '↗ NE'];
+const SWAY_UI = [
+    { key: 'stiffness', name: 'ความแข็ง', min: 5, max: 150, step: 1 },
+    { key: 'damping', name: 'ความหน่วง', min: 0.5, max: 25, step: 0.5 },
+    { key: 'gain', name: 'แรงขับ', min: 0, max: 2, step: 0.05 },
+] as const;
 const ROWS_TH = ['→ E', '↘ SE', '↓ S', '↙ SW', '← W', '↖ NW', '↑ N', '↗ NE'];
 
 const CSS = `
@@ -73,6 +79,12 @@ ${p ? `
 <div class="row"><button data-act="mirror">คัดลอกไปทิศกระจก</button><button data-act="reset">รีเซ็ตทุกทิศ</button></div>
 <div class="tip">ลากชิ้นบนตัวละคร หรือกดลูกศร (Shift = 4 px) · 1–4 เลือกทิศ</div>` : '<div class="tip">เลือกชิ้นส่วนก่อน</div>'}
 
+${p?.sway ? `<h3>ฟิสิกส์ · ${p.id}</h3>
+${SWAY_UI.map(s => `<div class="row"><label style="width:70px">${s.name}</label>
+  <input type="range" data-sway="${s.key}" min="${s.min}" max="${s.max}" step="${s.step}" value="${p.sway![s.key]}" style="flex:1">
+  <span style="width:34px;text-align:right">${p.sway![s.key]}</span></div>`).join('')}
+<div class="tip">${p.sway.poses} ท่า · กด ▶ ให้ตัวอย่างวิ่ง แล้ว ❚❚ ให้หยุด ดูหางแกว่งกลับ · เลือกทิศ → หรือ ← จะเห็นชัด</div>` : ''}
+
 <h3>สี</h3>
 <div class="row">ผิว</div><div>${swatches('skin', SKIN_TONES)}</div>
 <div class="row">ผม</div><div>${swatches('hair', HAIR_COLORS)}</div>
@@ -106,6 +118,7 @@ ${p ? `
     private change(e: Event) {
         const t = e.target as HTMLInputElement | HTMLSelectElement;
         if (t.dataset.row !== undefined) this.actions.previewRow(Number(t.value));
+        else if (t.dataset.sway) this.actions.sway(t.dataset.sway as 'stiffness' | 'damping' | 'gain', Number(t.value));
         else if (t.dataset.off) {
             const ins = this.el.querySelectorAll<HTMLInputElement>('input[data-off]');
             this.actions.offset(Number(ins[0].value) || 0, Number(ins[1].value) || 0);

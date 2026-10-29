@@ -1,7 +1,7 @@
 import { Scene, GameObjects, Input } from 'phaser';
 import { VIEWS } from '@shared/avatar';
 import { AvatarEditorModel } from '../model/AvatarEditorModel';
-import { PlayerModel } from '../model/PlayerModel';
+import { PlayerModel, SPEED } from '../model/PlayerModel';
 import { PlayerView, PLAYER_SHEET, preloadAvatar } from '../view/PlayerView';
 import { AvatarPanel } from '../view/editor/AvatarPanel';
 import rig from '../model/player_rig.json';
@@ -57,6 +57,7 @@ export class AvatarEditorController extends Scene {
             mirror: () => this.m.mirrorTo(this.m.view),
             reset: () => this.m.resetOffsets(),
             colour: (w, n) => this.m.colour(w, n),
+            sway: (k, v) => this.m.setSway(k, v),
             play: on => this.m.setPlaying(on),
             previewRow: r => this.m.setPreviewRow(r),
             undo: () => this.m.undo(),
@@ -168,6 +169,8 @@ export class AvatarEditorController extends Scene {
     update(_t: number, delta: number) {
         const pm = this.preview.model;
         pm.moving = this.m.playing;
+        // walking in place, but swaying parts feel the speed as if it were moving that way
+        pm.vx = this.m.playing ? Math.cos(pm.facing * Math.PI / 4) * SPEED : 0;
         if (this.m.playing) pm.walkT += delta / 1000; else pm.walkT = 0;
         this.figures.forEach(f => f.view.sync(f.model, 1));
         this.preview.view.sync(pm, 1);

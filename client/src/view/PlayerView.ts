@@ -1,6 +1,8 @@
 import { Scene, GameObjects } from 'phaser';
 import { SLOTS, SKIN_TONES, HAIR_COLORS, ITEM_COLORS, PARTS, VIEWS, type Look, type Part } from '@shared/avatar';
-import { WALK_FRAMES, type PlayerModel } from '../model/PlayerModel';
+import { WALK_FRAMES, WALK_FPS, SPEED, type PlayerModel } from '../model/PlayerModel';
+import { SwaySpring } from '../model/SwaySpring';
+import { world } from '../model/WorldModel';
 import rig from '../model/player_rig.json';
 import { recolored } from './art/recolor';
 
@@ -19,6 +21,9 @@ const RAMPS = { hair: HAIR_COLORS, item: ITEM_COLORS };
 const BLINK: [number, number][] = [[45, 1], [125, 2], [180, 1]];
 const blinkRow = (ms: number) => ms < 0 ? 0 : BLINK.find(([end]) => ms < end)?.[1] ?? 0;
 
+/** gusts, a little stronger in the rain: a slow drift toward screen-right with some flutter */
+const wind = (t: number) => (world.raining ? 0.22 : 0.08) * (0.6 + Math.sin(t * 0.5) * 0.4 + Math.sin(t * 2.3 + 1) * 0.25);
+
 /** load the body sheet and every head part (call from a scene's preload, with the path set to assets/) */
 export function preloadAvatar(scene: Scene) {
     const f = PLAYER_SHEET.frame;
@@ -28,7 +33,8 @@ export function preloadAvatar(scene: Scene) {
 
 export class PlayerView {
     private sprite: GameObjects.Sprite;
-    private parts: { part: Part; sprite: GameObjects.Sprite }[] = [];
+    private parts: { part: Part; sprite: GameObjects.Sprite; spring: SwaySpring }[] = [];
+    private lastSync = 0;
     private nameTag: GameObjects.Text;
     private blinkAt = 0;     // scene time the current/next blink starts
 
@@ -59,7 +65,7 @@ export class PlayerView {
             const key = part.tint
                 ? recolored(this.scene, PART_KEY(id), `${PART_KEY(id)}@${part.tint}${look[part.tint]}`, f, RAMPS[part.tint][look[part.tint]])
                 : PART_KEY(id);
-            return { part, sprite: this.scene.add.sprite(0, 0, key, 0).setOrigin(this.sprite.originX, this.sprite.originY) };
+            return { part, spring: new SwaySpring(), sprite: this.scene.add.sprite(0, 0, key, 0).setOrigin(this.sprite.originX, this.sprite.originY) };
         }).sort((a, b) => SLOTS.indexOf(a.part.slot) - SLOTS.indexOf(b.part.slot));
     }
 
@@ -74,12 +80,20 @@ export class PlayerView {
             this.blinkAt = now + (double ? 260 : 2000 + Math.random() * 4000);
         }
         const eyes = blinkRow(now - this.blinkAt);
-        for (const { part, sprite } of this.parts) {
+        const dt = this.lastSync ? (now - this.lastSync) / 1000 : 0;
+        this.lastSync = now;
+        // swaying parts trail behind the walk (screen x), bob with the steps, and lean in the wind
+        const step = model.moving ? Math.sin(model.walkT * WALK_FPS / WALK_FRAMES * Math.PI * 4) * 0.12 : 0;
+        const drive = Math.max(-1, Math.min(1, -model.vx / SPEED + step + wind(now / 1000)));
+        for (const { part, sprite, spring } of this.parts) {
             const slot = part.slot, n = SLOTS.indexOf(slot) + 1;
             const [ox, oy] = part.offset[view];
             // long hair hangs behind the shoulders when facing the camera, over the back when facing away
             const d = slot === 'hairBack' && !facesAway(row) ? depth - 0.01 : depth + n * 0.01;
-            const frame = part.blink ? eyes * VIEWS.length + view : view;
+            let r = 0;
+            if (part.blink) r = eyes;
+            else if (part.sway) { spring.update(dt, drive * part.sway.gain, part.sway); r = spring.pose(part.sway); }
+            const frame = r * VIEWS.length + view;
             sprite.setPosition(model.x + dx + ox, model.y + dy + oy).setFrame(frame).setDepth(d);
         }
         this.nameTag.setPosition(Math.round(model.x), Math.round(model.y - 56)).setDepth(depth + 0.5);
