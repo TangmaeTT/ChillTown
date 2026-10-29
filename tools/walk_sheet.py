@@ -38,6 +38,14 @@ def strip(path, scale, colors):
     return frames
 
 
+def head_height(f):
+    """rows from the top of the figure down to the neck (where it narrows under the widest part of the head)"""
+    al = f[..., 3] > 0
+    widths = al.sum(1)
+    peak = int(np.argmax(widths[:40]))
+    return next((y for y in range(peak, f.shape[0]) if widths[y] < 0.6 * widths[peak]), peak)
+
+
 def stride_speed(side, walk_n, fps):
     """how fast to move so the planted foot doesn't slide: one step (feet apart minus a foot) per half cycle"""
     if not side:
@@ -58,7 +66,7 @@ def main():
     ap.add_argument('--scale', type=int, default=5)
     ap.add_argument('--colors', type=int, default=40)
     ap.add_argument('--fps', type=float, default=8)
-    ap.add_argument('--height', type=int, help='make every direction this tall (default: the front view S)')
+    ap.add_argument('--height', type=int, help='make every direction this tall overall (default: match head size to the front view S)')
     ap.add_argument('--speed', type=float, help='walk speed in px/s (default: from the side view stride, so feet do not slide)')
     ap.add_argument('--out', default=str(ROOT / 'client/public/assets/player.png'))
     a = ap.parse_args()
@@ -66,16 +74,17 @@ def main():
     got = {d: strip(getattr(a, d), a.scale, a.colors) for d in DRAWN if getattr(a, d)}
     if not got:
         sys.exit('give at least one direction')
-    # every direction the same height: an AI draws each sheet a little bigger or smaller. Scaled by whole pixels
-    # (nearest), not averaged, so it stays crisp: 74 -> 69 drops about one row and column in 14.
-    target = a.height or got.get('s', next(iter(got.values())))[0].shape[0]
+    # every direction the same size: an AI draws each sheet a little bigger or smaller. Matched on the HEAD's
+    # height (a chibi is read by its big head; one sheet can have a longer body and a smaller head), or on the
+    # whole height with --height. Scaled by whole pixels (nearest), not averaged, so it stays crisp.
+    ref = got.get('s', next(iter(got.values())))[0]
     for d, fr in got.items():
-        h0 = fr[0].shape[0]
-        if abs(h0 - target) > 1:
-            k = target / h0
+        h0, hh0 = fr[0].shape[0], head_height(fr[0])
+        k = a.height / h0 if a.height else head_height(ref) / hh0
+        if abs(k - 1) > 0.02:
             got[d] = fr = [np.array(Image.fromarray(f).resize((max(1, round(f.shape[1] * k)), max(1, round(f.shape[0] * k))), Image.NEAREST)) for f in fr]
         hs = [f.shape[0] for f in fr]
-        print(f'{d:>2}: {len(fr)} figures, height {h0} -> {min(hs)}-{max(hs)} px')
+        print(f'{d:>2}: {len(fr)} figures, head {hh0} -> {head_height(fr[0])} px, height {h0} -> {min(hs)}-{max(hs)} px')
 
     # a missing direction borrows the closest drawn one: diagonals prefer front/back over the side view
     BORROW = {'s': ['sw', 'w', 'nw', 'n'], 'sw': ['s', 'w', 'nw', 'n'], 'w': ['sw', 'nw', 's', 'n'],

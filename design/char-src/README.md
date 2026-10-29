@@ -4,7 +4,7 @@
 
 ```
 python tools/walk_sheet.py --s design/char-src/walk_s_pose.png --sw design/char-src/walk_sw_pose2.png \
-  --w design/char-src/walk_w_pose.png --nw design/char-src/walk_nw_pose.png --n design/char-src/walk_n_pose.png
+  --w design/char-src/walk_w_pose.png --nw design/char-src/walk_nw_pose2.png --n design/char-src/walk_n_pose.png
 ```
 
 - `designbase.png`: ตัวฐานหัวโล้น 5 มุม (หน้า, 3/4 หน้า, ข้าง, หลัง, 3/4 หลัง) แนบให้ ChatGPT ทุกครั้ง
