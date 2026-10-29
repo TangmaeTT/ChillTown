@@ -31,6 +31,8 @@ export function dressed(scene: Scene, src: string, look: Look, frame: number, sk
     if (scene.textures.exists(key)) return key;
     const img = scene.textures.get(src).getSourceImage() as HTMLImageElement;
     const map = scene.textures.get(REGIONS_KEY).getSourceImage() as HTMLImageElement;
+    // a body sheet without its region map yet (a new character being tried out): show it as drawn
+    if (map.width !== img.width || map.height !== img.height) return src;
     const w = img.width, h = img.height, n = w * h;
     const tex = scene.textures.createCanvas(key, w, h)!;
     const ctx = tex.getContext();

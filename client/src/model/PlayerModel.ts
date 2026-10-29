@@ -4,6 +4,11 @@ import sheet from './player_sheet.json';
 
 // player.png layout, written by tools/char_sheet.py together with the sheet: col 0 standing + WALK_FRAMES walk cycle
 export const WALK_FRAMES: number = sheet.walkFrames;
+// frame size, where the feet are in it, and how tall the character stands (px); defaults = the 68 px sheet
+const s = sheet as { frame?: number; feet?: number; height?: number };
+export const FRAME: number = s.frame ?? 68;
+export const FEET_Y: number = s.feet ?? 60;
+export const BODY_H: number = s.height ?? 52;
 export const WALK_FPS: number = sheet.walkFps;
 export const SPEED = 70; // world px per second
 

@@ -1,6 +1,6 @@
 import { Scene, GameObjects } from 'phaser';
 import { SLOTS, HAIR_COLORS, ITEM_COLORS, CLOTH_COLORS, TOPS, BOTTOMS, PARTS, VIEWS, type Look, type Part } from '@shared/avatar';
-import { WALK_FRAMES, WALK_FPS, SPEED, type PlayerModel } from '../model/PlayerModel';
+import { WALK_FRAMES, WALK_FPS, SPEED, FRAME, FEET_Y, BODY_H, type PlayerModel } from '../model/PlayerModel';
 import { SwaySpring } from '../model/SwaySpring';
 import { world } from '../model/WorldModel';
 import rig from '../model/player_rig.json';
@@ -11,8 +11,7 @@ export { PART_KEY, VIEW_OF_ROW };
 
 // player.png (tools/char_sheet.py): 68x68 frames, col 0 = standing, then the walk cycle;
 // rows clockwise from screen angle: E, SE, S, SW, W, NW, N, NE
-export const PLAYER_SHEET = { key: 'player', file: 'player.png', frame: 68 };
-const FEET_Y = 60;
+export const PLAYER_SHEET = { key: 'player', file: 'player.png', frame: FRAME };
 
 // Head parts (head/<id>.png) have one standing view per diagonal: SE, SW, NW, NE.
 const facesAway = (row: number) => VIEW_OF_ROW[row] >= 2;
@@ -49,7 +48,7 @@ export class PlayerView {
     // catalog: the avatar editor passes its working copy, so nudged offsets show at once
     constructor(private scene: Scene, model: PlayerModel, name: string, look: Look, private catalog: Part[] = PARTS) {
         this.sprite = scene.add.sprite(model.x, model.y, PLAYER_SHEET.key, 0).setOrigin(0.5, FEET_Y / PLAYER_SHEET.frame);
-        this.nameTag = scene.add.text(model.x, model.y - 56, name, {
+        this.nameTag = scene.add.text(model.x, model.y - BODY_H - 4, name, {
             fontFamily: 'Tahoma, sans-serif', fontSize: '8px', color: '#e8f0c8', resolution: 4,
             stroke: '#0e1014', strokeThickness: 2,
         }).setOrigin(0.5, 1);
@@ -113,6 +112,6 @@ export class PlayerView {
             const [dx, dy] = part.anchor === 'waist' ? waist : head;
             sprite.setPosition(model.x + dx + ox, model.y + dy + oy).setFrame(frame).setDepth(d);
         }
-        this.nameTag.setPosition(Math.round(model.x), Math.round(model.y - 56)).setDepth(depth + 0.5);
+        this.nameTag.setPosition(Math.round(model.x), Math.round(model.y - BODY_H - 4)).setDepth(depth + 0.5);
     }
 }

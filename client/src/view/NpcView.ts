@@ -1,12 +1,11 @@
 import { Scene, GameObjects } from 'phaser';
 import type { IsoGrid } from '@shared/iso';
-import { WALK_FRAMES, WALK_FPS } from '../model/PlayerModel';
+import { WALK_FRAMES, WALK_FPS, FEET_Y } from '../model/PlayerModel';
 import type { NpcModel } from '../model/NpcModel';
 import { PLAYER_SHEET } from './PlayerView';
 
 // Placeholder pedestrians: the player sheet with different tints, until NPC characters are made in PixelLab.
 export const NPC_TINTS = [0xffffff, 0xaec4ff, 0xffd2a6, 0xbfe8bf, 0xffb8cc, 0xd2d2d2, 0xe8d8ff];
-const FEET_Y = 60;
 
 export class NpcView {
     private sprites = new Map<number, GameObjects.Sprite>();
