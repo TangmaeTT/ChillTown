@@ -38,22 +38,44 @@ def strip(path, scale, colors):
     return frames
 
 
+def stride_speed(side, walk_n, fps):
+    """how fast to move so the planted foot doesn't slide: one step (feet apart minus a foot) per half cycle"""
+    if not side:
+        return 45
+    spans = []
+    for f in side[1:]:
+        feet = f[-6:, :, 3] > 0
+        xs = np.nonzero(feet.any(0))[0]
+        spans.append(xs[-1] - xs[0] + 1)
+    step = max(spans) * 0.65    # the widest stance minus a foot: about two thirds of it (measured on the base)
+    return round(step / (walk_n / 2) * fps)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     for d in DRAWN:
         ap.add_argument('--' + d)
     ap.add_argument('--scale', type=int, default=5)
     ap.add_argument('--colors', type=int, default=40)
-    ap.add_argument('--fps', type=float, default=10)
+    ap.add_argument('--fps', type=float, default=8)
+    ap.add_argument('--height', type=int, help='make every direction this tall (default: the front view S)')
+    ap.add_argument('--speed', type=float, help='walk speed in px/s (default: from the side view stride, so feet do not slide)')
     ap.add_argument('--out', default=str(ROOT / 'client/public/assets/player.png'))
     a = ap.parse_args()
 
     got = {d: strip(getattr(a, d), a.scale, a.colors) for d in DRAWN if getattr(a, d)}
     if not got:
         sys.exit('give at least one direction')
+    # every direction the same height: an AI draws each sheet a little bigger or smaller. Scaled by whole pixels
+    # (nearest), not averaged, so it stays crisp: 74 -> 69 drops about one row and column in 14.
+    target = a.height or got.get('s', next(iter(got.values())))[0].shape[0]
     for d, fr in got.items():
+        h0 = fr[0].shape[0]
+        if abs(h0 - target) > 1:
+            k = target / h0
+            got[d] = fr = [np.array(Image.fromarray(f).resize((max(1, round(f.shape[1] * k)), max(1, round(f.shape[0] * k))), Image.NEAREST)) for f in fr]
         hs = [f.shape[0] for f in fr]
-        print(f'{d:>2}: {len(fr)} figures, height {min(hs)}-{max(hs)} px')
+        print(f'{d:>2}: {len(fr)} figures, height {h0} -> {min(hs)}-{max(hs)} px')
 
     # a missing direction borrows the closest drawn one: diagonals prefer front/back over the side view
     BORROW = {'s': ['sw', 'w', 'nw', 'n'], 'sw': ['s', 'w', 'nw', 'n'], 'w': ['sw', 'nw', 's', 'n'],
@@ -77,7 +99,8 @@ def main():
             print(f'   row {r} ({d}{" mirrored" if mirror else ""}) borrows {src}')
     Image.fromarray(sheet).save(a.out)
     height = max(max(f.shape[0] for f in fr) for fr in got.values())
-    meta = {'walkFrames': walk_n, 'walkFps': a.fps, 'frame': CELL, 'feet': FEET, 'height': height, 'speed': 70}
+    speed = a.speed or stride_speed(got.get('w'), walk_n, a.fps)
+    meta = {'walkFrames': walk_n, 'walkFps': a.fps, 'frame': CELL, 'feet': FEET, 'height': height, 'speed': speed}
     (ROOT / 'client/src/model/player_sheet.json').write_text(json.dumps(meta, indent=2) + '\n')
     print(f'saved {a.out}: {walk_n} walk frames per direction; player_sheet.json {meta}')
 
