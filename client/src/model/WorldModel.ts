@@ -1,6 +1,7 @@
 // World state shared by every scene: clock, weather, player preferences. No Phaser in here.
 import { gameTime, phaseOf, PHASE_TH, clockLabel, DAY_SECONDS } from '@shared/clock';
 import { DEFAULT_LOOK, decodeLook } from '@shared/avatar';
+import { BODY_H } from './PlayerModel';
 
 const params = new URLSearchParams(location.search);
 
@@ -11,8 +12,9 @@ export const world = {
     offset: 0,               // seconds added to the real clock
     raining: params.get('rain') !== '0',
     roomName: '',            // shown in the HUD
-    // camera zoom, kept across room changes. ?zoom=0.75 in the URL sets the starting value
-    zoom: Number(params.get('zoom')) || 2,
+    // camera zoom, kept across room changes. ?zoom=2 in the URL sets the starting value. The game shows the nearest
+    // whole number (cameraZoom) so pixels stay even; the map editor zooms freely. Big (new style) characters start at 1.
+    zoom: Number(params.get('zoom')) || (BODY_H > 60 ? 1 : 2),
     edit: params.get('edit') === '1',   // ?edit=1 opens the map editor
     // the player's avatar; ?look=1.1.0.beanie (see shared/avatar.ts) until there is a dressing room
     look: decodeLook(params.get('look') ?? '') ?? DEFAULT_LOOK,
@@ -46,6 +48,9 @@ export const timeLabel = () => clockLabel(world.minutes);
 export const phaseLabel = () => PHASE_TH[phaseOf(world.minutes)];
 
 export const ZOOM_MIN = 0.5, ZOOM_MAX = 3;
+
+/** the zoom the game camera settles on: whole numbers only (pixel art stays even), any value in the map editor */
+export const cameraZoom = () => world.edit ? world.zoom : Math.max(1, Math.round(world.zoom));
 
 /** multiply the zoom by f (wheel, pinch, buttons), clamped */
 export function zoomBy(f: number) {

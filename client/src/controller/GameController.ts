@@ -1,6 +1,6 @@
 import { Scene, Math as PMath } from 'phaser';
 import { ROOMS, type RoomId } from '@shared/rooms';
-import { world, tickClock } from '../model/WorldModel';
+import { world, tickClock, cameraZoom } from '../model/WorldModel';
 import { RoomModel, roomFromUrl } from '../model/RoomModel';
 import { PlayerModel } from '../model/PlayerModel';
 import { TrainModel } from '../model/TrainModel';
@@ -94,7 +94,7 @@ export class GameController extends Scene {
 
         // --- camera
         const cam = this.cameras.main;
-        cam.setBounds(0, 0, this.room.grid.worldW, this.room.grid.worldH).setZoom(world.zoom).setRoundPixels(true);
+        cam.setBounds(0, 0, this.room.grid.worldW, this.room.grid.worldH).setZoom(cameraZoom()).setRoundPixels(true);
 
         if (world.edit) {
             this.playerView.setVisible(false);
@@ -140,7 +140,8 @@ export class GameController extends Scene {
         if (this.traffic) this.trafficView!.update(this.traffic);
         if (this.npcs) this.npcView!.update(this.npcs);
         const cam = this.cameras.main;
-        if (Math.abs(cam.zoom - world.zoom) > 0.001) cam.setZoom(PMath.Linear(cam.zoom, world.zoom, 0.25));
+        const z = cameraZoom();
+        if (cam.zoom !== z) cam.setZoom(Math.abs(cam.zoom - z) < 0.02 ? z : PMath.Linear(cam.zoom, z, 0.25));
     }
 
     /** someone (the player or a pedestrian) is on the zebra crossing: cars wait */

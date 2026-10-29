@@ -43,8 +43,8 @@ export class HudScene extends Scene {
         // zoom buttons, bottom-right (thumb reach on phones)
         const zb = { ...font, fontSize: '20px', backgroundColor: '#0e1014cc', padding: { x: 12, y: 2 }, fixedWidth: 44, align: 'center' };
         this.zoomBtns = [
-            this.add.text(0, 0, '－', zb).setInteractive({ useHandCursor: true }).on('pointerdown', () => actions.zoom(1 / 1.25)),
-            this.add.text(0, 0, '＋', zb).setInteractive({ useHandCursor: true }).on('pointerdown', () => actions.zoom(1.25)),
+            this.add.text(0, 0, '－', zb).setInteractive({ useHandCursor: true }).on('pointerdown', () => actions.zoom(-1)),
+            this.add.text(0, 0, '＋', zb).setInteractive({ useHandCursor: true }).on('pointerdown', () => actions.zoom(1)),
         ];
         this.zoomBtns.forEach(b => b.setOrigin(1, 1).setDepth(11));
         const placeZoom = () => this.zoomBtns.forEach((b, k) => b.setPosition(this.scale.width - 14 - (1 - k) * 52, this.scale.height - 14));

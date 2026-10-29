@@ -49,7 +49,7 @@ export class PlayerView {
     constructor(private scene: Scene, model: PlayerModel, name: string, look: Look, private catalog: Part[] = PARTS) {
         this.sprite = scene.add.sprite(model.x, model.y, PLAYER_SHEET.key, 0).setOrigin(0.5, FEET_Y / PLAYER_SHEET.frame);
         this.nameTag = scene.add.text(model.x, model.y - BODY_H - 4, name, {
-            fontFamily: 'Tahoma, sans-serif', fontSize: '8px', color: '#e8f0c8', resolution: 4,
+            fontFamily: 'Tahoma, sans-serif', fontSize: BODY_H > 60 ? '13px' : '8px', color: '#e8f0c8', resolution: 4,
             stroke: '#0e1014', strokeThickness: 2,
         }).setOrigin(0.5, 1);
         this.setLook(look);
