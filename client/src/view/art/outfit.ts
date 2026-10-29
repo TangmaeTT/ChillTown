@@ -1,6 +1,12 @@
 import { Scene } from 'phaser';
 import { SKIN_TONES, CLOTH_COLORS, TOPS, BOTTOMS, type Look } from '@shared/avatar';
 import { hex, luma, onRamp } from './recolor';
+import body from '../../model/player_body.json';
+
+// head parts and drawn tops are loaded under this key (head/<id>.png)
+export const PART_KEY = (id: string) => `head_${id}`;
+// part view (SE, SW, NW, NE) drawn for each player.png row (E, SE, S, SW, W, NW, N, NE)
+export const VIEW_OF_ROW = [0, 0, 1, 1, 1, 2, 3, 3];
 
 // Dress the base body: copy player.png and re-draw each pixel by its region (player_regions.png, from
 // tools/body_regions.py): the top's colour, pattern and sleeves, the bottom's colour and length, the shoes,
@@ -90,10 +96,46 @@ export function dressed(scene: Scene, src: string, look: Look, frame: number, sk
         else if (r === 'shoe') onRamp(px, i, shoeRamp, tShoe(p));
         else if (isSkin[p]) onRamp(px, i, skinRamp, tSkin(p));
     }
+    if (top.print) printTop(scene, top.print, px, region, w, frame);
     ctx.putImageData(data, 0, 0);
     tex.refresh();
     let k = 0;
     for (let y = 0; y + frame <= h; y += frame)
         for (let x = 0; x + frame <= w; x += frame) tex.add(k++, 0, x, y, frame, frame);
     return key;
+}
+
+/**
+ * A drawn top (tools/top_from_ai.py: its standing torso in 4 views, as a head part image) cut onto the shirt of
+ * every frame: each shirt pixel takes the drawn colour from where it sits in the standing frame (moved by
+ * player_body.json `shirt`), plus a 1 px rim around the shirt for the garment's thickness. So it follows the
+ * breathing and the walk pixel for pixel, and arms in front of the body stay on top (they aren't shirt).
+ */
+function printTop(scene: Scene, id: string, px: Uint8ClampedArray, region: (string | undefined)[], w: number, frame: number) {
+    const img = scene.textures.get(PART_KEY(id)).getSourceImage() as HTMLImageElement;
+    const c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d')!;
+    g.drawImage(img, 0, 0);
+    const art = g.getImageData(0, 0, img.width, img.height).data, aw = img.width;
+    const rows = body.shirt.length;
+    for (let r = 0; r < rows; r++) {
+        const view = VIEW_OF_ROW[r];
+        body.shirt[r].forEach(([dx, dy], col) => {
+            const x0 = col * frame, y0 = r * frame;
+            const at = (x: number, y: number) => (y0 + y) * w + x0 + x;
+            const shirt = (x: number, y: number) => x >= 0 && y >= 0 && x < frame && y < frame && region[at(x, y)] === 'shirt';
+            for (let y = 0; y < frame; y++) for (let x = 0; x < frame; x++) {
+                const p = at(x, y), i = p * 4;
+                const rim = !shirt(x, y) && (!px[i + 3] || region[p] === 'line')
+                    && (shirt(x - 1, y) || shirt(x + 1, y) || shirt(x, y - 1) || shirt(x, y + 1));
+                if (!shirt(x, y) && !rim) continue;
+                const sx = x - dx, sy = y - dy;
+                if (sx < 0 || sy < 0 || sx >= frame || sy >= frame) continue;
+                const a = (sy * aw + view * frame + sx) * 4;
+                if (!art[a + 3]) continue;
+                px[i] = art[a]; px[i + 1] = art[a + 1]; px[i + 2] = art[a + 2]; px[i + 3] = 255;
+            }
+        });
+    }
 }

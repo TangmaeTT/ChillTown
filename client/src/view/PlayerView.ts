@@ -6,7 +6,8 @@ import { world } from '../model/WorldModel';
 import rig from '../model/player_rig.json';
 import body from '../model/player_body.json';
 import { recolored } from './art/recolor';
-import { dressed, REGIONS_KEY } from './art/outfit';
+import { dressed, REGIONS_KEY, PART_KEY, VIEW_OF_ROW } from './art/outfit';
+export { PART_KEY, VIEW_OF_ROW };
 
 // player.png (tools/char_sheet.py): 68x68 frames, col 0 = standing, then the walk cycle;
 // rows clockwise from screen angle: E, SE, S, SW, W, NW, N, NE
@@ -14,8 +15,6 @@ export const PLAYER_SHEET = { key: 'player', file: 'player.png', frame: 68 };
 const FEET_Y = 60;
 
 // Head parts (head/<id>.png) have one standing view per diagonal: SE, SW, NW, NE.
-export const PART_KEY = (id: string) => `head_${id}`;
-export const VIEW_OF_ROW = [0, 0, 1, 1, 1, 2, 3, 3];
 const facesAway = (row: number) => VIEW_OF_ROW[row] >= 2;
 /** the ramp a tinted part is recoloured to, and a short name for it (texture cache key) */
 const tintOf = (tint: NonNullable<Part['tint']>, l: Look): [string[], string] => ({

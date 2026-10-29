@@ -71,7 +71,8 @@ export const ITEM_COLORS: string[][] = [
 // (tools/body_regions.py), so any top goes with any bottom in every frame of every animation.
 export type Top = {
     id: string; name: string; sleeves: 'short' | 'long'; pattern: 'plain' | 'stripes';
-    overlay?: string;           // a part worn with it (shared/parts.json): a hood, or a whole drawn torso
+    overlay?: string;           // a part worn with it (shared/parts.json), e.g. a hood
+    print?: string;             // a drawn torso (head/<id>.png from tools/top_from_ai.py) cut onto the shirt of every frame
     sleeveColors?: string[];    // a drawn top's own sleeve ramp (tools/top_from_ai.py), instead of the chosen colour
 };
 export const TOPS: Top[] = [
@@ -81,7 +82,7 @@ export const TOPS: Top[] = [
     { id: 'long_stripe', name: 'แขนยาวลายขวาง', sleeves: 'long', pattern: 'stripes' },
     { id: 'hoodie', name: 'ฮู้ด', sleeves: 'long', pattern: 'plain', overlay: 'hood' },
     // drawn tops (ChatGPT -> tools/top_from_ai.py): their own colours, so the top colour doesn't apply
-    { id: 'denim_jacket', name: 'แจ็กเก็ตยีนส์', sleeves: 'long', pattern: 'plain', overlay: 'denim_jacket',
+    { id: 'denim_jacket', name: 'แจ็กเก็ตยีนส์', sleeves: 'long', pattern: 'plain', print: 'denim_jacket',
       sleeveColors: ['#365067', '#496f90', '#6c97b7', '#8eb2ca'] },
 ];
 // overlay (tops and bottoms): a part (shared/parts.json) worn with it that changes the outline,

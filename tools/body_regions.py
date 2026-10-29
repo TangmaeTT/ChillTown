@@ -14,7 +14,8 @@ frame, below the head (char_rig.head_box):
 Head and neck pixels are left out (region 0): the game recolours them by skin colour as before.
 Output: same size as the sheet, one flat colour per region (REGIONS below; client/src/view/art/outfit.ts reads them),
 plus client/src/model/player_body.json: the waist in each standing view and how it moves in every frame
-(body parts like skirts follow it, as head parts follow the head). Run it again whenever player.png changes.
+(body parts like skirts follow it, as head parts follow the head), and how the shirt moves in every frame
+(drawn tops are re-cut onto the shirt with it, so they fit each frame). Run it again whenever player.png changes.
 """
 import argparse
 import colorsys
@@ -99,6 +100,19 @@ def regions(f):
     return out
 
 
+def shift(reg, ref, names):
+    """how far this frame's regions `names` have moved from the standing frame's: [dx, dy] with the least mismatch"""
+    mask = lambda r: np.any([(r[..., :3] == REGIONS[k]).all(2) for k in names], 0) & (r[..., 3] > 0)
+    m, base = mask(reg), mask(ref)
+    best, at = None, [0, 0]
+    for dy in range(-3, 4):
+        for dx in range(-3, 4):
+            err = (np.roll(np.roll(base, dy, 0), dx, 1) != m).sum() * 10 + abs(dx) + abs(dy)
+            if best is None or err < best:
+                best, at = err, [dx, dy]
+    return at
+
+
 def waist_point(reg):
     """the middle of the top row of the trousers: [x, y] in frame px"""
     pants = (reg[..., :3] == REGIONS['pants']).all(2) & (reg[..., 3] > 0)
@@ -119,17 +133,21 @@ def main():
     img = np.array(Image.open(a.sheet).convert('RGBA'))
     res = np.zeros_like(img)
     rows, cols = img.shape[0] // FRAME, img.shape[1] // FRAME
-    waist, offset = [], []
+    waist, offset, shirt = [], [], []
     for r in range(rows):
-        points = []
+        points, shifts, hips = [], [], []
         for c in range(cols):
             sl = np.s_[r * FRAME:(r + 1) * FRAME, c * FRAME:(c + 1) * FRAME]
             res[sl] = regions(img[sl])
             points.append(waist_point(res[sl]))
+            stand = res[r * FRAME:(r + 1) * FRAME, 0:FRAME]
+            shifts.append(shift(res[sl], stand, ['shirt']))
+            hips.append(shift(res[sl], stand, ['pants']))
         waist.append(points[0])
-        offset.append([[p[0] - points[0][0], p[1] - points[0][1]] for p in points])
+        offset.append(hips)     # matching the whole trousers shape: steadier than the waist point itself
+        shirt.append(shifts)
     Image.fromarray(res).save(a.out)
-    BODY_JSON.write_text(json.dumps({'frame': FRAME, 'waist': waist, 'offset': offset}, separators=(',', ':')) + '\n')
+    BODY_JSON.write_text(json.dumps({'frame': FRAME, 'waist': waist, 'offset': offset, 'shirt': shirt}, separators=(',', ':')) + '\n')
     print('wrote', BODY_JSON.name, 'waist per row', waist)
     counts = {k: int((res[..., :3] == v).all(2).sum()) for k, v in REGIONS.items()}
     print('saved', a.out, counts)
