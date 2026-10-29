@@ -19,7 +19,7 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent))
-from strip_frames import split  # noqa: E402
+from strip_frames import split, head  # noqa: E402
 
 ROOT = Path(__file__).parent.parent
 CELL, FEET = 96, 90
@@ -91,7 +91,8 @@ def main():
             if mirror:
                 f = f[:, ::-1]
             h, w = f.shape[:2]
-            top, left = FEET - h + 1, (CELL - w) // 2
+            # centre on the head, not the whole figure: swinging arms change the width, the head stays put
+            top, left = FEET - h + 1, int(round(CELL / 2 - head(f)[2]))
             cell = sheet[r * CELL:(r + 1) * CELL, k * CELL:(k + 1) * CELL]
             m = f[..., 3] > 0
             cell[top:top + h, left:left + w][m] = f[m]
