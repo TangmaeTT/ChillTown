@@ -62,6 +62,7 @@
 | สีเสื้อผ้า/ผม/ผิว | เพิ่ม ramp 4 สี (มืด → สว่าง) ใน `shared/avatar.ts` |
 | เสื้อ/กางเกงแบบใหม่ที่ทรงเดิม | เพิ่มใน `TOPS`/`BOTTOMS` ถ้าเป็นลายใหม่ ให้เพิ่ม `pattern` แล้วเขียนกฎใน `outfit.ts` |
 | ชิ้นที่เปลี่ยนทรง (หมวก ผม กระโปรง ผ้าคลุม) | วาดภาพสีเทา 4 ทิศ × N แถว ลงใน `head/<id>.png` (ใช้ template จาก `head_parts.py` หรือดูตัวอย่างจาก `hair_part.py`/`cloth_part.py`) แล้วเพิ่มบรรทัดใน `parts.json` แล้วจัดตำแหน่งใน editor |
+| ทรงผมจาก AI | แนบ `art-in/char/hair_ref.png` ให้ ChatGPT พร้อม prompt "เติมผม ห้ามแตะส่วนอื่น" (ตัวอย่าง: `hair_messy`) แล้วรัน `hair_from_ai.py <ภาพ> head/<id>.png` จากนั้นเพิ่มใน `parts.json` เป็น `hairFront` + `tint: hair` |
 | หน้าแบบใหม่ | วาดคิ้วตาบนหัวเปล่า 3 แถว (ลืม/ครึ่ง/หลับ) หรือเอาหน้าจาก Autosprite มาผ่าน `face_part.py` |
 | ท่าใหม่ / ตัวฐานใหม่ | Autosprite → `char_sheet.py` → `blank_face.py` → `char_rig.py` → `body_regions.py` แล้วเสื้อผ้าทั้งหมดใส่ได้เอง (ชิ้นซ้อนอาจต้องปรับ offset) |
 

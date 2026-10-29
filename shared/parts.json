@@ -1,5 +1,6 @@
 [
   {"id":"face_default","slot":"face","blink":true,"offset":[[0,0],[0,0],[0,0],[0,0]]},
+  {"id":"hair_messy","slot":"hairFront","tint":"hair","offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"pony","slot":"hairFront","tint":"hair","offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"pony_tail","slot":"hairBack","tint":"hair","sway":{"poses":5,"stiffness":40,"damping":5,"gain":0.9},"offset":[[0,0],[0,0],[0,0],[0,0]]},
   {"id":"hood","slot":"hood","tint":"top","offset":[[0,0],[0,0],[0,0],[0,0]]},
