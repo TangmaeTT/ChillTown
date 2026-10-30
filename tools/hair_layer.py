@@ -11,6 +11,8 @@ head: scaled by the head's width and pinned to the head's top centre, which foll
 Writes a sheet the size of the walk sheet with only the hair, to draw over the body.
 --cut=0.66 keeps hair down to that share of the figure's height (default 0.58, the head);
 use it for long styles such as twin tails.
+--only: the second image contains ONLY the hair (same canvas, on the heads' positions,
+everything else magenta), so it is used as is, with no diffing; cleanest edges.
 """
 import sys
 from pathlib import Path
@@ -69,6 +71,7 @@ def head_anchor(fig):
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     cut = next((float(a[6:]) for a in sys.argv[1:] if a.startswith('--cut=')), 0.58)
+    only = '--only' in sys.argv[1:]
     if len(args) != 4:
         sys.exit(__doc__)
     bald_p, hair_p, sheet_p, out_p = args
@@ -88,6 +91,14 @@ def main():
         b, r = bald[:, x0:x1], hair[:, x0:x1]
         ys = np.nonzero(b[..., 3].max(1))[0]
         btop, bh = ys[0], ys[-1] - ys[0] + 1
+        if only:
+            # The second image holds only the hair, already placed on the heads.
+            mask = drop_specks(r[..., 3] > 0)
+            layer = np.zeros_like(r)
+            layer[mask] = r[mask]
+            top, mid, width = head_anchor(b)
+            layers[d] = (layer, top, mid, width)
+            continue
         diff = np.linalg.norm(r[..., :3].astype(float) - b[..., :3].astype(float), axis=-1)
         mask = (r[..., 3] > 0) & ((b[..., 3] == 0) | (diff > 60))
         mask[btop + int(bh * cut):] = False                   # hair stays above --cut of the height (0.58: head)
