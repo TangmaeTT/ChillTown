@@ -8,6 +8,71 @@ class_name PropKit
 ## A card faces the camera, which looks along (+X, +Z).
 const CARD_YAW := -3.0 * PI / 4.0
 
+## Props the layout editor can place: kind -> [builder, texture, Thai name].
+const CATALOG := {
+	"ac": ["box", "kit_ac", "แอร์"],
+	"meter": ["box", "kit_meter", "มิเตอร์ไฟ"],
+	"crates": ["box", "kit_crates", "ลังซ้อน"],
+	"fern": ["card", "kit_fern", "เฟิร์น"],
+	"bush": ["card", "kit_bush", "กระถางพุ่ม"],
+	"tall": ["card", "kit_tall", "ต้นไม้สูง"],
+	"rack": ["card", "kit_rack", "ราวตากผ้า"],
+	"shelf": ["box", "grocery_shelf", "ชั้นวางของ"],
+	"counter": ["box", "grocery_counter", "เคาน์เตอร์"],
+	"fridge": ["box", "grocery_fridge", "ตู้แช่"],
+	"vending": ["vending", "vending", "ตู้กดน้ำ"],
+}
+
+
+## Places a catalogue prop with its base centred on `foot`. The returned node
+## carries meta "kind" and "size" (bounding box, metres) for the editor.
+static func spawn(parent: Node3D, kind: String, foot: Vector3, yaw := 0.0) -> Node3D:
+	var spec: Array = CATALOG[kind]
+	var node: Node3D
+	match spec[0]:
+		"card":
+			node = Node3D.new()
+			node.position = foot
+			parent.add_child(node)
+			card(node, spec[1], Vector3.ZERO)
+		"vending":
+			node = textured_box(parent, spec[1], foot, yaw)
+			_vending_fx(node)
+		_:
+			node = textured_box(parent, spec[1], foot, yaw)
+	node.set_meta("kind", kind)
+	node.set_meta("size", size_of(kind))
+	return node
+
+
+static func size_of(kind: String) -> Vector3:
+	var spec: Array = CATALOG[kind]
+	if spec[0] == "card":
+		var s := Toon.texture_size_m(spec[1])
+		return Vector3(s.x, s.y, 0.1)
+	var front := Toon.texture_size_m(spec[1] + "_front")
+	return Vector3(front.x, front.y, Toon.texture_size_m(spec[1] + "_side").x)
+
+
+## Turns a placed prop; its reflection (if any) keeps pointing at the camera.
+static func set_yaw(node: Node3D, yaw: float) -> void:
+	node.rotation.y = yaw
+	if node.has_node("fx"):
+		node.get_node("fx").rotation.y = -yaw
+
+
+## Vending machine glow: a small light in front and a wet-ground reflection
+## under a counter-rotated holder, since reflections must face the camera.
+static func _vending_fx(node: Node3D) -> void:
+	var size := Toon.texture_size_m("vending_front")
+	var depth := Toon.texture_size_m("vending_side").x
+	CityBuilder.omni(node, Vector3(0, size.y / 2 + 0.2, -depth / 2 - 0.5), Color("e8f4ff"), 0.6, 2.5)
+	var fx := Node3D.new()
+	fx.name = "fx"
+	node.add_child(fx)
+	fx.rotation.y = -node.rotation.y
+	CityBuilder.reflection(fx, Vector3.ZERO, size.y, 0.8, Color("f2ead0"), 0.6)
+
 
 static func _face(parent: Node3D, center: Vector3, size: Vector2, rot: Vector3, tex: String) -> MeshInstance3D:
 	var mi := CityBuilder.face(parent, center, size, 0.0, Toon.textured(tex))
@@ -125,6 +190,7 @@ static func interior(parent: Node3D, kit: String, center_x: float, front_z: floa
 	# So the pieces sit near the front, spread across the screen and layered
 	# by height: fridge at the front right, counter front centre, the
 	# freestanding shelf just behind on the left, rising above the counter.
-	textured_box(parent, kit + "_fridge", Vector3(center_x - width / 2 + 0.55, floor_y, front_z + 0.5))
-	textured_box(parent, kit + "_counter", Vector3(center_x + 0.15, floor_y, front_z + 0.5))
-	textured_box(parent, kit + "_shelf", Vector3(center_x + 1.15, floor_y, front_z + 1.1))
+	# Movable: these go into the default layout for the editor.
+	CityBuilder.add_default("fridge", Vector3(center_x - width / 2 + 0.55, floor_y, front_z + 0.5))
+	CityBuilder.add_default("counter", Vector3(center_x + 0.15, floor_y, front_z + 0.5))
+	CityBuilder.add_default("shelf", Vector3(center_x + 1.15, floor_y, front_z + 1.1))

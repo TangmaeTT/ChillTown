@@ -4,7 +4,7 @@ extends Node3D
 ## The 3D world renders into a low-res SubViewport scaled up with nearest
 ## filtering (pixel look); UI and chat bubbles stay full resolution.
 ## User args (after "--"): --say=<text>  --time=<hours>  --dry  --zoom=<f>
-## --pixel=<1-4>  (plus DevShot's).
+## --pixel=<1-4>  --edit (open the layout editor)  (plus DevShot's).
 
 ## Isometric 2:1: camera turned 45 degrees and tilted 30 degrees down,
 ## looking at the shopfronts (+Z) from the street side.
@@ -31,6 +31,8 @@ var view_box := SubViewportContainer.new()
 var game_view := SubViewport.new()
 var bubbles := BubbleLayer.new()
 var chat := ChatPanel.new()
+var props := Node3D.new()
+var editor := PropEditor.new()
 var clock := GameClock.new()
 var sky := SkyRig.new()
 var rain: GPUParticles3D
@@ -49,6 +51,10 @@ func _ready() -> void:
 	sky.clock = clock
 	add_child(sky)
 	CityBuilder.build(self)
+	props.name = "Props"
+	add_child(props)
+	for it in PropLayout.load_or(CityBuilder.default_props).items:
+		PropKit.spawn(props, it.kind, it.pos, it.yaw)
 
 	player = PlayerController.new(Chibi.new())
 	player.position = Vector3(-6.5, 0, 5.4)
@@ -73,6 +79,10 @@ func _ready() -> void:
 	add_child(chat)
 	chat.submitted.connect(func(t: String) -> void: chat_log.post("torad", t))
 	chat_log.message_added.connect(_on_message)
+	# Added after the player so it sees clicks first while editing.
+	editor.props_root = props
+	editor.camera = camera
+	add_child(editor)
 
 	rain = _make_rain()
 	add_child(rain)
@@ -89,6 +99,8 @@ func _ready() -> void:
 			zoom = float(a.substr(7))
 		elif a.begins_with("--pixel="):
 			_set_pixel(int(a.substr(8)))
+		elif a == "--edit":
+			editor.toggle()
 
 
 func _setup_view() -> void:
@@ -130,6 +142,7 @@ func _set_pixel(n: int) -> void:
 	pixel = clampi(n, 1, 4)
 	view_box.stretch_shrink = pixel
 	bubbles.screen_scale = pixel
+	editor.screen_scale = pixel
 	player.screen_scale = pixel
 
 

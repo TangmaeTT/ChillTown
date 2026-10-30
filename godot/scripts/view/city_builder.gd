@@ -25,6 +25,15 @@ const CORNERS := {4: ["corner_b", "ร้านชำ", "grocery"]}
 const SOI_WIDTH := 4.4
 
 
+## Movable props placed by the city code, used when no saved layout exists
+## (PropLayout). Filled by build().
+static var default_props: Array[Dictionary] = []
+
+
+static func add_default(kind: String, foot: Vector3, yaw := 0.0) -> void:
+	default_props.append({"kind": kind, "pos": foot, "yaw": yaw})
+
+
 static func ground_height(p: Vector3) -> float:
 	return SIDEWALK_TOP if absf(p.z) > ROAD_HALF else 0.0
 
@@ -110,6 +119,7 @@ static func omni(parent: Node3D, pos: Vector3, color: Color, energy: float, rang
 static func build(root: Node3D) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
+	default_props.clear()
 	_ground(root)
 	_road_markings(root)
 	_shophouses(root, rng)
@@ -191,19 +201,6 @@ static func _textured_shophouse(root: Node3D, x: float, tex: String, sign: Strin
 		root.add_child(l)
 
 
-static func _vending_machine(root: Node3D, pos: Vector3) -> void:
-	var size := Toon.texture_size_m("vending_front")
-	var depth := Toon.texture_size_m("vending_side").x
-	var c := pos + Vector3(0, size.y / 2, 0)
-	box(root, c, Vector3(size.x - 0.02, size.y - 0.02, depth - 0.02), Toon.mat(Color("3f6f6e")), true)
-	face(root, c + Vector3(0, 0, -depth / 2), size, PI, Toon.textured("vending_front", 1.6))
-	var side := Vector2(depth, size.y)
-	face(root, c + Vector3(size.x / 2, 0, 0), side, PI / 2, Toon.textured("vending_side"))
-	face(root, c + Vector3(-size.x / 2, 0, 0), side, -PI / 2, Toon.textured("vending_side"))
-	omni(root, c + Vector3(0, 0.2, -depth / 2 - 0.5), Color("e8f4ff"), 0.6, 2.5)
-	reflection(root, Vector3(pos.x, 0, pos.z - depth / 2 - 0.05), size.y, 0.8, Color("f2ead0"), 0.6)
-
-
 ## Box textured on the three faces the camera sees: front (-Z), side (-X) and roof.
 ## The front sits on the sidewalk edge; the side texture's width sets the depth.
 static func solid(parent: Node3D, center: Vector3, size: Vector3) -> void:
@@ -257,22 +254,22 @@ static func _dress_corner(root: Node3D, x: float, front: float, size: Vector2, d
 	var grey := Color("5a6a78")
 	var dark := Color("3a3d42")
 	# Front of these pieces faces the alley (-X).
-	PropKit.textured_box(root, "kit_ac", Vector3(side_x - 0.15, 6.0, front + 2.4), PI / 2)
-	PropKit.textured_box(root, "kit_ac", Vector3(side_x - 0.15, 3.3, front + 4.8), PI / 2)
-	PropKit.textured_box(root, "kit_meter", Vector3(side_x - 0.13, 1.4, front + 0.9), PI / 2)
+	add_default("ac", Vector3(side_x - 0.15, 6.0, front + 2.4), PI / 2)
+	add_default("ac", Vector3(side_x - 0.15, 3.3, front + 4.8), PI / 2)
+	add_default("meter", Vector3(side_x - 0.13, 1.4, front + 0.9), PI / 2)
 	PropKit.pipe(root, Vector3(side_x - 0.08, SIDEWALK_TOP, front + 0.25), Vector3(side_x - 0.08, size.y - 0.3, front + 0.25), 0.06, grey)
 	PropKit.pipe(root, Vector3(x + size.x / 2 - 0.15, SIDEWALK_TOP, front - 0.08), Vector3(x + size.x / 2 - 0.15, size.y - 0.3, front - 0.08), 0.05, grey)
 	PropKit.pipe(root, Vector3(side_x - 0.04, 2.1, front + 0.9), Vector3(side_x - 0.04, 2.1, front + depth - 0.3), 0.025, dark)
 	PropKit.pipe(root, Vector3(side_x - 0.04, 2.1, front + 0.9), Vector3(side_x - 0.04, 6.1, front + 0.9), 0.025, dark)
 	PropKit.pipe(root, Vector3(side_x - 0.04, 6.1, front + 0.9), Vector3(side_x - 0.04, 6.1, front + 2.0), 0.025, dark)
-	PropKit.card(root, "kit_fern", Vector3(x + size.x / 2 - 0.35, SIDEWALK_TOP, front - 0.3))
-	PropKit.card(root, "kit_tall", Vector3(x + size.x / 2 - 0.85, SIDEWALK_TOP, front - 0.3))
-	PropKit.textured_box(root, "kit_crates", Vector3(x - size.x / 2 + 0.35, SIDEWALK_TOP, front - 0.25))
+	add_default("fern", Vector3(x + size.x / 2 - 0.35, SIDEWALK_TOP, front - 0.3))
+	add_default("tall", Vector3(x + size.x / 2 - 0.85, SIDEWALK_TOP, front - 0.3))
+	add_default("crates", Vector3(x - size.x / 2 + 0.35, SIDEWALK_TOP, front - 0.25))
 	# Bush on the left end of the left 2nd-floor window sill (sill 4.45 m up,
 	# window 0.6-1.8 m in from the facade's left edge as seen from the street,
 	# which is world +X); laundry rack up on the roof.
-	PropKit.card(root, "kit_bush", Vector3(x + size.x / 2 - 0.85, 4.45, front - 0.15))
-	PropKit.card(root, "kit_rack", Vector3(x + 0.4, size.y, front + 1.6))
+	add_default("bush", Vector3(x + size.x / 2 - 0.85, 4.45, front - 0.15))
+	add_default("rack", Vector3(x + 0.4, size.y, front + 1.6))
 	var top := PropKit.utility_pole(root, Vector3(side_x - 1.2, SIDEWALK_TOP, front - 1.3))
 	PropKit.wire(root, top, Vector3(side_x - 0.05, 7.2, front + 0.5), 0.5)
 	PropKit.wire(root, top + Vector3(0.5, 0, 0), Vector3(side_x - 0.05, 6.8, front + 1.5), 0.6)
@@ -402,7 +399,7 @@ static func _south_side(root: Node3D) -> void:
 
 static func _props(root: Node3D) -> void:
 	# Vending machine against the shuttered house next to the textured shop (index 6 -> x = 0).
-	_vending_machine(root, Vector3(1.3, SIDEWALK_TOP, WALK_EDGE - 0.4))
+	add_default("vending", Vector3(1.3, SIDEWALK_TOP, WALK_EDGE - 0.4))
 
 	# Bench on the south sidewalk.
 	var wood := Toon.mat(Color("8f7068"))
