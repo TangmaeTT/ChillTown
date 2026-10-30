@@ -64,6 +64,33 @@ static func sphere(parent: Node3D, center: Vector3, r: float, m: Material,
 	return mi
 
 
+const REFLECTION_SHADER := preload("res://assets/shaders/wet_reflection.gdshader")
+
+
+## Streak of a light reflected on wet ground. `height`: how high the light is.
+## In this isometric view the mirrored light shows up 1.73 x height along the
+## ground toward the camera (-X, -Z).
+static func reflection(parent: Node3D, foot: Vector3, height: float, width: float,
+		color: Color, strength: float, night_only := true) -> void:
+	var length := 1.73 * height
+	var mi := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2(width, length)
+	mi.mesh = q
+	var m := ShaderMaterial.new()
+	m.shader = REFLECTION_SHADER
+	m.set_shader_parameter("color", color)
+	m.set_shader_parameter("strength", strength)
+	m.set_shader_parameter("night_only", night_only)
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var dir := Vector3(-1, 0, -1).normalized()
+	mi.position = Vector3(foot.x, ground_height(foot) + 0.015, foot.z) + dir * length / 2
+	# Lay the quad flat (X), then turn its far end (+Z) toward the camera (Y).
+	mi.rotation = Vector3(-PI / 2, -3 * PI / 4, 0)
+	parent.add_child(mi)
+
+
 static func omni(parent: Node3D, pos: Vector3, color: Color, energy: float, range_m: float) -> OmniLight3D:
 	var l := OmniLight3D.new()
 	l.position = pos
@@ -90,8 +117,8 @@ static func build(root: Node3D) -> void:
 
 static func _ground(root: Node3D) -> void:
 	# Tiled, so the Mobile renderer's per-mesh light limit (8 omni) is never hit.
-	var asphalt := Toon.mat(Color("2b3038"), 0.85)
-	var walk := Toon.mat(Color("6b6a66"), 0.45)
+	var asphalt := Toon.ground("ground_asphalt", Color("2b3038"), 0.85)
+	var walk := Toon.ground("ground_pavers", Color("6b6a66"), 0.45)
 	var curb := Toon.mat(Color("8a8984"), 0.3)
 	for ix in range(-3, 3):
 		for iz in range(-3, 3):
@@ -150,6 +177,7 @@ static func _textured_shophouse(root: Node3D, x: float, tex: String, sign: Strin
 	# Quad faces +Z by default; turn it to face the street (-Z).
 	face(root, Vector3(x, size.y / 2, front - 0.01), size, PI, Toon.textured(tex))
 	omni(root, Vector3(x, 1.6, front - 0.8), Color("ffbf80"), 0.9, 4.5)
+	reflection(root, Vector3(x, 0, front - 0.3), 2.4, 2.0, Color("ffbf80"), 0.3)
 	if sign != "":
 		# The facade's empty signboard band sits about a third of the way up.
 		var l := Toon.label(sign, 72, Color(1.7, 1.4, 1.0), 0)
@@ -169,6 +197,7 @@ static func _vending_machine(root: Node3D, pos: Vector3) -> void:
 	face(root, c + Vector3(size.x / 2, 0, 0), side, PI / 2, Toon.textured("vending_side"))
 	face(root, c + Vector3(-size.x / 2, 0, 0), side, -PI / 2, Toon.textured("vending_side"))
 	omni(root, c + Vector3(0, 0.2, -depth / 2 - 0.5), Color("e8f4ff"), 0.6, 2.5)
+	reflection(root, Vector3(pos.x, 0, pos.z - depth / 2 - 0.05), size.y, 0.8, Color("f2ead0"), 0.6)
 
 
 static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: int) -> void:
@@ -199,6 +228,7 @@ static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: 
 		var warm := Color(WARM[idx % WARM.size()])
 		box(root, Vector3(x, 1.35, front - 0.03), Vector3(3.4, 2.5, 0.06), Toon.glow(warm, 1.0))
 		omni(root, Vector3(x, 1.8, front - 1.0), Color("ffbf80"), 0.9, 4.5)
+		reflection(root, Vector3(x, 0, front - 0.3), 2.5, 2.0, warm, 0.25)
 	else:
 		var shutter := Toon.mat(Color("6e737b"))
 		var groove := Toon.mat(Color("4a4e55"))
@@ -251,6 +281,7 @@ static func _lamp(root: Node3D, x: float, z: float) -> void:
 	box(root, Vector3(x, 4.22, z + toward * 0.9), Vector3(0.38, 0.14, 0.26), Toon.glow(Color("ffd59a"), 4.0))
 	var lamp := omni(root, Vector3(x, 3.9, z + toward * 0.9), Color("ffc983"), 2.6, 6.5)
 	lamp.add_to_group("street_lamps")
+	reflection(root, Vector3(x, 0, z + toward * 0.9), 4.2, 0.5, Color("ffc983"), 0.9)
 
 
 static func _lamps(root: Node3D) -> void:

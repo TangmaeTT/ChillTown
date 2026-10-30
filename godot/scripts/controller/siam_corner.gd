@@ -3,7 +3,7 @@ extends Node3D
 ## and chibis, the clock to the sky rig, and sets up rain and the camera.
 ## The 3D world renders into a low-res SubViewport scaled up with nearest
 ## filtering (pixel look); UI and chat bubbles stay full resolution.
-## User args (after "--"): --say=<text>  --time=<hours>  --rain  --zoom=<f>
+## User args (after "--"): --say=<text>  --time=<hours>  --dry  --zoom=<f>
 ## --pixel=<1-4>  (plus DevShot's).
 
 ## Isometric 2:1: camera turned 45 degrees and tilted 30 degrees down,
@@ -37,6 +37,8 @@ var rain: GPUParticles3D
 ## 0.75: one texture pixel (32 per metre) is about one game pixel on screen.
 var zoom := 0.75
 var pixel := 2
+## Ground wetness: soaks up while it rains, dries slowly to damp after.
+var wet := 1.0
 var _cam_focus := Vector3.ZERO
 var _npc_line := 0
 var _npc_timer := 0.4
@@ -73,7 +75,6 @@ func _ready() -> void:
 	chat_log.message_added.connect(_on_message)
 
 	rain = _make_rain()
-	rain.emitting = false
 	add_child(rain)
 
 	for a in OS.get_cmdline_user_args():
@@ -81,8 +82,9 @@ func _ready() -> void:
 			chat_log.post("torad", a.substr(6))
 		elif a.begins_with("--time="):
 			clock.hours = float(a.substr(7))
-		elif a == "--rain":
-			rain.emitting = true
+		elif a == "--dry":
+			rain.emitting = false
+			wet = 0.0
 		elif a.begins_with("--zoom="):
 			zoom = float(a.substr(7))
 		elif a.begins_with("--pixel="):
@@ -102,9 +104,26 @@ func _setup_view() -> void:
 	camera.near = 0.5
 	camera.far = 120.0
 	game_view.add_child(camera)
+	_add_outline_pass()
 	_cam_focus = player.position + FOCUS_OFFSET
 	camera.look_at_from_position(_cam_focus + CAM_DIR.normalized() * CAM_DISTANCE, _cam_focus)
 	_set_pixel(pixel)
+
+
+## Full-screen quad on the camera running edge_outline.gdshader.
+func _add_outline_pass() -> void:
+	var quad := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE
+	quad.mesh = q
+	var m := ShaderMaterial.new()
+	m.shader = preload("res://assets/shaders/edge_outline.gdshader")
+	m.render_priority = -128
+	quad.material_override = m
+	quad.extra_cull_margin = 16384.0
+	quad.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	quad.position = Vector3(0, 0, -1)
+	camera.add_child(quad)
 
 
 func _set_pixel(n: int) -> void:
@@ -127,6 +146,8 @@ func _process(delta: float) -> void:
 	camera.global_position = b * local
 	rain.position = player.position + Vector3(0, 12, 2)
 	RenderingServer.global_shader_parameter_set("player_position", player.position)
+	wet = move_toward(wet, 1.0 if rain.emitting else 0.35, delta * (0.2 if rain.emitting else 0.02))
+	RenderingServer.global_shader_parameter_set("wet_amount", wet)
 	clock.advance(delta)
 	sky.update(delta, player.position)
 	chat.set_clock(clock.label())

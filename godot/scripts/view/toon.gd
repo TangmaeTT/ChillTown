@@ -51,6 +51,19 @@ static func textured(name: String, emission_energy := 2.0) -> ShaderMaterial:
 	return m
 
 
+## Ground tiled from above in world space (tools/gen_ground.py textures).
+static func ground(name: String, color: Color, wet: float, tile_m := 2.0) -> ShaderMaterial:
+	var key := "ground|%s|%s|%s" % [name, color.to_html(), wet]
+	if _cache.has(key):
+		return _cache[key]
+	var m := mat(color, wet).duplicate() as ShaderMaterial
+	m.set_shader_parameter("use_ground", true)
+	m.set_shader_parameter("ground_tex", load("res://assets/textures/%s_albedo.png" % name))
+	m.set_shader_parameter("ground_tile_m", tile_m)
+	_cache[key] = m
+	return m
+
+
 ## Size in metres of a face texture at the project's 32 px per metre.
 static func texture_size_m(name: String) -> Vector2:
 	var t: Texture2D = load("res://assets/textures/%s_albedo.png" % name)

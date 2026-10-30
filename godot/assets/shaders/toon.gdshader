@@ -25,6 +25,19 @@ uniform bool use_tex = false;
 uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_disable;
 uniform sampler2D emission_tex : source_color, filter_nearest, repeat_disable;
 uniform float tex_emission_energy = 2.0;
+// Tiled ground from tools/gen_ground.py, projected from above in world space.
+// The texture stores value / 2, so it can brighten as well as darken.
+uniform bool use_ground = false;
+uniform sampler2D ground_tex : source_color, filter_nearest, repeat_enable;
+uniform float ground_tile_m = 2.0;
+// 0 dry .. 1 soaked (rain); scales the wet look of materials with wetness > 0.
+global uniform float wet_amount;
+
+varying vec3 world_pos;
+
+void vertex() {
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
 
 float bayer4(vec2 p) {
 	ivec2 i = ivec2(mod(p, 4.0));
@@ -50,8 +63,12 @@ void fragment() {
 		base *= t.rgb;
 		glow += texture(emission_tex, UV).rgb * tex_emission_energy;
 	}
-	ALBEDO = base;
-	ROUGHNESS = mix(0.95, 0.2, wetness);
+	if (use_ground) {
+		base *= texture(ground_tex, world_pos.xz / ground_tile_m).rgb * 2.0;
+	}
+	float wet = wetness * wet_amount;
+	ALBEDO = base * mix(1.0, 0.72, wet);
+	ROUGHNESS = mix(0.95, 0.2, wet);
 	EMISSION = glow * mix(day_emission, 1.0, night_amount);
 }
 
@@ -65,9 +82,10 @@ void light() {
 	float rim = smoothstep(0.62, 0.7, 1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0));
 	DIFFUSE_LIGHT += LIGHT_COLOR * rim * rim_amount * toon * step(0.01, ndl) / PI;
 
-	if (wetness > 0.0) {
+	float wet = wetness * wet_amount;
+	if (wet > 0.0) {
 		vec3 h = normalize(VIEW + LIGHT);
-		float s = pow(clamp(dot(NORMAL, h), 0.0, 1.0), mix(16.0, 400.0, wetness));
-		SPECULAR_LIGHT += LIGHT_COLOR * smoothstep(0.3, 0.6, s) * wetness * ATTENUATION * 0.6;
+		float s = pow(clamp(dot(NORMAL, h), 0.0, 1.0), mix(16.0, 400.0, wet));
+		SPECULAR_LIGHT += LIGHT_COLOR * smoothstep(0.3, 0.6, s) * wet * ATTENUATION * 0.6;
 	}
 }

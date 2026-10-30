@@ -9,14 +9,14 @@ const SHADOW_LAMPS := 2
 
 ## hour, sun colour, sun energy, ambient colour, ambient energy, background
 const KEYS := [
-	[0.0, "8fa6d8", 0.3, "3b4f73", 0.55, "0d1622"],
+	[0.0, "7f95d0", 0.25, "2e3c66", 0.5, "0a0f1e"],
 	[5.5, "ffb38a", 0.35, "6a6a8a", 0.5, "3a3e5a"],
 	[7.0, "fff0d8", 1.1, "a9b7c9", 0.55, "9fb8c8"],
 	[12.0, "fff8ec", 1.35, "b0bfcf", 0.6, "a8c4d4"],
 	[16.5, "ffe0b0", 1.15, "a9a9c0", 0.55, "9fb0c0"],
 	[18.3, "ff9a6a", 0.6, "6a5a7a", 0.5, "4a3a5a"],
-	[19.5, "8fa6d8", 0.3, "3b4f73", 0.55, "0d1622"],
-	[24.0, "8fa6d8", 0.3, "3b4f73", 0.55, "0d1622"],
+	[19.5, "7f95d0", 0.25, "2e3c66", 0.5, "0a0f1e"],
+	[24.0, "7f95d0", 0.25, "2e3c66", 0.5, "0a0f1e"],
 ]
 
 var clock: GameClock

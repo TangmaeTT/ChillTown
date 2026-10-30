@@ -32,6 +32,10 @@ night_amount={
 "type": "float",
 "value": 1.0
 }
+wet_amount={
+"type": "float",
+"value": 1.0
+}
 
 [gui]
 
