@@ -2,8 +2,8 @@ class_name PropEditor
 extends CanvasLayer
 ## In-game layout editor, toggled with Tab. Click a prop to select it and drag
 ## to move it at its own height (5 cm snap). Q/E turn it 90 degrees, R/F raise
-## or lower it (Shift: 25 cm), C copies, Delete or X removes, Esc deselects,
-## Ctrl+S or the button saves to PropLayout. The palette adds a new prop in
+## or lower it (Shift: 25 cm), G drops it to the ground, C copies, Delete or X
+## removes, Esc deselects, Ctrl+S or the button saves to PropLayout. The palette adds a new prop in
 ## the middle of the screen. WASD still walks, which moves the camera.
 
 const SNAP := 0.05
@@ -51,6 +51,11 @@ func _ready() -> void:
 	save.add_theme_font_size_override("font_size", 18)
 	save.pressed.connect(_save)
 	top.add_child(save)
+	var close := Button.new()
+	close.text = "  ออก  "
+	close.add_theme_font_size_override("font_size", 18)
+	close.pressed.connect(toggle)
+	top.add_child(close)
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 6)
 	col.add_child(row)
@@ -60,7 +65,10 @@ func _ready() -> void:
 		b.add_theme_font_size_override("font_size", 16)
 		b.pressed.connect(_add.bind(kind))
 		row.add_child(b)
-	col.add_child(_label("คลิก = เลือก/ลาก · Q/E = หมุน · R/F = ยกขึ้น/ลง (Shift ทีละ 25 ซม.) · C = ก๊อป · Delete = ลบ · Esc = ยกเลิก · Ctrl+S = บันทึก · Tab = ออก", 14, Color(0.85, 0.82, 0.7)))
+	# Buttons must not take keyboard focus, or Tab would cycle through them.
+	for b in _panel.find_children("*", "Button", true, false):
+		b.focus_mode = Control.FOCUS_NONE
+	col.add_child(_label("คลิก = เลือก/ลาก · Q/E = หมุน · R/F = ยกขึ้น/ลง (Shift ทีละ 25 ซม.) · G = วางลงพื้น · C = ก๊อป · Delete = ลบ · Esc = ยกเลิก · Ctrl+S = บันทึก · Tab = ออก", 14, Color(0.85, 0.82, 0.7)))
 
 	var box := BoxMesh.new()
 	box.size = Vector3.ONE
@@ -93,11 +101,17 @@ func toggle() -> void:
 		_select(null)
 
 
-func _unhandled_input(event: InputEvent) -> void:
+## Tab is caught here, before the GUI, which would otherwise use it to move focus.
+func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_TAB:
+		var focus := get_viewport().gui_get_focus_owner()
+		if focus is LineEdit:
+			return
 		toggle()
 		get_viewport().set_input_as_handled()
-		return
+
+
+func _unhandled_input(event: InputEvent) -> void:
 	if not active:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -131,6 +145,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				_lift(step)
 			KEY_F:
 				_lift(-step)
+			KEY_G:
+				if selected:
+					selected.position.y = CityBuilder.SIDEWALK_TOP
+					_refresh()
 			KEY_C:
 				_copy()
 			KEY_DELETE, KEY_X:

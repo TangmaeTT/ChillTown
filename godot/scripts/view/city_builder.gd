@@ -228,7 +228,7 @@ static func _corner_building(root: Node3D, x: float, tex: String, sign: String, 
 		var hole := Toon.hole_rect_m(tex + "_front")
 		# Texture x runs from the facade's +X edge (the quad is turned to face -Z).
 		PropKit.interior(root, kit, x + front_m.x / 2 - hole.get_center().x, front,
-				front_m.x - 0.3, 4.0, hole.position.y + SIDEWALK_TOP)
+				front_m.x - 0.3, 4.0, SIDEWALK_TOP)
 		_dress_corner(root, x, front, front_m, depth)
 	var front_face := face(root, Vector3(x, h / 2, front - 0.01), front_m, PI, Toon.textured(tex + "_front"))
 	# Dev: `-- --xray` hides corner fronts to check the room layout behind them.

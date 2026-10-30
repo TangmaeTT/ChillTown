@@ -163,6 +163,7 @@ static func utility_pole(parent: Node3D, foot: Vector3, height := 8.5) -> Vector
 ## right wall is what you mostly see), floor, ceiling, a tube light that is
 ## always on, and the kit's shelf, counter and fridge. `front_z` is the facade
 ## plane; the room runs +Z. Depth should match the back-wall texture's width.
+## The floor sits at sidewalk height so props placed anywhere stand on it.
 static func interior(parent: Node3D, kit: String, center_x: float, front_z: float,
 		width: float, depth: float, floor_y: float, height := 2.6) -> void:
 	var wall := Toon.mat(Color("8a7a68"))
