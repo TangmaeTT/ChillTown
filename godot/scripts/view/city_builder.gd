@@ -194,7 +194,7 @@ static func _lamp(root: Node3D, x: float, z: float) -> void:
 	box(root, Vector3(x, SIDEWALK_TOP + 2.1, z), Vector3(0.14, 4.2, 0.14), pole, true)
 	box(root, Vector3(x, 4.3, z + toward * 0.45), Vector3(0.1, 0.1, 0.9), pole)
 	box(root, Vector3(x, 4.22, z + toward * 0.9), Vector3(0.38, 0.14, 0.26), Toon.glow(Color("ffd59a"), 4.0))
-	omni(root, Vector3(x, 3.9, z + toward * 0.9), Color("ffc983"), 1.3, 6.5)
+	omni(root, Vector3(x, 3.9, z + toward * 0.9), Color("ffc983"), 1.2, 5.0)
 
 
 static func _lamps(root: Node3D) -> void:

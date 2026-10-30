@@ -9,6 +9,8 @@ const BOUNDS := Rect2(-28, -7.6, 56, 15.2)
 var chibi: Chibi
 var camera: Camera3D
 var input_blocked := func() -> bool: return false
+## Screen pixels per game-viewport pixel; clicks are converted before raycasting.
+var screen_scale := 1.0
 var _target = null
 
 
@@ -30,8 +32,9 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var origin := camera.project_ray_origin(event.position)
-		var normal := camera.project_ray_normal(event.position)
+		var at: Vector2 = event.position / screen_scale
+		var origin := camera.project_ray_origin(at)
+		var normal := camera.project_ray_normal(at)
 		var hit = Plane(Vector3.UP, 0.0).intersects_ray(origin, normal)
 		if hit != null:
 			_target = hit

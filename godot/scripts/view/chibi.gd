@@ -2,8 +2,7 @@ class_name Chibi
 extends Node3D
 ## Placeholder chibi built from primitives, standing in for the real 3D base
 ## model. It already has the parts the outfit system will need (hair, top,
-## bottom, shoes as separate meshes), a code walk cycle, blinking, a name tag
-## and a chat bubble. Faces -Z.
+## bottom, shoes as separate meshes), a code walk cycle and blinking. Faces -Z.
 
 const BUBBLE_SECONDS := 6.0
 const OUTLINE := 0.012
@@ -17,8 +16,10 @@ var _rig := Node3D.new()
 var _legs: Array[Node3D] = []
 var _arms: Array[Node3D] = []
 var _eyes: Array[Node3D] = []
-var _bubble: Label3D
-var _name_tag: Label3D
+## Read by BubbleLayer, which draws name tags and bubbles in 2D at full
+## resolution so Thai text stays sharp over the pixelated world.
+var display_name := ""
+var bubble_text := ""
 var _phase := 0.0
 var _speed01 := 0.0
 var _bubble_left := 0.0
@@ -33,31 +34,15 @@ func _init(p_look := {}) -> void:
 func _ready() -> void:
 	add_child(_rig)
 	_build()
-	_name_tag = Toon.label("", 40, Color("d3ca90"), 10)
-	_name_tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_name_tag.no_depth_test = true
-	_name_tag.position.y = 1.72
-	add_child(_name_tag)
-	_bubble = Toon.label("", 56, Color.WHITE, 16)
-	_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_bubble.no_depth_test = true
-	_bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_bubble.width = 520
-	_bubble.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	_bubble.position.y = 1.95
-	_bubble.render_priority = 1
-	_bubble.visible = false
-	add_child(_bubble)
-
-
-func set_display_name(n: String) -> void:
-	_name_tag.text = n
 
 
 func say(text: String) -> void:
-	_bubble.text = text
-	_bubble.visible = true
+	bubble_text = text
 	_bubble_left = BUBBLE_SECONDS
+
+
+func is_bubble_visible() -> bool:
+	return _bubble_left > 0.0
 
 
 ## speed01: 0 idle .. 1 full walk. dir: world direction (y ignored).
@@ -86,8 +71,6 @@ func _process(delta: float) -> void:
 
 	if _bubble_left > 0.0:
 		_bubble_left -= delta
-		if _bubble_left <= 0.0:
-			_bubble.visible = false
 
 
 func _part(parent: Node3D, mesh: Mesh, pos: Vector3, color: Color, squash := Vector3.ONE,

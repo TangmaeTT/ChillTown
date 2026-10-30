@@ -1,10 +1,20 @@
 extends Node3D
 ## Test scene: one Siam street corner at night. Wires the chat model to the
 ## chat panel and chibis, sets up lights, rain, camera and day/night toggle.
-## User args (after "--"): --say=<text>  --day  --no-rain  --zoom=<f>  (plus DevShot's).
+## The 3D world renders into a low-res SubViewport scaled up with nearest
+## filtering (pixel look); UI and chat bubbles stay full resolution.
+## User args (after "--"): --say=<text>  --day  --no-rain  --zoom=<f>
+## --pixel=<1-4>  (plus DevShot's).
 
-const CAM_OFFSET := Vector3(0, 8, -12)
+## Camera looks along this direction (from the -Z side, down at the street).
+const CAM_DIR := Vector3(0, 8, -12)
+const CAM_DISTANCE := 40.0
+## Ortho height in metres at zoom 1.
+const VIEW_HEIGHT := 11.0
 const ZOOM_RANGE := Vector2(0.45, 1.6)
+const PIXEL_STEPS := [1, 2, 3, 4]
+## Look a little ahead of the player, toward the shopfronts.
+const FOCUS_OFFSET := Vector3(0, 1, 2.5)
 const NPC_LINES := [
 	"ฝนตกอีกแล้วเหรอ",
 	"ไปกินก๋วยเตี๋ยวกันไหม ร้านนี้น้ำซุปอร่อยนะ",
@@ -16,14 +26,19 @@ var chat_log := ChatLog.new()
 var player: PlayerController
 var npc: Chibi
 var camera := Camera3D.new()
+var view_box := SubViewportContainer.new()
+var game_view := SubViewport.new()
+var bubbles := BubbleLayer.new()
 var chat := ChatPanel.new()
 var env := Environment.new()
 var sun := DirectionalLight3D.new()
 var rain: GPUParticles3D
 var night := true
+var zoom := 1.0
+var pixel := 3
+var _cam_focus := Vector3.ZERO
 var _npc_line := 0
 var _npc_timer := 0.4
-var zoom := 1.0
 
 
 func _ready() -> void:
@@ -34,31 +49,23 @@ func _ready() -> void:
 	player = PlayerController.new(Chibi.new())
 	player.position = Vector3(-1.5, 0, -5.4)
 	add_child(player)
-	player.chibi.set_display_name("torad")
+	player.chibi.display_name = "torad"
 	player.camera = camera
 	player.input_blocked = chat.is_typing
 
 	npc = Chibi.new({"hair": Color("6b4a3a"), "top": Color("8ab074"), "bottom": Color("51444a")})
 	npc.position = Vector3(0.6, CityBuilder.SIDEWALK_TOP, -5.0)
-	npc.rotation.y = PI * 0.75
 	add_child(npc)
-	npc.set_display_name("มิว")
+	npc.display_name = "มิว"
 	npc.set_motion(0.0, Vector3(-1, 0, -0.6))
 
-	camera.fov = 32
-	camera.position = player.position + CAM_OFFSET * zoom
-	var attrs := CameraAttributesPractical.new()
-	attrs.dof_blur_far_enabled = true
-	attrs.dof_blur_far_distance = 20.0
-	attrs.dof_blur_far_transition = 10.0
-	attrs.dof_blur_near_enabled = true
-	attrs.dof_blur_near_distance = 7.0
-	attrs.dof_blur_near_transition = 4.0
-	attrs.dof_blur_amount = 0.06
-	camera.attributes = attrs
-	add_child(camera)
-	camera.look_at(player.position + Vector3.UP)
+	_setup_view()
 
+	add_child(bubbles)
+	bubbles.camera = camera
+	bubbles.track(player.chibi)
+	bubbles.track(npc)
+	chat.layer = 2
 	add_child(chat)
 	chat.submitted.connect(func(t: String) -> void: chat_log.post("torad", t))
 	chat_log.message_added.connect(_on_message)
@@ -75,14 +82,46 @@ func _ready() -> void:
 			rain.emitting = false
 		elif a.begins_with("--zoom="):
 			zoom = float(a.substr(7))
-			camera.position = player.position + CAM_OFFSET * zoom
-			camera.look_at(player.position + Vector3.UP)
+		elif a.begins_with("--pixel="):
+			_set_pixel(int(a.substr(8)))
+
+
+func _setup_view() -> void:
+	# World nodes stay under this root; the SubViewport has no world of its
+	# own, so its camera renders the same World3D at low resolution.
+	view_box.stretch = true
+	view_box.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	view_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	view_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(view_box)
+	view_box.add_child(game_view)
+	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	camera.near = 0.5
+	camera.far = 120.0
+	game_view.add_child(camera)
+	_cam_focus = player.position + FOCUS_OFFSET
+	camera.look_at_from_position(_cam_focus + CAM_DIR.normalized() * CAM_DISTANCE, _cam_focus)
+	_set_pixel(pixel)
+
+
+func _set_pixel(n: int) -> void:
+	pixel = clampi(n, 1, 4)
+	view_box.stretch_shrink = pixel
+	bubbles.screen_scale = pixel
+	player.screen_scale = pixel
 
 
 func _process(delta: float) -> void:
-	var focus := player.position + Vector3.UP
-	camera.position = camera.position.lerp(focus + CAM_OFFSET * zoom, minf(1.0, delta * 5.0))
-	camera.look_at(focus)
+	_cam_focus = _cam_focus.lerp(player.position + FOCUS_OFFSET, minf(1.0, delta * 5.0))
+	camera.size = VIEW_HEIGHT * zoom
+	# Snap the camera to whole game pixels in its own plane, so the pixelated
+	# world doesn't shimmer as it scrolls.
+	var texel := camera.size / float(game_view.size.y)
+	var b := camera.global_basis
+	var local := b.inverse() * (_cam_focus + CAM_DIR.normalized() * CAM_DISTANCE)
+	local.x = snappedf(local.x, texel)
+	local.y = snappedf(local.y, texel)
+	camera.global_position = b * local
 	rain.position = player.position + Vector3(0, 12, 2)
 
 	_npc_timer -= delta
@@ -111,6 +150,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			rain.emitting = not rain.emitting
 		KEY_T:
 			_set_night(not night)
+		KEY_P:
+			_set_pixel(pixel % PIXEL_STEPS.size() + 1)
 
 
 func _on_message(sender: String, text: String) -> void:
@@ -160,7 +201,7 @@ func _set_night(on: bool) -> void:
 		env.ambient_light_color = Color("3b4f73")
 		env.ambient_light_energy = 0.55
 		env.fog_light_color = Color("1b2a3c")
-		env.fog_density = 0.012
+		env.fog_density = 0.004
 		sun.light_color = Color("8fa6d8")
 		sun.light_energy = 0.35
 	else:
@@ -168,7 +209,7 @@ func _set_night(on: bool) -> void:
 		env.ambient_light_color = Color("a9b7c9")
 		env.ambient_light_energy = 0.6
 		env.fog_light_color = Color("b8c6cf")
-		env.fog_density = 0.006
+		env.fog_density = 0.002
 		sun.light_color = Color("fff1dc")
 		sun.light_energy = 1.3
 	for l in get_tree().get_nodes_in_group("night_lights"):
