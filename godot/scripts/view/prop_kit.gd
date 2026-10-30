@@ -104,7 +104,8 @@ static func interior(parent: Node3D, kit: String, center_x: float, front_z: floa
 	var back_z := front_z + depth
 	var cz := front_z + depth / 2
 	CityBuilder.box(parent, Vector3(center_x, floor_y - 0.05, cz), Vector3(width, 0.1, depth), Toon.mat(Color("6f6a62"), 0.3))
-	CityBuilder.box(parent, Vector3(center_x, floor_y + height + 0.05, cz), Vector3(width, 0.1, depth), Toon.mat(Color("4a443e")))
+	var ceiling := CityBuilder.box(parent, Vector3(center_x, floor_y + height + 0.05, cz), Vector3(width, 0.1, depth), Toon.mat(Color("4a443e")))
+	ceiling.visible = not OS.get_cmdline_user_args().has("--xray")
 	for sx in [-1.0, 1.0]:
 		CityBuilder.box(parent, Vector3(center_x + sx * (width / 2 + 0.05), floor_y + height / 2, cz),
 				Vector3(0.1, height, depth), wall)
@@ -118,8 +119,12 @@ static func interior(parent: Node3D, kit: String, center_x: float, front_z: floa
 	light.omni_range = depth + 1.5
 	parent.add_child(light)
 
-	# Fridge against the right wall, its glass door turned toward the camera side (-X).
-	var fridge_d := Toon.texture_size_m(kit + "_fridge_side").x
-	textured_box(parent, kit + "_fridge", Vector3(center_x + width / 2 - fridge_d / 2 - 0.25, floor_y, front_z + 1.0), PI / 2)
-	textured_box(parent, kit + "_shelf", Vector3(center_x - 0.3, floor_y, cz + 0.4))
-	textured_box(parent, kit + "_counter", Vector3(center_x - 0.5, floor_y, front_z + 0.6))
+	# What the camera can see inside: a strip running from the hole toward the
+	# +X wall (screen left), and only about 1.5 m deep for anything tall,
+	# because the wall above the hole cuts off the view down into the room.
+	# So the pieces sit near the front, spread across the screen and layered
+	# by height: fridge at the front right, counter front centre, the
+	# freestanding shelf just behind on the left, rising above the counter.
+	textured_box(parent, kit + "_fridge", Vector3(center_x - width / 2 + 0.55, floor_y, front_z + 0.5))
+	textured_box(parent, kit + "_counter", Vector3(center_x + 0.15, floor_y, front_z + 0.5))
+	textured_box(parent, kit + "_shelf", Vector3(center_x + 1.15, floor_y, front_z + 1.1))

@@ -229,10 +229,13 @@ static func _corner_building(root: Node3D, x: float, tex: String, sign: String, 
 		# Faces only, so the shopfront hole looks into a real room.
 		solid(root, c, Vector3(front_m.x, h, depth))
 		var hole := Toon.hole_rect_m(tex + "_front")
-		PropKit.interior(root, kit, x - front_m.x / 2 + hole.get_center().x, front,
+		# Texture x runs from the facade's +X edge (the quad is turned to face -Z).
+		PropKit.interior(root, kit, x + front_m.x / 2 - hole.get_center().x, front,
 				front_m.x - 0.3, 4.0, hole.position.y + SIDEWALK_TOP)
 		_dress_corner(root, x, front, front_m, depth)
-	face(root, Vector3(x, h / 2, front - 0.01), front_m, PI, Toon.textured(tex + "_front"))
+	var front_face := face(root, Vector3(x, h / 2, front - 0.01), front_m, PI, Toon.textured(tex + "_front"))
+	# Dev: `-- --xray` hides corner fronts to check the room layout behind them.
+	front_face.visible = not OS.get_cmdline_user_args().has("--xray")
 	face(root, Vector3(x - front_m.x / 2 - 0.01, h / 2, c.z), Vector2(depth, h), -PI / 2, Toon.textured(tex + "_side"))
 	var roof := face(root, Vector3(x, h + 0.01, c.z), Vector2(front_m.x, depth), 0.0, Toon.textured(tex + "_roof"))
 	roof.rotation.x = -PI / 2
@@ -265,8 +268,11 @@ static func _dress_corner(root: Node3D, x: float, front: float, size: Vector2, d
 	PropKit.card(root, "kit_fern", Vector3(x + size.x / 2 - 0.35, SIDEWALK_TOP, front - 0.3))
 	PropKit.card(root, "kit_tall", Vector3(x + size.x / 2 - 0.85, SIDEWALK_TOP, front - 0.3))
 	PropKit.textured_box(root, "kit_crates", Vector3(x - size.x / 2 + 0.35, SIDEWALK_TOP, front - 0.25))
-	PropKit.card(root, "kit_bush", Vector3(x - 1.2, 3.9, front - 0.25))
-	PropKit.card(root, "kit_rack", Vector3(x + 0.8, 3.9, front - 0.3))
+	# Bush on the left end of the left 2nd-floor window sill (sill 4.45 m up,
+	# window 0.6-1.8 m in from the facade's left edge as seen from the street,
+	# which is world +X); laundry rack up on the roof.
+	PropKit.card(root, "kit_bush", Vector3(x + size.x / 2 - 0.85, 4.45, front - 0.15))
+	PropKit.card(root, "kit_rack", Vector3(x + 0.4, size.y, front + 1.6))
 	var top := PropKit.utility_pole(root, Vector3(side_x - 1.2, SIDEWALK_TOP, front - 1.3))
 	PropKit.wire(root, top, Vector3(side_x - 0.05, 7.2, front + 0.5), 0.5)
 	PropKit.wire(root, top + Vector3(0.5, 0, 0), Vector3(side_x - 0.05, 6.8, front + 1.5), 0.6)
