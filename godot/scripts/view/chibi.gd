@@ -80,7 +80,7 @@ func _part(parent: Node3D, mesh: Mesh, pos: Vector3, color: Color, squash := Vec
 	mi.position = pos
 	mi.scale = squash
 	# A little self-light (fill) so faces read even with the lamp behind them.
-	mi.material_override = Toon.mat(color, 0.0, color, 0.22, outline, 0.5)
+	mi.material_override = Toon.mat(color, 0.0, color, 0.22, outline, 0.5, 1.0)
 	parent.add_child(mi)
 	return mi
 

@@ -171,15 +171,15 @@ static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: 
 
 
 static func _skytrain(root: Node3D) -> void:
-	var concrete := Toon.mat(Color("8c9096"))
-	var concrete_dark := Toon.mat(Color("6c7076"))
+	var concrete := Toon.occluder(Color("8c9096"))
+	var concrete_dark := Toon.occluder(Color("6c7076"))
 	box(root, Vector3(0, 8.95, 0), Vector3(64, 0.9, 5.5), concrete)
 	box(root, Vector3(0, 9.7, -2.7), Vector3(64, 0.6, 0.15), concrete_dark)
 	box(root, Vector3(0, 9.7, 2.7), Vector3(64, 0.6, 0.15), concrete_dark)
-	var rail := Toon.mat(Color("3a3d42"), 0.4)
+	var rail := Toon.occluder(Color("3a3d42"))
 	for z in [-1.5, -0.6, 0.6, 1.5]:
 		box(root, Vector3(0, 9.47, z), Vector3(64, 0.12, 0.1), rail)
-	var strip := Toon.glow(Color("e8f0ff"), 1.4)
+	var strip := Toon.glow(Color("e8f0ff"), 1.4, true)
 	for px in [-24.0, -12.0, 0.0, 12.0, 24.0]:
 		box(root, Vector3(px, 4.25, 0), Vector3(1.1, 8.5, 1.1), concrete, true)
 		box(root, Vector3(px, 8.2, 0), Vector3(3.2, 0.6, 1.6), concrete_dark)
@@ -194,7 +194,8 @@ static func _lamp(root: Node3D, x: float, z: float) -> void:
 	box(root, Vector3(x, SIDEWALK_TOP + 2.1, z), Vector3(0.14, 4.2, 0.14), pole, true)
 	box(root, Vector3(x, 4.3, z + toward * 0.45), Vector3(0.1, 0.1, 0.9), pole)
 	box(root, Vector3(x, 4.22, z + toward * 0.9), Vector3(0.38, 0.14, 0.26), Toon.glow(Color("ffd59a"), 4.0))
-	omni(root, Vector3(x, 3.9, z + toward * 0.9), Color("ffc983"), 1.2, 5.0)
+	var lamp := omni(root, Vector3(x, 3.9, z + toward * 0.9), Color("ffc983"), 2.6, 6.5)
+	lamp.add_to_group("street_lamps")
 
 
 static func _lamps(root: Node3D) -> void:
@@ -210,8 +211,8 @@ static func _south_side(root: Node3D) -> void:
 	box(root, Vector3(0, 0.3, -8.25), Vector3(64, 0.6, 0.3), wall, true)
 	box(root, Vector3(0, 0.66, -8.25), Vector3(64, 0.14, 0.42), ivy)
 	var trunk := Toon.mat(Color("51444a"))
-	var leaf_a := Toon.mat(Color("3b5849"), 0.0, Color.BLACK, 0.0, 0.03, 0.4)
-	var leaf_b := Toon.mat(Color("4d6c55"), 0.0, Color.BLACK, 0.0, 0.03, 0.4)
+	var leaf_a := Toon.occluder(Color("3b5849"), 0.03)
+	var leaf_b := Toon.occluder(Color("4d6c55"), 0.03)
 	for x in [-18.0, -6.0, 6.0, 18.0]:
 		box(root, Vector3(x, 0.32, -7.3), Vector3(1.3, 0.4, 1.3), wall, true)
 		box(root, Vector3(x, 1.2, -7.3), Vector3(0.22, 1.6, 0.22), trunk)

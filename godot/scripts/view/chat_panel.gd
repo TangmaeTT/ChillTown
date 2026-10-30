@@ -9,6 +9,7 @@ const LOG_LINES := 6
 
 var input := LineEdit.new()
 var _log := VBoxContainer.new()
+var _clock := Label.new()
 
 
 func _ready() -> void:
@@ -46,12 +47,25 @@ func _ready() -> void:
 	log_panel.add_child(_log)
 
 	var hint := Label.new()
-	hint.text = "WASD / แตะพื้น = เดิน · Enter = พิมพ์ · R = ฝน · T = กลางวัน/คืน · P = ขนาดพิกเซล"
+	hint.text = "WASD / แตะพื้น = เดิน · Enter = พิมพ์ · R = ฝน · T = ข้ามเวลา 2 ชม. · P = ขนาดพิกเซล"
 	hint.add_theme_font_size_override("font_size", 18)
 	hint.add_theme_color_override("font_color", Color(0.85, 0.82, 0.7, 0.8))
 	hint.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 16)
 	hint.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	add_child(hint)
+
+	_clock.add_theme_font_size_override("font_size", 26)
+	_clock.add_theme_color_override("font_color", Color("f4efe2"))
+	_clock.add_theme_color_override("font_outline_color", Color(0.05, 0.05, 0.08))
+	_clock.add_theme_constant_override("outline_size", 6)
+	_clock.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 16)
+	_clock.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_clock.offset_top = 44
+	add_child(_clock)
+
+
+func set_clock(text: String) -> void:
+	_clock.text = text
 
 
 func add_line(sender: String, text: String) -> void:

@@ -1,20 +1,21 @@
 extends Node3D
-## Test scene: one Siam street corner at night. Wires the chat model to the
-## chat panel and chibis, sets up lights, rain, camera and day/night toggle.
+## Test scene: one Siam street corner. Wires the chat model to the chat panel
+## and chibis, the clock to the sky rig, and sets up rain and the camera.
 ## The 3D world renders into a low-res SubViewport scaled up with nearest
 ## filtering (pixel look); UI and chat bubbles stay full resolution.
-## User args (after "--"): --say=<text>  --day  --no-rain  --zoom=<f>
+## User args (after "--"): --say=<text>  --time=<hours>  --rain  --zoom=<f>
 ## --pixel=<1-4>  (plus DevShot's).
 
-## Camera looks along this direction (from the -Z side, down at the street).
-const CAM_DIR := Vector3(0, 8, -12)
+## Isometric 2:1: camera turned 45 degrees and tilted 30 degrees down,
+## looking at the shopfronts (+Z) from the street side.
+const CAM_DIR := Vector3(-0.6124, 0.5, -0.6124)
 const CAM_DISTANCE := 40.0
 ## Ortho height in metres at zoom 1.
-const VIEW_HEIGHT := 11.0
+const VIEW_HEIGHT := 12.0
 const ZOOM_RANGE := Vector2(0.45, 1.6)
 const PIXEL_STEPS := [1, 2, 3, 4]
 ## Look a little ahead of the player, toward the shopfronts.
-const FOCUS_OFFSET := Vector3(0, 1, 2.5)
+const FOCUS_OFFSET := Vector3(1.5, 1, 3.5)
 const NPC_LINES := [
 	"ฝนตกอีกแล้วเหรอ",
 	"ไปกินก๋วยเตี๋ยวกันไหม ร้านนี้น้ำซุปอร่อยนะ",
@@ -30,12 +31,11 @@ var view_box := SubViewportContainer.new()
 var game_view := SubViewport.new()
 var bubbles := BubbleLayer.new()
 var chat := ChatPanel.new()
-var env := Environment.new()
-var sun := DirectionalLight3D.new()
+var clock := GameClock.new()
+var sky := SkyRig.new()
 var rain: GPUParticles3D
-var night := true
 var zoom := 1.0
-var pixel := 3
+var pixel := 2
 var _cam_focus := Vector3.ZERO
 var _npc_line := 0
 var _npc_timer := 0.4
@@ -43,7 +43,8 @@ var _npc_timer := 0.4
 
 func _ready() -> void:
 	_setup_input()
-	_setup_world()
+	sky.clock = clock
+	add_child(sky)
 	CityBuilder.build(self)
 
 	player = PlayerController.new(Chibi.new())
@@ -71,15 +72,16 @@ func _ready() -> void:
 	chat_log.message_added.connect(_on_message)
 
 	rain = _make_rain()
+	rain.emitting = false
 	add_child(rain)
 
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--say="):
 			chat_log.post("torad", a.substr(6))
-		elif a == "--day":
-			_set_night(false)
-		elif a == "--no-rain":
-			rain.emitting = false
+		elif a.begins_with("--time="):
+			clock.hours = float(a.substr(7))
+		elif a == "--rain":
+			rain.emitting = true
 		elif a.begins_with("--zoom="):
 			zoom = float(a.substr(7))
 		elif a.begins_with("--pixel="):
@@ -123,6 +125,10 @@ func _process(delta: float) -> void:
 	local.y = snappedf(local.y, texel)
 	camera.global_position = b * local
 	rain.position = player.position + Vector3(0, 12, 2)
+	RenderingServer.global_shader_parameter_set("player_position", player.position)
+	clock.advance(delta)
+	sky.update(delta, player.position)
+	chat.set_clock(clock.label())
 
 	_npc_timer -= delta
 	if _npc_timer <= 0.0:
@@ -149,7 +155,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_R:
 			rain.emitting = not rain.emitting
 		KEY_T:
-			_set_night(not night)
+			clock.skip(2.0)
 		KEY_P:
 			_set_pixel(pixel % PIXEL_STEPS.size() + 1)
 
@@ -174,46 +180,6 @@ func _setup_input() -> void:
 			var ev := InputEventKey.new()
 			ev.physical_keycode = k
 			InputMap.action_add_event(action, ev)
-
-
-func _setup_world() -> void:
-	env.background_mode = Environment.BG_COLOR
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.glow_enabled = true
-	env.glow_intensity = 0.9
-	env.glow_bloom = 0.05
-	env.glow_hdr_threshold = 0.9
-	env.fog_enabled = true
-	var we := WorldEnvironment.new()
-	we.environment = env
-	add_child(we)
-	sun.shadow_enabled = true
-	sun.rotation_degrees = Vector3(-50, 150, 0)
-	add_child(sun)
-	_set_night(true)
-
-
-func _set_night(on: bool) -> void:
-	night = on
-	if on:
-		env.background_color = Color("0d1622")
-		env.ambient_light_color = Color("3b4f73")
-		env.ambient_light_energy = 0.55
-		env.fog_light_color = Color("1b2a3c")
-		env.fog_density = 0.004
-		sun.light_color = Color("8fa6d8")
-		sun.light_energy = 0.35
-	else:
-		env.background_color = Color("9fb8c8")
-		env.ambient_light_color = Color("a9b7c9")
-		env.ambient_light_energy = 0.6
-		env.fog_light_color = Color("b8c6cf")
-		env.fog_density = 0.002
-		sun.light_color = Color("fff1dc")
-		sun.light_energy = 1.3
-	for l in get_tree().get_nodes_in_group("night_lights"):
-		l.visible = on
 
 
 func _make_rain() -> GPUParticles3D:
