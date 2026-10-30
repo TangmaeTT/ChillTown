@@ -9,6 +9,8 @@ Hair = pixels of the redraw that are new or changed compared with the bald sheet
 area. Like Ragnarok's headgear, it is drawn once per direction and placed on each frame by the
 head: scaled by the head's width and pinned to the head's top centre, which follows the walk bob.
 Writes a sheet the size of the walk sheet with only the hair, to draw over the body.
+--cut=0.66 keeps hair down to that share of the figure's height (default 0.58, the head);
+use it for long styles such as twin tails.
 """
 import sys
 from pathlib import Path
@@ -31,6 +33,31 @@ def load(path):
     return pf.key_background(np.array(Image.open(path).convert('RGBA')), [255, 0, 255], 90)
 
 
+def drop_specks(mask, keep=0.05):
+    """Keep only 4-connected blobs at least `keep` times the biggest (drops slivers of the
+    neighbouring figure and stray pixels). Plain flood fill, no SciPy needed."""
+    lab = np.zeros(mask.shape, np.int32)
+    sizes = [0]
+    h, w = mask.shape
+    for y0, x0 in zip(*np.nonzero(mask)):
+        if lab[y0, x0]:
+            continue
+        n = len(sizes)
+        lab[y0, x0] = n
+        stack, size = [(y0, x0)], 0
+        while stack:
+            y, x = stack.pop()
+            size += 1
+            for yy, xx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+                if 0 <= yy < h and 0 <= xx < w and mask[yy, xx] and not lab[yy, xx]:
+                    lab[yy, xx] = n
+                    stack.append((yy, xx))
+        sizes.append(size)
+    sizes = np.array(sizes)
+    good = np.nonzero(sizes >= sizes.max() * keep)[0]
+    return np.isin(lab, good[good > 0])
+
+
 def head_anchor(fig):
     """(top row, centre x, width) of the head: the top 45% of the figure's opaque pixels"""
     al = fig[..., 3] > 0
@@ -40,16 +67,22 @@ def head_anchor(fig):
 
 
 def main():
-    if len(sys.argv) != 5:
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    cut = next((float(a[6:]) for a in sys.argv[1:] if a.startswith('--cut=')), 0.58)
+    if len(args) != 4:
         sys.exit(__doc__)
-    bald_p, hair_p, sheet_p, out_p = sys.argv[1:]
+    bald_p, hair_p, sheet_p, out_p = args
     bald, hair = load(bald_p), load(hair_p)
     h, w = min(bald.shape[0], hair.shape[0]), min(bald.shape[1], hair.shape[1])
     bald, hair = bald[:h, :w], hair[:h, :w]
 
-    parts = split_parts(np.maximum(bald[..., 3], hair[..., 3]), 20)
+    # Split on the bald figures (long hair can bridge the gaps), then widen each
+    # figure's columns to halfway to its neighbours so wide hair is kept.
+    parts = split_parts(bald[..., 3], 20)
     if len(parts) != 5:
         sys.exit(f'expected 5 figures, found {len(parts)}: {parts}')
+    edges = [0] + [(parts[i][1] + parts[i + 1][0]) // 2 for i in range(4)] + [w]
+    parts = [(edges[i], edges[i + 1]) for i in range(5)]
     layers = {}
     for (x0, x1), d in zip(parts, ORDER):
         b, r = bald[:, x0:x1], hair[:, x0:x1]
@@ -57,7 +90,18 @@ def main():
         btop, bh = ys[0], ys[-1] - ys[0] + 1
         diff = np.linalg.norm(r[..., :3].astype(float) - b[..., :3].astype(float), axis=-1)
         mask = (r[..., 3] > 0) & ((b[..., 3] == 0) | (diff > 60))
-        mask[btop + int(bh * 0.58):] = False                  # hair stays on the head, not the body
+        mask[btop + int(bh * cut):] = False                   # hair stays above --cut of the height (0.58: head)
+        # Inside the bald silhouette, the redraw also retouches the face; keep only
+        # pixels coloured like the hair, learned from the hair outside the silhouette.
+        outside = mask & (b[..., 3] == 0)
+        pal = np.unique(r[outside][:, :3] // 8, axis=0).astype(float) * 8 + 4
+        inside = np.argwhere(mask & (b[..., 3] > 0))
+        if len(pal) and len(inside):
+            cols = r[inside[:, 0], inside[:, 1], :3].astype(float)
+            near = np.min(np.linalg.norm(cols[:, None, :] - pal[None, :, :], axis=-1), axis=1)
+            far = inside[near > 24]
+            mask[far[:, 0], far[:, 1]] = False
+        mask = drop_specks(mask)
         layer = np.zeros_like(r)
         layer[mask] = r[mask]
         top, mid, width = head_anchor(b)

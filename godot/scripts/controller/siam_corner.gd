@@ -64,8 +64,7 @@ func _ready() -> void:
 	player.camera = camera
 	player.input_blocked = chat.is_typing
 
-	# The code-built 3D chibi, kept beside the sprite for comparison.
-	npc = Chibi.new()
+	npc = SpriteChibi.new({"hair_style": "twintail"})
 	npc.position = Vector3(-4.6, CityBuilder.SIDEWALK_TOP, 5.0)
 	add_child(npc)
 	npc.display_name = "มิว"
