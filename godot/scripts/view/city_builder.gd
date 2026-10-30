@@ -18,7 +18,10 @@ const AWNING_COLORS := ["b5674d", "4f7a6a", "c9a65a", "6a5a8a", "8f5a5a"]
 const WARM := ["ffcf8f", "ffd9a8", "f2b880"]
 const SIGNS := {2: "ก๋วยเตี๋ยว", 4: "ร้านกาแฟ", 6: "เสื้อผ้า", 8: "ร้านเกม", 10: "ตัดผม"}
 ## Shophouses drawn from a ChatGPT facade texture instead of boxes: index -> [texture, sign].
-const TEXTURED := {5: ["shophouse_a", "ร้านชำ"], 9: ["shophouse_a", ""]}
+const TEXTURED := {5: ["shophouse_a", ""], 9: ["shophouse_a", "ร้านชำ"]}
+## Corner buildings (front + side + roof textures), with an alley (soi) on their -X side.
+const CORNERS := {4: ["corner_a", "ร้านชำ"]}
+const SOI_WIDTH := 4.4
 
 
 static func ground_height(p: Vector3) -> float:
@@ -200,7 +203,42 @@ static func _vending_machine(root: Node3D, pos: Vector3) -> void:
 	reflection(root, Vector3(pos.x, 0, pos.z - depth / 2 - 0.05), size.y, 0.8, Color("f2ead0"), 0.6)
 
 
+## Box textured on the three faces the camera sees: front (-Z), side (-X) and roof.
+## The front sits on the sidewalk edge; the side texture's width sets the depth.
+static func _corner_building(root: Node3D, x: float, tex: String, sign: String) -> void:
+	var front_m := Toon.texture_size_m(tex + "_front")
+	var depth := Toon.texture_size_m(tex + "_side").x
+	var h := front_m.y
+	var front := WALK_EDGE
+	var c := Vector3(x, h / 2, front + depth / 2)
+	box(root, c, Vector3(front_m.x - 0.02, h - 0.02, depth - 0.02), Toon.mat(Color("7f6158")), true)
+	face(root, Vector3(x, h / 2, front - 0.01), front_m, PI, Toon.textured(tex + "_front"))
+	face(root, Vector3(x - front_m.x / 2 - 0.01, h / 2, c.z), Vector2(depth, h), -PI / 2, Toon.textured(tex + "_side"))
+	var roof := face(root, Vector3(x, h + 0.01, c.z), Vector2(front_m.x, depth), 0.0, Toon.textured(tex + "_roof"))
+	roof.rotation.x = -PI / 2
+	omni(root, Vector3(x, 1.6, front - 0.8), Color("ffbf80"), 0.9, 4.5)
+	reflection(root, Vector3(x, 0, front - 0.3), 2.4, 2.0, Color("ffbf80"), 0.3)
+	if sign != "":
+		var l := Toon.label(sign, 72, Color(1.7, 1.4, 1.0), 0)
+		l.pixel_size = 0.006
+		l.position = Vector3(x, h * 0.334, front - 0.03)
+		l.rotation.y = PI
+		root.add_child(l)
+
+
+## Paved alley between two shophouses, running back from the sidewalk.
+static func _soi(root: Node3D, x: float) -> void:
+	box(root, Vector3(x, SIDEWALK_TOP / 2, WALK_EDGE + 4), Vector3(SOI_WIDTH, SIDEWALK_TOP, 8),
+			Toon.ground("ground_pavers", Color("615f5c"), 0.5))
+
+
 static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: int) -> void:
+	if CORNERS.has(idx + 1):
+		_soi(root, x)
+		return
+	if CORNERS.has(idx):
+		_corner_building(root, x, CORNERS[idx][0], CORNERS[idx][1])
+		return
 	if TEXTURED.has(idx):
 		_textured_shophouse(root, x, TEXTURED[idx][0], TEXTURED[idx][1])
 		rng.randi()  # keep the other houses' random looks unchanged
