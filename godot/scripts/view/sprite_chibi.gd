@@ -7,12 +7,12 @@ extends Chibi
 ## (0 = standing, 1-8 = walk) x 8 rows in screen directions E SE S SW W NW N NE,
 ## 96 px cells with the feet at y = 90. Same API as Chibi, so it drops in.
 
-const CELL := 96
-const FEET := 90
+var CELL := 96
+var FEET := 90
 const WALK_FRAMES := 8
 const WALK_FPS := 10.0
 ## One sprite pixel = one game pixel at the default zoom (9 m of view over 360 px).
-const PIXEL := 0.025
+var PIXEL := 0.025
 ## The camera looks down 30 degrees from the -X -Z side.
 const CARD_ROT := Vector3(-PI / 6, -3.0 * PI / 4.0, 0)
 
@@ -22,6 +22,17 @@ var _pivot := Node3D.new()
 var _mat: ShaderMaterial
 var _row := 2
 var _walk_t := 0.0
+
+
+## Dev: `-- --small` uses the half-size 16-colour outlined test sheet at the
+## coarser pixel size 3 (Flavour Edge-like density).
+func _init(p_look := {}) -> void:
+	super(p_look)
+	if OS.get_cmdline_user_args().has("--small"):
+		sheet = load("res://assets/characters/walk_small.png")
+		CELL = 48
+		FEET = 45
+		PIXEL = 0.0375
 
 
 func _ready() -> void:

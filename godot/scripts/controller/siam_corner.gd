@@ -101,6 +101,8 @@ func _ready() -> void:
 			zoom = float(a.substr(7))
 		elif a.begins_with("--pixel="):
 			_set_pixel(int(a.substr(8)))
+		elif a == "--small":
+			_set_pixel(3)
 		elif a == "--edit":
 			editor.toggle()
 		elif a == "--charview":
