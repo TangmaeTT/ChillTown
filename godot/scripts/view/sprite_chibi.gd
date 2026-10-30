@@ -33,6 +33,11 @@ func _init(p_look := {}) -> void:
 		CELL = 48
 		FEET = 45
 		PIXEL = 0.0375
+	elif OS.get_cmdline_user_args().has("--v62"):
+		# Codex test (31 Oct): ~66 px standing pose, 2 drawn directions + mirrors.
+		sheet = load("res://assets/characters/base62_stand.png")
+		CELL = 80
+		FEET = 76
 
 
 func _ready() -> void:
