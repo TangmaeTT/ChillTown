@@ -101,6 +101,18 @@ branch `feature/godot-test-scene` (ต่อจาก `feature/gdd-v2-godot`) ·
   - ทดสอบบนมือถือ: Android (ต้องติดตั้ง export templates + JDK + SDK) และ iOS (Xcode บน Mac ของ torad)
   - ยังไม่ได้เลือกเซิร์ฟเวอร์ (แนะนำ Nakama) และยังไม่มีตัวฐาน 3D ตัวจริง ตอนนี้เป็น chibi ชั่วคราว
 
+## 6.6 ตัวละคร sprite + ทรงผม (31 ต.ค. 2026 · มาตรฐาน)
+
+ตัวละครเป็น sprite พิกเซล 2D ในโลก 3D (แนว Flavour Edge) ไม่ใช่ 3D · สั่งงาน Codex ผ่านบัญชี ChatGPT ของ torad (ดู memory `codex-cli-image-gen`)
+- **ตัวฐาน:** `art-in/char/codex_v62/stand_5dir.png` (5 ทิศ S SW W NW N) → ท่าเดินทิศละ 1 strip → `tools/walk_sheet.py --scale 5 --colors 24 --height 70` → `godot/assets/characters/walk_v62.png` (96 px/ช่อง, 8 แถว × ยืน + เดิน 8)
+- **ทรงผมทุกทรงทำแบบนี้ (torad ยืนยัน):**
+  1. Codex วาดตัวฐาน 5 ทิศ + ใส่ทรงผม (`style.png`) เพื่อได้หน้าตาทรง
+  2. Codex วาด **เฉพาะผม** บนพื้น magenta ผืนภาพเท่าเดิม ตำแหน่งหัวเดิม (prompt: `art-in/char/codex_v62/prompt_hair_only.txt`)
+  3. `python tools/hair_layer.py stand_5dir.png hair_only_<ชื่อ>.png godot/assets/characters/walk_v62.png godot/assets/characters/hair_<ชื่อ>.png --only`
+  4. เพิ่มชื่อใน `SpriteChibi.HAIR_STYLES`
+  - ห้ามใช้วิธีเทียบส่วนต่างกับภาพเต็ม (ติดเส้นขอบหน้ามาด้วย)
+- ผมวาดทิศละภาพเดียว ยึดกับหัวทุกเฟรม (แบบ headgear ของ Ragnarok) · ย้อมสีใน shader (สีแดงจัด เช่น ยางมัดผม ไม่โดนย้อม) · ในเกมกด **H** เลือกทรง/สี
+
 ## 7. ขั้นต่อไป
 
 **จบ PoC ระบบแต่งตัวแล้ว (29 ต.ค.)** หยุดจูนไว้ก่อน รอชีตจริงแล้วค่อยเก็บงานรอบเดียว
