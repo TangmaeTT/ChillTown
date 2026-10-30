@@ -48,14 +48,14 @@ func _ready() -> void:
 	CityBuilder.build(self)
 
 	player = PlayerController.new(Chibi.new())
-	player.position = Vector3(-1.5, 0, -5.4)
+	player.position = Vector3(-6.5, 0, 5.4)
 	add_child(player)
 	player.chibi.display_name = "torad"
 	player.camera = camera
 	player.input_blocked = chat.is_typing
 
 	npc = Chibi.new({"hair": Color("6b4a3a"), "top": Color("8ab074"), "bottom": Color("51444a")})
-	npc.position = Vector3(0.6, CityBuilder.SIDEWALK_TOP, -5.0)
+	npc.position = Vector3(-4.6, CityBuilder.SIDEWALK_TOP, 5.0)
 	add_child(npc)
 	npc.display_name = "มิว"
 	npc.set_motion(0.0, Vector3(-1, 0, -0.6))

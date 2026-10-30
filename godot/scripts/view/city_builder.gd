@@ -1,6 +1,7 @@
 class_name CityBuilder
 ## Builds the Siam street-corner test block out of boxes: road, sidewalks,
-## shophouses with lit windows and Thai signs, skytrain viaduct, lamps, trees.
+## shophouses with lit windows and Thai signs, skytrain viaduct behind them,
+## lamps, trees.
 ## Placeholder geometry: real props will be modelled, but the layout, scale
 ## and lighting rules are what this scene tests.
 ## Axes: road runs along X, shops on +Z, camera looks from -Z.
@@ -8,6 +9,9 @@ class_name CityBuilder
 const SIDEWALK_TOP := 0.12
 const ROAD_HALF := 4.0
 const WALK_EDGE := 8.0
+## Skytrain viaduct: behind the shophouses (which end at z = 14), lifted to clear the roofs.
+const RAIL_Z := 17.5
+const RAIL_LIFT := 3.5
 
 const WALL_COLORS := ["8f7068", "67565a", "4d6c55", "51444a", "7a6a55", "5a6a78", "6e5f52"]
 const AWNING_COLORS := ["b5674d", "4f7a6a", "c9a65a", "6a5a8a", "8f5a5a"]
@@ -141,7 +145,7 @@ static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: 
 			if rng.randf() < 0.45:
 				m = Toon.glow(Color(WARM[rng.randi() % WARM.size()]), rng.randf_range(1.2, 2.5))
 			box(root, Vector3(x + wx, y, front - 0.03), Vector3(1.0, 1.2, 0.06), m)
-			if rng.randf() < 0.25:
+			if rng.randf() < 0.25 and (f > 0 or not SIGNS.has(idx)):
 				box(root, Vector3(x + wx, y - 0.95, front - 0.18), Vector3(0.7, 0.45, 0.32), Toon.mat(Color("c9c9c4")))
 
 	var has_sign := SIGNS.has(idx)
@@ -171,21 +175,26 @@ static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: 
 
 
 static func _skytrain(root: Node3D) -> void:
-	var concrete := Toon.occluder(Color("8c9096"))
-	var concrete_dark := Toon.occluder(Color("6c7076"))
-	box(root, Vector3(0, 8.95, 0), Vector3(64, 0.9, 5.5), concrete)
-	box(root, Vector3(0, 9.7, -2.7), Vector3(64, 0.6, 0.15), concrete_dark)
-	box(root, Vector3(0, 9.7, 2.7), Vector3(64, 0.6, 0.15), concrete_dark)
-	var rail := Toon.occluder(Color("3a3d42"))
+	# Runs behind the shophouse row (torad, 30 Oct): over the street it hid
+	# the shopfronts from the isometric camera. From here it reads as a
+	# skyline above the roofs and never covers the player.
+	var o := Vector3(0, RAIL_LIFT, RAIL_Z)
+	var concrete := Toon.mat(Color("8c9096"))
+	var concrete_dark := Toon.mat(Color("6c7076"))
+	box(root, o + Vector3(0, 8.95, 0), Vector3(64, 0.9, 5.5), concrete)
+	box(root, o + Vector3(0, 9.7, -2.7), Vector3(64, 0.6, 0.15), concrete_dark)
+	box(root, o + Vector3(0, 9.7, 2.7), Vector3(64, 0.6, 0.15), concrete_dark)
+	var rail := Toon.mat(Color("3a3d42"))
 	for z in [-1.5, -0.6, 0.6, 1.5]:
-		box(root, Vector3(0, 9.47, z), Vector3(64, 0.12, 0.1), rail)
-	var strip := Toon.glow(Color("e8f0ff"), 1.4, true)
+		box(root, o + Vector3(0, 9.47, z), Vector3(64, 0.12, 0.1), rail)
+	var strip := Toon.glow(Color("e8f0ff"), 1.4)
+	var pillar_h := 8.5 + RAIL_LIFT
 	for px in [-24.0, -12.0, 0.0, 12.0, 24.0]:
-		box(root, Vector3(px, 4.25, 0), Vector3(1.1, 8.5, 1.1), concrete, true)
-		box(root, Vector3(px, 8.2, 0), Vector3(3.2, 0.6, 1.6), concrete_dark)
+		box(root, Vector3(px, pillar_h / 2, RAIL_Z), Vector3(1.1, pillar_h, 1.1), concrete)
+		box(root, o + Vector3(px, 8.2, 0), Vector3(3.2, 0.6, 1.6), concrete_dark)
 	for sx in range(-27, 28, 6):
-		box(root, Vector3(sx, 8.47, -2.0), Vector3(1.6, 0.05, 0.12), strip)
-		box(root, Vector3(sx, 8.47, 2.0), Vector3(1.6, 0.05, 0.12), strip)
+		box(root, o + Vector3(sx, 8.47, -2.0), Vector3(1.6, 0.05, 0.12), strip)
+		box(root, o + Vector3(sx, 8.47, 2.0), Vector3(1.6, 0.05, 0.12), strip)
 
 
 static func _lamp(root: Node3D, x: float, z: float) -> void:
