@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dai5o08ssfnww"
-path="res://.godot/imported/base62_stand.png-e394f6ccdcbf2d1ea524f8f09d23a111.ctex"
+uid="uid://dvtij28uheav6"
+path="res://.godot/imported/walk_v62.png-d173a85d811b15c42eaea0ca2b0030da.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/characters/base62_stand.png"
-dest_files=["res://.godot/imported/base62_stand.png-e394f6ccdcbf2d1ea524f8f09d23a111.ctex"]
+source_file="res://assets/characters/walk_v62.png"
+dest_files=["res://.godot/imported/walk_v62.png-d173a85d811b15c42eaea0ca2b0030da.ctex"]
 
 [params]
 

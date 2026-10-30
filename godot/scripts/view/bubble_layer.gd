@@ -52,7 +52,7 @@ func _process(_delta: float) -> void:
 		var it: Dictionary = _items[c]
 		var tag: Label = it.tag
 		var bubble: PanelContainer = it.bubble
-		var head := c.global_position + HEAD
+		var head := c.global_position + Vector3(0, c.tag_height, 0)
 		if camera.is_position_behind(head):
 			tag.visible = false
 			bubble.visible = false

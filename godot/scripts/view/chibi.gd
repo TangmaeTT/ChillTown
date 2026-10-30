@@ -26,6 +26,8 @@ var look := {
 ## Read by BubbleLayer, which draws name tags and bubbles in 2D at full
 ## resolution so Thai text stays sharp over the pixelated world.
 var display_name := ""
+## Height of the name tag above the feet, metres.
+var tag_height := 2.15
 var bubble_text := ""
 
 var _rig := Node3D.new()

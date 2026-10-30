@@ -16,7 +16,8 @@ var PIXEL := 0.025
 ## The camera looks down 30 degrees from the -X -Z side.
 const CARD_ROT := Vector3(-PI / 6, -3.0 * PI / 4.0, 0)
 
-var sheet: Texture2D = preload("res://assets/characters/walk_base.png")
+## Codex-drawn base (31 Oct): 5 drawn directions + 3 mirrored, stand + 8-frame walk, ~70 px.
+var sheet: Texture2D = preload("res://assets/characters/walk_v62.png")
 var _card := MeshInstance3D.new()
 var _pivot := Node3D.new()
 var _mat: ShaderMaterial
@@ -33,14 +34,10 @@ func _init(p_look := {}) -> void:
 		CELL = 48
 		FEET = 45
 		PIXEL = 0.0375
-	elif OS.get_cmdline_user_args().has("--v62"):
-		# Codex test (31 Oct): ~66 px standing pose, 2 drawn directions + mirrors.
-		sheet = load("res://assets/characters/base62_stand.png")
-		CELL = 80
-		FEET = 76
 
 
 func _ready() -> void:
+	tag_height = 2.4
 	_rig.free()                          # Chibi's 3D rig isn't used here
 	# Uses the world's toon shader (soft light, night fill like other
 	# characters, alpha cut so the shadow is the silhouette).
