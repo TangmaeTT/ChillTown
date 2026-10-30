@@ -47,7 +47,7 @@ func _ready() -> void:
 	log_panel.add_child(_log)
 
 	var hint := Label.new()
-	hint.text = "WASD / แตะพื้น = เดิน · Enter = พิมพ์ · R = ฝน · T = ข้ามเวลา 2 ชม. · P = ขนาดพิกเซล · Tab = จัดวาง"
+	hint.text = "WASD / แตะพื้น = เดิน · Enter = พิมพ์ · R = ฝน · T = ข้ามเวลา 2 ชม. · P = ขนาดพิกเซล · Tab = จัดวาง · H = ทรงผม"
 	hint.add_theme_font_size_override("font_size", 18)
 	hint.add_theme_color_override("font_color", Color(0.85, 0.82, 0.7, 0.8))
 	hint.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 16)

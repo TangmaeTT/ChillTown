@@ -33,6 +33,8 @@ var bubbles := BubbleLayer.new()
 var chat := ChatPanel.new()
 var props := Node3D.new()
 var editor := PropEditor.new()
+var look := PlayerLook.load_saved()
+var hair_picker := HairPicker.new()
 var clock := GameClock.new()
 var sky := SkyRig.new()
 var rain: GPUParticles3D
@@ -57,7 +59,7 @@ func _ready() -> void:
 	for it in PropLayout.load_or(CityBuilder.default_props).items:
 		PropKit.spawn(props, it.kind, it.pos, it.yaw)
 
-	player = PlayerController.new(SpriteChibi.new())
+	player = PlayerController.new(SpriteChibi.new({"hair_style": look.hair_style, "hair_tint": look.hair_tint}))
 	player.position = Vector3(-6.5, 0, 5.4)
 	add_child(player)
 	player.chibi.display_name = "torad"
@@ -84,6 +86,9 @@ func _ready() -> void:
 	editor.props_root = props
 	editor.camera = camera
 	add_child(editor)
+	add_child(hair_picker)
+	hair_picker.set_current(look.hair_style, look.hair_tint)
+	hair_picker.changed.connect(_on_hair_changed)
 
 	rain = _make_rain()
 	add_child(rain)
@@ -203,8 +208,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			rain.emitting = not rain.emitting
 		KEY_T:
 			clock.skip(2.0)
+		KEY_H:
+			hair_picker.toggle()
 		KEY_P:
 			_set_pixel(pixel % PIXEL_STEPS.size() + 1)
+
+
+func _on_hair_changed(style: String, tint: Color) -> void:
+	(player.chibi as SpriteChibi).set_hair(style, tint)
+	look.hair_style = style
+	look.hair_tint = tint
+	look.save()
 
 
 func _on_message(sender: String, text: String) -> void:

@@ -43,7 +43,7 @@ func _ready() -> void:
 	# characters, alpha cut so the shadow is the silhouette).
 	_mat = Toon.mat(Color.WHITE, 0.0, Color.BLACK, 0.0, 0.0, 0.0, 0.0, false, 0.2, 0.45).duplicate()
 	_mat.set_shader_parameter("use_tex", true)
-	_mat.set_shader_parameter("albedo_tex", _dressed_sheet())
+	_mat.set_shader_parameter("albedo_tex", sheet)
 	_mat.set_shader_parameter("light_as_up", true)
 	var q := QuadMesh.new()
 	q.size = Vector2.ONE * CELL * PIXEL
@@ -54,25 +54,53 @@ func _ready() -> void:
 	_card.position.y = (CELL / 2.0 - (CELL - FEET)) * PIXEL
 	_pivot.add_child(_card)
 	add_child(_pivot)
+	set_hair(look.get("hair_style", ""), look.get("hair_tint", Color(0, 0, 0, 0)))
 	_show(0)
 
 
-## Outfit layers drawn over the body, Ragnarok-style: each layer is a sheet
-## the size of the walk sheet (tools/hair_layer.py) composited once at load.
-## look.hair names res://assets/characters/hair_<name>.png ("" = bald).
-func _dressed_sheet() -> Texture2D:
-	var hair: String = look.get("hair_style", "")
-	var path := "res://assets/characters/hair_%s.png" % hair
-	if hair == "" or not ResourceLoader.exists(path):
-		return sheet
-	var img := sheet.get_image()
+## Hairstyles available as layers (tools/hair_layer.py), id -> Thai name.
+const HAIR_STYLES := {"": "หัวโล้น", "messy": "ฟูยุ่ง", "twintail": "ทวินเทล"}
+
+
+## Outfit layer drawn over the body, Ragnarok-style: a sheet the size of the
+## walk sheet, blended in the shader so the style and dye change instantly.
+## style "" = bald; tint Color(0, 0, 0, 0) = the drawn colour.
+func set_hair(style: String, tint := Color(0, 0, 0, 0)) -> void:
+	look.hair_style = style
+	look.hair_tint = tint
+	if _mat == null:
+		return
+	var path := "res://assets/characters/hair_%s.png" % style
+	var on := style != "" and ResourceLoader.exists(path)
+	_mat.set_shader_parameter("use_overlay", on)
+	if on:
+		var tex: Texture2D = load(path)
+		_mat.set_shader_parameter("overlay_tex", tex)
+		_mat.set_shader_parameter("overlay_ref", _mean_luminance(tex))
+	_mat.set_shader_parameter("overlay_dye", tint.a > 0.0)
+	_mat.set_shader_parameter("overlay_tint", Color(tint.r, tint.g, tint.b))
+
+
+static var _lum_cache := {}
+
+
+## Average luminance of a layer's non-red opaque pixels (cached per texture).
+static func _mean_luminance(tex: Texture2D) -> float:
+	if _lum_cache.has(tex.resource_path):
+		return _lum_cache[tex.resource_path]
+	var img := tex.get_image()
 	img.decompress()
-	img.convert(Image.FORMAT_RGBA8)
-	var layer := (load(path) as Texture2D).get_image()
-	layer.decompress()
-	layer.convert(Image.FORMAT_RGBA8)
-	img.blend_rect(layer, Rect2i(Vector2i.ZERO, layer.get_size()), Vector2i.ZERO)
-	return ImageTexture.create_from_image(img)
+	var total := 0.0
+	var n := 0
+	for y in range(0, img.get_height(), 2):
+		for x in range(0, img.get_width(), 2):
+			var c := img.get_pixel(x, y)
+			if c.a > 0.5 and not (c.r > 0.35 and c.r > c.g * 1.6 and c.r > c.b * 1.6):
+				total += 0.299 * c.r + 0.587 * c.g + 0.114 * c.b
+				n += 1
+	var mean := total / n if n > 0 else 0.3
+	_lum_cache[tex.resource_path] = mean
+	return mean
 
 
 ## The card never turns with the walking direction; the sheet row does.

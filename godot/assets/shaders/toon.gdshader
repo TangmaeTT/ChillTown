@@ -34,6 +34,15 @@ uniform vec4 uv_rect = vec4(0.0, 0.0, 1.0, 1.0);
 // Sprite cards are lit as if they faced the sky, so a sun or lamp behind the
 // card still lights the character (Flavour Edge-style sprites).
 uniform bool light_as_up = false;
+// Outfit layer drawn over the sprite (hair), same sheet layout. With
+// overlay_dye on, it is recoloured to overlay_tint keeping its shading;
+// strongly red pixels (hair ties, ribbons) keep their own colour.
+uniform bool use_overlay = false;
+uniform sampler2D overlay_tex : source_color, filter_nearest, repeat_disable;
+uniform bool overlay_dye = false;
+uniform vec3 overlay_tint : source_color = vec3(1.0);
+// The layer's average hair luminance: a pixel this light gets exactly the tint.
+uniform float overlay_ref = 0.3;
 // Tiled ground from tools/gen_ground.py, projected from above in world space.
 // The texture stores value / 2, so it can brighten as well as darken.
 uniform bool use_ground = false;
@@ -70,6 +79,20 @@ void fragment() {
 	if (use_tex) {
 		vec2 uv = uv_rect.xy + UV * uv_rect.zw;
 		vec4 t = texture(albedo_tex, uv);
+		if (use_overlay) {
+			vec4 o = texture(overlay_tex, uv);
+			if (o.a > 0.5) {
+				vec3 c = o.rgb;
+				bool accent = c.r > 0.35 && c.r > c.g * 1.6 && c.r > c.b * 1.6;
+				if (overlay_dye && !accent) {
+					// Scale the tint by the pixel's lightness relative to the
+					// layer's average, so highlights and outline survive.
+					float lum = dot(c, vec3(0.299, 0.587, 0.114));
+					c = clamp(overlay_tint * (lum / overlay_ref), 0.0, 1.0);
+				}
+				t = vec4(c, 1.0);
+			}
+		}
 		if (t.a < 0.5) {
 			discard;
 		}
