@@ -1,0 +1,37 @@
+; Engine configuration file.
+; Chill Town (Godot) — see ../design/GDD.md v0.2
+
+config_version=5
+
+[application]
+
+config/name="Chill Town"
+run/main_scene="res://scenes/siam_corner.tscn"
+config/features=PackedStringArray("4.7", "Mobile")
+config/icon="res://icon.svg"
+
+[autoload]
+
+DevShot="*res://scripts/dev/dev_shot.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=4
+
+[gui]
+
+theme/custom_font="res://assets/fonts/Mali-Medium.ttf"
+
+[internationalization]
+
+locale/include_text_server_data=true
+
+[rendering]
+
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
+anti_aliasing/quality/msaa_3d=2
