@@ -20,6 +20,10 @@ global uniform vec3 player_position;
 // they keep day_emission of their strength. Characters use 1 (constant fill).
 global uniform float night_amount;
 uniform float day_emission = 0.25;
+// Fill light for characters, added once (with the sun/moon) in light(), so it
+// multiplies the albedo after decals: a face decal's dark eyes stay dark.
+// Follows night_amount like emission (day_emission share by day).
+uniform float fill = 0.0;
 // Pixel-art face textures from tools/texture_from_ai.py (32 px per metre).
 uniform bool use_tex = false;
 uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_disable;
@@ -78,6 +82,10 @@ void light() {
 		+ smoothstep(0.4, 0.4 + band_softness, ndl) * 0.4;
 	float tone = mix(ndl, banded, toon);
 	DIFFUSE_LIGHT += LIGHT_COLOR * tone / PI;
+
+	if (LIGHT_IS_DIRECTIONAL && fill > 0.0) {
+		DIFFUSE_LIGHT += vec3(fill * mix(day_emission, 1.0, night_amount));
+	}
 
 	float rim = smoothstep(0.62, 0.7, 1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0));
 	DIFFUSE_LIGHT += LIGHT_COLOR * rim * rim_amount * toon * step(0.01, ndl) / PI;

@@ -38,6 +38,7 @@ var sky := SkyRig.new()
 var rain: GPUParticles3D
 ## 0.75: one texture pixel (32 per metre) is about one game pixel on screen.
 var zoom := 0.75
+var focus_offset := FOCUS_OFFSET
 var pixel := 2
 ## Ground wetness: soaks up while it rains, dries slowly to damp after.
 var wet := 1.0
@@ -63,7 +64,7 @@ func _ready() -> void:
 	player.camera = camera
 	player.input_blocked = chat.is_typing
 
-	npc = Chibi.new({"hair": Color("6b4a3a"), "top": Color("8ab074"), "bottom": Color("51444a")})
+	npc = Chibi.new({"hair_style": "none", "top": Color("8ab074"), "bottom": Color("51444a")})
 	npc.position = Vector3(-4.6, CityBuilder.SIDEWALK_TOP, 5.0)
 	add_child(npc)
 	npc.display_name = "มิว"
@@ -101,6 +102,15 @@ func _ready() -> void:
 			_set_pixel(int(a.substr(8)))
 		elif a == "--edit":
 			editor.toggle()
+		elif a == "--charview":
+			# Dev: both chibis side by side on open pavement, camera on them.
+			player.position = Vector3(-1.0, 0, -6.0)
+			npc.position = Vector3(0.3, CityBuilder.SIDEWALK_TOP, -6.6)
+			focus_offset = Vector3(0, 1.1, 0)
+			zoom = 0.3
+			_cam_focus = player.position + focus_offset
+			player.chibi.set_motion(0.0, Vector3(-1, 0, -1))
+			npc.set_motion(0.0, Vector3(-1, 0, -1))
 
 
 func _setup_view() -> void:
@@ -117,7 +127,7 @@ func _setup_view() -> void:
 	camera.far = 120.0
 	game_view.add_child(camera)
 	_add_outline_pass()
-	_cam_focus = player.position + FOCUS_OFFSET
+	_cam_focus = player.position + focus_offset
 	camera.look_at_from_position(_cam_focus + CAM_DIR.normalized() * CAM_DISTANCE, _cam_focus)
 	_set_pixel(pixel)
 
@@ -147,7 +157,7 @@ func _set_pixel(n: int) -> void:
 
 
 func _process(delta: float) -> void:
-	_cam_focus = _cam_focus.lerp(player.position + FOCUS_OFFSET, minf(1.0, delta * 5.0))
+	_cam_focus = _cam_focus.lerp(player.position + focus_offset, minf(1.0, delta * 5.0))
 	camera.size = VIEW_HEIGHT * zoom
 	# Snap the camera to whole game pixels in its own plane, so the pixelated
 	# world doesn't shimmer as it scrolls.

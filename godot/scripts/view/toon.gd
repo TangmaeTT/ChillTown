@@ -9,8 +9,9 @@ static var _cache := {}
 
 
 static func mat(color: Color, wet := 0.0, emission := Color.BLACK, energy := 0.0,
-		outline := 0.0, rim := 0.0, toon := 0.0, cutaway := false, day_emission := 0.25) -> ShaderMaterial:
-	var key := "%s|%s|%s|%s|%s|%s|%s|%s|%s" % [color.to_html(), wet, emission.to_html(), energy, outline, rim, toon, cutaway, day_emission]
+		outline := 0.0, rim := 0.0, toon := 0.0, cutaway := false, day_emission := 0.25,
+		fill := 0.0) -> ShaderMaterial:
+	var key := "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [color.to_html(), wet, emission.to_html(), energy, outline, rim, toon, cutaway, day_emission, fill]
 	if _cache.has(key):
 		return _cache[key]
 	var m := ShaderMaterial.new()
@@ -23,6 +24,7 @@ static func mat(color: Color, wet := 0.0, emission := Color.BLACK, energy := 0.0
 	m.set_shader_parameter("toon", toon)
 	m.set_shader_parameter("cutaway", cutaway)
 	m.set_shader_parameter("day_emission", day_emission)
+	m.set_shader_parameter("fill", fill)
 	if outline > 0.0:
 		var o := ShaderMaterial.new()
 		o.shader = OUTLINE_SHADER
