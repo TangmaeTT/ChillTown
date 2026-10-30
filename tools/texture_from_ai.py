@@ -4,6 +4,7 @@
       godot/assets/textures/shophouse_a --widths 4.2
   python tools/texture_from_ai.py art-in/props/vending_day.png art-in/props/vending_night.png \
       godot/assets/textures/vending --widths 1.0,0.75 --names front,side --height 1.94
+  python tools/texture_from_ai.py art-in/facade/corner_a_day.png art-in/facade/corner_a_night.png       godot/assets/textures/corner_a --widths 4.2,6,4.2 --names front,side,roof --heights 10.1,10.1,
 
 The images are flat orthographic views on magenta (see the prompts in PROJECT_NOTES §6).
 Parts side by side on one sheet are split at the magenta gaps, left to right, and each
@@ -80,6 +81,8 @@ def main():
     ap.add_argument("--widths", required=True, help="real width of each part in metres, left to right, comma-separated")
     ap.add_argument("--names", help="suffix for each part, comma-separated (default: none for one part, 0,1,.. otherwise)")
     ap.add_argument("--height", type=float, help="force every part to this height in metres (faces of one box must match)")
+    ap.add_argument("--heights", help="height in metres per part, comma-separated; leave a slot empty to keep that part's "
+                    "own proportions, e.g. 10.1,10.1, for front,side,roof")
     ap.add_argument("--ppm", type=int, default=32, help="game pixels per metre (project standard 32)")
     ap.add_argument("--colors", type=int, default=40)
     ap.add_argument("--min-gap", type=int, default=12, help="empty columns that separate parts")
@@ -97,16 +100,19 @@ def main():
     parts = split_parts(day[..., 3], a.min_gap)
     if len(parts) != len(widths):
         sys.exit(f"found {len(parts)} parts {parts}, but --widths gives {len(widths)}")
+    heights = [float(v) if v.strip() else None for v in a.heights.split(",")] if a.heights else [a.height] * len(parts)
+    if len(heights) != len(parts):
+        sys.exit(f"--heights gives {len(heights)} values for {len(parts)} parts")
     names = a.names.split(",") if a.names else ([""] if len(parts) == 1 else [str(i) for i in range(len(parts))])
 
     day_q = pf.reduce_colours(day, a.colors)
     night_q = pf.reduce_colours(night, a.colors)
-    for (x0, x1), wm, name in zip(parts, widths, names):
+    for (x0, x1), wm, hm, name in zip(parts, widths, heights, names):
         col = day[:, x0:x1, 3].max(1) > 0
         ys = np.nonzero(col)[0]
         box = (slice(ys.min(), ys.max() + 1), slice(x0, x1))
         w = round(wm * a.ppm)
-        h = round(a.height * a.ppm) if a.height else round((box[0].stop - box[0].start) * w / (x1 - x0))
+        h = round(hm * a.ppm) if hm else round((box[0].stop - box[0].start) * w / (x1 - x0))
         d = mode_downscale(day_q[box], w, h)
         n = mode_downscale(night_q[box], w, h)
 
