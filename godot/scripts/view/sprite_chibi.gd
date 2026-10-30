@@ -43,7 +43,7 @@ func _ready() -> void:
 	# characters, alpha cut so the shadow is the silhouette).
 	_mat = Toon.mat(Color.WHITE, 0.0, Color.BLACK, 0.0, 0.0, 0.0, 0.0, false, 0.2, 0.45).duplicate()
 	_mat.set_shader_parameter("use_tex", true)
-	_mat.set_shader_parameter("albedo_tex", sheet)
+	_mat.set_shader_parameter("albedo_tex", _dressed_sheet())
 	_mat.set_shader_parameter("light_as_up", true)
 	var q := QuadMesh.new()
 	q.size = Vector2.ONE * CELL * PIXEL
@@ -55,6 +55,24 @@ func _ready() -> void:
 	_pivot.add_child(_card)
 	add_child(_pivot)
 	_show(0)
+
+
+## Outfit layers drawn over the body, Ragnarok-style: each layer is a sheet
+## the size of the walk sheet (tools/hair_layer.py) composited once at load.
+## look.hair names res://assets/characters/hair_<name>.png ("" = bald).
+func _dressed_sheet() -> Texture2D:
+	var hair: String = look.get("hair_style", "")
+	var path := "res://assets/characters/hair_%s.png" % hair
+	if hair == "" or not ResourceLoader.exists(path):
+		return sheet
+	var img := sheet.get_image()
+	img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	var layer := (load(path) as Texture2D).get_image()
+	layer.decompress()
+	layer.convert(Image.FORMAT_RGBA8)
+	img.blend_rect(layer, Rect2i(Vector2i.ZERO, layer.get_size()), Vector2i.ZERO)
+	return ImageTexture.create_from_image(img)
 
 
 ## The card never turns with the walking direction; the sheet row does.
