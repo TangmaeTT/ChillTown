@@ -76,7 +76,7 @@ def mode_downscale(rgba, w, h):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("day")
-    ap.add_argument("night")
+    ap.add_argument("night", help="night version, or '-' for props with no lights (emission stays black)")
     ap.add_argument("out", help="output path prefix, e.g. godot/assets/textures/vending")
     ap.add_argument("--widths", required=True, help="real width of each part in metres, left to right, comma-separated")
     ap.add_argument("--names", help="suffix for each part, comma-separated (default: none for one part, 0,1,.. otherwise)")
@@ -88,7 +88,8 @@ def main():
     ap.add_argument("--min-gap", type=int, default=12, help="empty columns that separate parts")
     a = ap.parse_args()
 
-    day, night = load(a.day), load(a.night)
+    day = load(a.day)
+    night = day.copy() if a.night == "-" else load(a.night)
     if day.shape != night.shape:
         # ChatGPT edits sometimes come back a pixel or two off; crop both to the overlap.
         if max(abs(p - q) for p, q in zip(day.shape, night.shape)) > 4:
@@ -119,6 +120,8 @@ def main():
         lum_n = n[..., :3].astype(np.float32).max(-1)
         lum_d = d[..., :3].astype(np.float32).max(-1)
         lit = (lum_n > 140) & (lum_n > lum_d * 0.55) & (d[..., 3] > 0)
+        if a.night == "-":
+            lit[:] = False
         em = np.zeros_like(n)
         em[lit, :3] = n[lit, :3]
         em[..., 3] = 255
