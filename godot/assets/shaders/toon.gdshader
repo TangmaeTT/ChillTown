@@ -27,8 +27,13 @@ uniform float fill = 0.0;
 // Pixel-art face textures from tools/texture_from_ai.py (32 px per metre).
 uniform bool use_tex = false;
 uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_disable;
-uniform sampler2D emission_tex : source_color, filter_nearest, repeat_disable;
+uniform sampler2D emission_tex : source_color, filter_nearest, repeat_disable, hint_default_black;
 uniform float tex_emission_energy = 2.0;
+// Sprite sheets: the part of the texture shown (x, y, w, h in UV).
+uniform vec4 uv_rect = vec4(0.0, 0.0, 1.0, 1.0);
+// Sprite cards are lit as if they faced the sky, so a sun or lamp behind the
+// card still lights the character (Flavour Edge-style sprites).
+uniform bool light_as_up = false;
 // Tiled ground from tools/gen_ground.py, projected from above in world space.
 // The texture stores value / 2, so it can brighten as well as darken.
 uniform bool use_ground = false;
@@ -59,13 +64,17 @@ void fragment() {
 	}
 	vec3 base = albedo.rgb;
 	vec3 glow = emission_color.rgb * emission_energy;
+	if (light_as_up) {
+		NORMAL = normalize((VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz);
+	}
 	if (use_tex) {
-		vec4 t = texture(albedo_tex, UV);
+		vec2 uv = uv_rect.xy + UV * uv_rect.zw;
+		vec4 t = texture(albedo_tex, uv);
 		if (t.a < 0.5) {
 			discard;
 		}
 		base *= t.rgb;
-		glow += texture(emission_tex, UV).rgb * tex_emission_energy;
+		glow += texture(emission_tex, uv).rgb * tex_emission_energy;
 	}
 	if (use_ground) {
 		base *= texture(ground_tex, world_pos.xz / ground_tile_m).rgb * 2.0;

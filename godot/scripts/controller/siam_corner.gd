@@ -57,14 +57,15 @@ func _ready() -> void:
 	for it in PropLayout.load_or(CityBuilder.default_props).items:
 		PropKit.spawn(props, it.kind, it.pos, it.yaw)
 
-	player = PlayerController.new(Chibi.new())
+	player = PlayerController.new(SpriteChibi.new())
 	player.position = Vector3(-6.5, 0, 5.4)
 	add_child(player)
 	player.chibi.display_name = "torad"
 	player.camera = camera
 	player.input_blocked = chat.is_typing
 
-	npc = Chibi.new({"hair_style": "none", "top": Color("8ab074"), "bottom": Color("51444a")})
+	# The code-built 3D chibi, kept beside the sprite for comparison.
+	npc = Chibi.new()
 	npc.position = Vector3(-4.6, CityBuilder.SIDEWALK_TOP, 5.0)
 	add_child(npc)
 	npc.display_name = "มิว"

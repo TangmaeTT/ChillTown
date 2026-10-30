@@ -3,7 +3,7 @@ extends CanvasLayer
 ## Name tags and chat bubbles drawn in 2D at full screen resolution, placed
 ## over each chibi's head by projecting through the (low-res) game camera.
 
-const HEAD := Vector3(0, 2.0, 0)
+const HEAD := Vector3(0, 2.15, 0)
 const MAX_WIDTH := 280.0
 const FONT_SIZE := 20
 ## Thai stacks marks above and below the line; give wrapped lines room.
