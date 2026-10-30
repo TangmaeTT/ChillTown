@@ -34,7 +34,8 @@ var chat := ChatPanel.new()
 var clock := GameClock.new()
 var sky := SkyRig.new()
 var rain: GPUParticles3D
-var zoom := 1.0
+## 0.75: one texture pixel (32 per metre) is about one game pixel on screen.
+var zoom := 0.75
 var pixel := 2
 var _cam_focus := Vector3.ZERO
 var _npc_line := 0

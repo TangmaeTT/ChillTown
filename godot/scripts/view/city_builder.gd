@@ -17,6 +17,8 @@ const WALL_COLORS := ["8f7068", "67565a", "4d6c55", "51444a", "7a6a55", "5a6a78"
 const AWNING_COLORS := ["b5674d", "4f7a6a", "c9a65a", "6a5a8a", "8f5a5a"]
 const WARM := ["ffcf8f", "ffd9a8", "f2b880"]
 const SIGNS := {2: "ก๋วยเตี๋ยว", 4: "ร้านกาแฟ", 6: "เสื้อผ้า", 8: "ร้านเกม", 10: "ตัดผม"}
+## Shophouses drawn from a ChatGPT facade texture instead of boxes: index -> [texture, sign].
+const TEXTURED := {5: ["shophouse_a", "ร้านชำ"], 9: ["shophouse_a", ""]}
 
 
 static func ground_height(p: Vector3) -> float:
@@ -129,7 +131,51 @@ static func _shophouses(root: Node3D, rng: RandomNumberGenerator) -> void:
 		i += 1
 
 
+static func face(parent: Node3D, center: Vector3, size: Vector2, yaw: float, m: Material) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = size
+	mi.mesh = q
+	mi.material_override = m
+	mi.position = center
+	mi.rotation.y = yaw
+	parent.add_child(mi)
+	return mi
+
+
+static func _textured_shophouse(root: Node3D, x: float, tex: String, sign: String) -> void:
+	var size := Toon.texture_size_m(tex)
+	var front := WALK_EDGE
+	box(root, Vector3(x, size.y / 2 - 0.3, front + 3), Vector3(4.2, size.y - 0.6, 6), Toon.mat(Color("7f6158")), true)
+	# Quad faces +Z by default; turn it to face the street (-Z).
+	face(root, Vector3(x, size.y / 2, front - 0.01), size, PI, Toon.textured(tex))
+	omni(root, Vector3(x, 1.6, front - 0.8), Color("ffbf80"), 0.9, 4.5)
+	if sign != "":
+		# The facade's empty signboard band sits about a third of the way up.
+		var l := Toon.label(sign, 72, Color(1.7, 1.4, 1.0), 0)
+		l.pixel_size = 0.006
+		l.position = Vector3(x, size.y * 0.334, front - 0.03)
+		l.rotation.y = PI
+		root.add_child(l)
+
+
+static func _vending_machine(root: Node3D, pos: Vector3) -> void:
+	var size := Toon.texture_size_m("vending_front")
+	var depth := Toon.texture_size_m("vending_side").x
+	var c := pos + Vector3(0, size.y / 2, 0)
+	box(root, c, Vector3(size.x - 0.02, size.y - 0.02, depth - 0.02), Toon.mat(Color("3f6f6e")), true)
+	face(root, c + Vector3(0, 0, -depth / 2), size, PI, Toon.textured("vending_front", 1.6))
+	var side := Vector2(depth, size.y)
+	face(root, c + Vector3(size.x / 2, 0, 0), side, PI / 2, Toon.textured("vending_side"))
+	face(root, c + Vector3(-size.x / 2, 0, 0), side, -PI / 2, Toon.textured("vending_side"))
+	omni(root, c + Vector3(0, 0.2, -depth / 2 - 0.5), Color("e8f4ff"), 0.6, 2.5)
+
+
 static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: int) -> void:
+	if TEXTURED.has(idx):
+		_textured_shophouse(root, x, TEXTURED[idx][0], TEXTURED[idx][1])
+		rng.randi()  # keep the other houses' random looks unchanged
+		return
 	var upper := rng.randi_range(1, 3)
 	var h := 3.2 + 2.6 * upper + 0.6
 	var wall := Color(WALL_COLORS[rng.randi() % WALL_COLORS.size()])
@@ -230,6 +276,9 @@ static func _south_side(root: Node3D) -> void:
 
 
 static func _props(root: Node3D) -> void:
+	# Vending machine against the shuttered house next to the textured shop (index 6 -> x = 0).
+	_vending_machine(root, Vector3(1.3, SIDEWALK_TOP, WALK_EDGE - 0.4))
+
 	# Bench on the south sidewalk.
 	var wood := Toon.mat(Color("8f7068"))
 	var metal := Toon.mat(Color("3a3f45"))

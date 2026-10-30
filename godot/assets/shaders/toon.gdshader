@@ -16,6 +16,15 @@ uniform float toon : hint_range(0.0, 1.0) = 1.0;
 uniform bool cutaway = false;
 uniform float cutaway_radius = 2.2;
 global uniform vec3 player_position;
+// 0 by day .. 1 at night (SkyRig). Lights glow fully only at night; by day
+// they keep day_emission of their strength. Characters use 1 (constant fill).
+global uniform float night_amount;
+uniform float day_emission = 0.25;
+// Pixel-art face textures from tools/texture_from_ai.py (32 px per metre).
+uniform bool use_tex = false;
+uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_disable;
+uniform sampler2D emission_tex : source_color, filter_nearest, repeat_disable;
+uniform float tex_emission_energy = 2.0;
 
 float bayer4(vec2 p) {
 	ivec2 i = ivec2(mod(p, 4.0));
@@ -31,9 +40,19 @@ void fragment() {
 			discard;
 		}
 	}
-	ALBEDO = albedo.rgb;
+	vec3 base = albedo.rgb;
+	vec3 glow = emission_color.rgb * emission_energy;
+	if (use_tex) {
+		vec4 t = texture(albedo_tex, UV);
+		if (t.a < 0.5) {
+			discard;
+		}
+		base *= t.rgb;
+		glow += texture(emission_tex, UV).rgb * tex_emission_energy;
+	}
+	ALBEDO = base;
 	ROUGHNESS = mix(0.95, 0.2, wetness);
-	EMISSION = emission_color.rgb * emission_energy;
+	EMISSION = glow * mix(day_emission, 1.0, night_amount);
 }
 
 void light() {

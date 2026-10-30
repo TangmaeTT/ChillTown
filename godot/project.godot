@@ -28,6 +28,10 @@ player_position={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }
+night_amount={
+"type": "float",
+"value": 1.0
+}
 
 [gui]
 

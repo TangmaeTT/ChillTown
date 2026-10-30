@@ -76,6 +76,15 @@
 **ตึกถัดไป:** แนบภาพร้านก๋วยเตี๋ยวเป็น reference แล้วสั่ง "same style, same pixel size, same palette, same lighting"
 **ฉาก/บรรยากาศ:** ต้องแนบภาพ ref (บ่อน้ำหรือคลอง) ทุกครั้ง · เน้น close-up มุมถนนเดียว · มีแหล่งไฟแค่ 2–3 จุด · มีคน 1–2 คน · ห้ามนีออนและห้ามแน่นเกิน
 
+**Godot: ภาพหน้าของ (texture) จาก ChatGPT (30 ต.ค. ใช้ได้ผลรอบแรก)**
+- ขอเป็น **ภาพหน้าตรงแบน (orthographic elevation)** บนพื้น magenta ไม่ใช่มุม isometric เพราะเกมแปะลงหน้ากล่อง 3D แล้วหมุนกับใส่เงาเอง
+- ส่ง prompt กลางวันก่อน แล้วสั่ง "Edit the image you just made. Keep every pixel exactly the same ... night" ในแชทเดิม จะได้ภาพกลางคืนที่ตรงทุกเม็ด
+- ใส่ในทุก prompt: chunky pixel art, big square pixels, ~N pixels wide (คิดจาก 32 เม็ด/เมตร), flat colours, no gradients/blur, พาเลตหม่น, แสงกลางวันแบนจากซ้ายบน, **no text / letters / logos / brands** (ป้ายไทยเกมใส่เอง)
+- ของหลายหน้า (เช่น ตู้กดน้ำ): วาดหน้าตรงกับด้านข้างวางคู่กัน สูงเท่ากัน มีช่องว่างคั่น
+- prompt เต็ม: ตึกแถว 3 ชั้นกับตู้กดน้ำ (ภาพต้นฉบับ `art-in/facade/`, `art-in/props/`)
+- แปลง: `python tools/texture_from_ai.py <day> <night> godot/assets/textures/<name> --widths 4.2` (หลายชิ้น: `--widths 1.0,0.75 --names front,side --height 1.94`) → ได้ `_albedo` + `_emission` ที่ 32 เม็ด/เมตร · ใช้ Python ของ Miniconda (มี NumPy)
+- ใน Godot: `.import` ต้องตั้ง `detect_3d/compress_to=0` ไม่งั้นโดนบีบอัดจนเม็ดเพี้ยน · ซูม 0.75 = 1 เม็ดภาพ ≈ 1 เม็ดจอ
+
 บทเรียน: ภาพเมืองมุมกว้างที่ gen ครั้งแรกสว่างเกิน (50%) ม่วงชมพูนีออน คนแน่น และเม็ดเล็ก จึงไม่ตรง ref
 
 ## 7. ขั้นต่อไป

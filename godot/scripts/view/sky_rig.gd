@@ -65,6 +65,13 @@ func update(delta: float, focus: Vector3) -> void:
 	var elevation := lerpf(12.0, 62.0, sin(arc * PI))
 	sun.rotation_degrees = Vector3(-elevation, lerpf(100.0, -100.0, arc) + 180.0, 0)
 
+	var glow_amount := 0.0
+	if h >= 17.5:
+		glow_amount = smoothstep(17.5, 19.0, h)
+	elif h < 6.5:
+		glow_amount = 1.0 - smoothstep(5.5, 6.5, h)
+	RenderingServer.global_shader_parameter_set("night_amount", glow_amount)
+
 	var night := clock.is_night()
 	var lamps := get_tree().get_nodes_in_group("night_lights")
 	for l: Light3D in lamps:
