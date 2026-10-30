@@ -20,7 +20,8 @@ const SIGNS := {2: "ก๋วยเตี๋ยว", 4: "ร้านกาแ�
 ## Shophouses drawn from a ChatGPT facade texture instead of boxes: index -> [texture, sign].
 const TEXTURED := {5: ["shophouse_a", ""], 9: ["shophouse_a", "ร้านชำ"]}
 ## Corner buildings (front + side + roof textures), with an alley (soi) on their -X side.
-const CORNERS := {4: ["corner_a", "ร้านชำ"]}
+## Optional third value: interior kit, which turns the shopfront into a hole with a room behind it.
+const CORNERS := {4: ["corner_b", "ร้านชำ", "grocery"]}
 const SOI_WIDTH := 4.4
 
 
@@ -205,13 +206,32 @@ static func _vending_machine(root: Node3D, pos: Vector3) -> void:
 
 ## Box textured on the three faces the camera sees: front (-Z), side (-X) and roof.
 ## The front sits on the sidewalk edge; the side texture's width sets the depth.
-static func _corner_building(root: Node3D, x: float, tex: String, sign: String) -> void:
+static func solid(parent: Node3D, center: Vector3, size: Vector3) -> void:
+	var sb := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = size
+	cs.shape = sh
+	sb.add_child(cs)
+	sb.position = center
+	parent.add_child(sb)
+
+
+static func _corner_building(root: Node3D, x: float, tex: String, sign: String, kit := "") -> void:
 	var front_m := Toon.texture_size_m(tex + "_front")
 	var depth := Toon.texture_size_m(tex + "_side").x
 	var h := front_m.y
 	var front := WALK_EDGE
 	var c := Vector3(x, h / 2, front + depth / 2)
-	box(root, c, Vector3(front_m.x - 0.02, h - 0.02, depth - 0.02), Toon.mat(Color("7f6158")), true)
+	if kit == "":
+		box(root, c, Vector3(front_m.x - 0.02, h - 0.02, depth - 0.02), Toon.mat(Color("7f6158")), true)
+	else:
+		# Faces only, so the shopfront hole looks into a real room.
+		solid(root, c, Vector3(front_m.x, h, depth))
+		var hole := Toon.hole_rect_m(tex + "_front")
+		PropKit.interior(root, kit, x - front_m.x / 2 + hole.get_center().x, front,
+				front_m.x - 0.3, 4.0, hole.position.y + SIDEWALK_TOP)
+		_dress_corner(root, x, front, front_m, depth)
 	face(root, Vector3(x, h / 2, front - 0.01), front_m, PI, Toon.textured(tex + "_front"))
 	face(root, Vector3(x - front_m.x / 2 - 0.01, h / 2, c.z), Vector2(depth, h), -PI / 2, Toon.textured(tex + "_side"))
 	var roof := face(root, Vector3(x, h + 0.01, c.z), Vector2(front_m.x, depth), 0.0, Toon.textured(tex + "_roof"))
@@ -226,6 +246,35 @@ static func _corner_building(root: Node3D, x: float, tex: String, sign: String) 
 		root.add_child(l)
 
 
+## Wall pieces on a corner building: AC units and a meter box on the alley
+## wall, pipes and conduit, plants and crates by the door, laundry on the
+## ledge, and a utility pole on the corner with wires to the building.
+static func _dress_corner(root: Node3D, x: float, front: float, size: Vector2, depth: float) -> void:
+	var side_x := x - size.x / 2
+	var grey := Color("5a6a78")
+	var dark := Color("3a3d42")
+	# Front of these pieces faces the alley (-X).
+	PropKit.textured_box(root, "kit_ac", Vector3(side_x - 0.15, 6.0, front + 2.4), PI / 2)
+	PropKit.textured_box(root, "kit_ac", Vector3(side_x - 0.15, 3.3, front + 4.8), PI / 2)
+	PropKit.textured_box(root, "kit_meter", Vector3(side_x - 0.13, 1.4, front + 0.9), PI / 2)
+	PropKit.pipe(root, Vector3(side_x - 0.08, SIDEWALK_TOP, front + 0.25), Vector3(side_x - 0.08, size.y - 0.3, front + 0.25), 0.06, grey)
+	PropKit.pipe(root, Vector3(x + size.x / 2 - 0.15, SIDEWALK_TOP, front - 0.08), Vector3(x + size.x / 2 - 0.15, size.y - 0.3, front - 0.08), 0.05, grey)
+	PropKit.pipe(root, Vector3(side_x - 0.04, 2.1, front + 0.9), Vector3(side_x - 0.04, 2.1, front + depth - 0.3), 0.025, dark)
+	PropKit.pipe(root, Vector3(side_x - 0.04, 2.1, front + 0.9), Vector3(side_x - 0.04, 6.1, front + 0.9), 0.025, dark)
+	PropKit.pipe(root, Vector3(side_x - 0.04, 6.1, front + 0.9), Vector3(side_x - 0.04, 6.1, front + 2.0), 0.025, dark)
+	PropKit.card(root, "kit_fern", Vector3(x + size.x / 2 - 0.35, SIDEWALK_TOP, front - 0.3))
+	PropKit.card(root, "kit_tall", Vector3(x + size.x / 2 - 0.85, SIDEWALK_TOP, front - 0.3))
+	PropKit.textured_box(root, "kit_crates", Vector3(x - size.x / 2 + 0.35, SIDEWALK_TOP, front - 0.25))
+	PropKit.card(root, "kit_bush", Vector3(x - 1.2, 3.9, front - 0.25))
+	PropKit.card(root, "kit_rack", Vector3(x + 0.8, 3.9, front - 0.3))
+	var top := PropKit.utility_pole(root, Vector3(side_x - 1.2, SIDEWALK_TOP, front - 1.3))
+	PropKit.wire(root, top, Vector3(side_x - 0.05, 7.2, front + 0.5), 0.5)
+	PropKit.wire(root, top + Vector3(0.5, 0, 0), Vector3(side_x - 0.05, 6.8, front + 1.5), 0.6)
+	PropKit.wire(root, top + Vector3(-0.6, 0, 0), top + Vector3(-13.0, 0, 0), 1.1)
+	PropKit.wire(root, top + Vector3(0.6, -0.8, 0), top + Vector3(13.0, -0.8, 0), 1.2)
+	PropKit.wire(root, top + Vector3(-0.3, -0.8, 0), top + Vector3(-13.0, -0.8, 0.3), 1.3)
+
+
 ## Paved alley between two shophouses, running back from the sidewalk.
 static func _soi(root: Node3D, x: float) -> void:
 	box(root, Vector3(x, SIDEWALK_TOP / 2, WALK_EDGE + 4), Vector3(SOI_WIDTH, SIDEWALK_TOP, 8),
@@ -237,7 +286,8 @@ static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: 
 		_soi(root, x)
 		return
 	if CORNERS.has(idx):
-		_corner_building(root, x, CORNERS[idx][0], CORNERS[idx][1])
+		var spec: Array = CORNERS[idx]
+		_corner_building(root, x, spec[0], spec[1], spec[2] if spec.size() > 2 else "")
 		return
 	if TEXTURED.has(idx):
 		_textured_shophouse(root, x, TEXTURED[idx][0], TEXTURED[idx][1])

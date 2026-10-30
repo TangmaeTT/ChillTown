@@ -70,6 +70,26 @@ static func texture_size_m(name: String) -> Vector2:
 	return Vector2(t.get_width(), t.get_height()) / 32.0
 
 
+## The shopfront hole in a facade texture (transparent pixels in its lower
+## half, away from the edges), in metres from the facade's bottom-left corner.
+static func hole_rect_m(name: String) -> Rect2:
+	var img: Image = (load("res://assets/textures/%s_albedo.png" % name) as Texture2D).get_image()
+	if img.is_compressed():
+		img.decompress()
+	var w := img.get_width()
+	var h := img.get_height()
+	var lo := Vector2i(w, h)
+	var hi := Vector2i(-1, -1)
+	for y in range(h / 2, h):
+		for x in range(10, w - 10):
+			if img.get_pixel(x, y).a < 0.5:
+				lo = Vector2i(mini(lo.x, x), mini(lo.y, y))
+				hi = Vector2i(maxi(hi.x, x), maxi(hi.y, y))
+	if hi.x < 0:
+		return Rect2()
+	return Rect2(lo.x / 32.0, (h - 1 - hi.y) / 32.0, (hi.x - lo.x + 1) / 32.0, (hi.y - lo.y + 1) / 32.0)
+
+
 ## Material for things that may hide the player (fades out around them).
 static func occluder(color: Color, outline := 0.0) -> ShaderMaterial:
 	return mat(color, 0.0, Color.BLACK, 0.0, outline, 0.0, 0.0, true)
