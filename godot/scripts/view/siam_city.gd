@@ -155,7 +155,8 @@ static func cut_away(node: Node3D) -> void:
 ## looks like ground about 1.2 h further toward +X and +Z). On screen +X runs up-left and
 ## +Z up-right, so the station at x = STATION_X is the lower-left corner. The station
 ## building stands on the road side of the tracks and the camera sees the trains' -Z side
-## at the platform in front of it; stairs come down to the south sidewalk.
+## at the platform in front of it; stairs come down to the south sidewalk. It is scenery:
+## no cutaway, it never fades around the player.
 static func skytrain(root: Node3D) -> void:
 	if not has("city_viaduct_side"):
 		return
@@ -165,25 +166,26 @@ static func skytrain(root: Node3D) -> void:
 		var cx := x + seg.x / 2
 		for sz in [-1.0, 1.0]:
 			CityBuilder.face(root, Vector3(cx, DECK_Y + seg.y / 2, RAIL_Z + sz * DECK_WIDTH / 2), seg,
-					PI if sz < 0 else 0.0, Toon.textured("city_viaduct_side", 2.0, true))
+					PI if sz < 0 else 0.0, Toon.textured("city_viaduct_side"))
 		if has("city_viaduct_top"):
-			flat(root, Vector3(cx, DECK_Y + seg.y + 0.01, RAIL_Z), Vector2(seg.x, DECK_WIDTH), "city_viaduct_top", false, true)
+			flat(root, Vector3(cx, DECK_Y + seg.y + 0.01, RAIL_Z), Vector2(seg.x, DECK_WIDTH), "city_viaduct_top")
 		x += seg.x
 	if has("city_pier_front"):
 		# The T cap spans the deck (Z), so the camera sees the pier's profile: yaw 90.
 		for px in [-56.0, -36.0, -16.0, 4.0, 24.0, 44.0, 64.0]:
-			cut_away(PropKit.textured_box(root, "city_pier", Vector3(px, 0, RAIL_Z), PI / 2))
+			PropKit.textured_box(root, "city_pier", Vector3(px, 0, RAIL_Z), PI / 2)
 	if has("city_station_front"):
 		var depth := Toon.texture_size_m("city_station_side").x
 		var sz := RAIL_Z + DECK_WIDTH / 2 + depth / 2
-		cut_away(PropKit.textured_box(root, "city_station", Vector3(STATION_X, DECK_Y - 1.0, sz), 0.0))
+		PropKit.textured_box(root, "city_station", Vector3(STATION_X, DECK_Y - 1.0, sz), 0.0)
 		CityBuilder.omni(root, Vector3(STATION_X, DECK_Y + 4.0, RAIL_Z), Color("e8f0ff"), 1.5, 14.0)
 		if has("city_station_stairs_front"):
 			# From the station's road side down to the south sidewalk, near its +X end
 			# (left on screen), away from the clock at the junction.
 			var run := Toon.texture_size_m("city_station_stairs_side").x
-			cut_away(PropKit.textured_box(root, "city_station_stairs",
-					Vector3(STATION_X + 13.0, 0.0, -8.6 - run / 2)))
+			# Turned round (yaw 180): the climb starts at the other end.
+			PropKit.textured_box(root, "city_station_stairs",
+					Vector3(STATION_X + 13.0, 0.0, -8.6 - run / 2), PI)
 	if PropKit.has_voxel("city_train_head") and PropKit.has_voxel("city_train_mid"):
 		for i in TRACKS.size():
 			var t := Node3D.new()
@@ -205,7 +207,6 @@ static func _train_cars(t: Node3D) -> void:
 		var car := PropKit.voxel(t, names[i], Vector3((i - 1) * (length + gap), 0, 0))
 		if i == 2:
 			car.scale.x = -1.0
-		cut_away(car)
 
 
 # --- utilities --------------------------------------------------------------
