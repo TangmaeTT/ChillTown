@@ -31,6 +31,16 @@ window/handheld/orientation=4
 
 theme/custom_font="res://assets/fonts/Mali-Medium.ttf"
 
+[importer_defaults]
+
+scene={
+"meshes/create_shadow_meshes": false,
+"meshes/generate_lods": false
+}
+texture={
+"detect_3d/compress_to": 0
+}
+
 [internationalization]
 
 locale/include_text_server_data=true
@@ -54,15 +64,4 @@ night_amount={
 wet_amount={
 "type": "float",
 "value": 1.0
-}
-
-[importer_defaults]
-
-scene={
-"meshes/generate_lods": false,
-"meshes/create_shadow_meshes": false
-}
-
-texture={
-"detect_3d/compress_to": 0
 }

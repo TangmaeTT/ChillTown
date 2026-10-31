@@ -77,11 +77,78 @@ def srgb_to_linear(c):
     return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
 
 
-def face_colours(views, view, normal, ys, xs, zs, shape):
-    """Vertex colour (linear RGB, 8 bit) + night glow for faces looking along `normal`."""
-    rgb, em = views[view]
-    c = np.broadcast_to(rgb, shape + (4,))[ys, xs, zs].copy()
-    e = np.broadcast_to(em, shape + (4,))[ys, xs, zs]
+NORMALS = [(0, 0, -1), (0, 0, 1), (-1, 0, 0), (1, 0, 0), (0, 1, 0), (0, -1, 0)]
+
+
+SLOPE_R = 3          # voxels: how far around a face the shape is blurred to find its slope
+
+
+def surface(occ):
+    """What face_view needs about the carved shape: how deep each voxel sits below the
+    surface each view sees, from both ends of its ray (f along z, s along x, t down from the
+    top; 0 = that view draws this voxel), and the shape blurred over SLOPE_R voxels."""
+    def depth(axis):
+        n = occ.shape[axis]
+        first = np.expand_dims(occ.argmax(axis), axis)
+        last = np.expand_dims(n - 1 - np.flip(occ, axis).argmax(axis), axis)
+        i = np.arange(n).reshape([-1 if a == axis else 1 for a in range(3)])
+        return i - first, last - i
+    big = np.iinfo(np.int64).max // 2
+    _, top = depth(0)
+    blur = occ.astype(np.uint16)
+    for axis in range(3):
+        c = np.cumsum(blur, axis, dtype=np.uint16)
+        n = c.shape[axis]
+        hi = np.take(c, np.minimum(np.arange(n) + SLOPE_R, n - 1), axis)
+        lo = np.take(c, np.maximum(np.arange(n) - SLOPE_R - 1, 0), axis)
+        lo[tuple(slice(0, SLOPE_R + 1) if a == axis else slice(None) for a in range(3))] = 0
+        blur = hi - lo
+    return {'f': depth(2), 's': depth(1), 't': (top, np.full_like(top, big)), 'blur': np.pad(blur, 1)}
+
+
+def face_view(view, normal, ys, xs, zs, surf):
+    """Which view colours each face, and which normal it is lit by. Each step of a curved
+    shape is a flat voxel face, but the views draw the curve: the top view's rim of a bush is
+    the pale outline of the dome, not its side. So a face takes the view facing its real
+    slope (the blurred shape's gradient) and is lit like it, and a curve shades as one smooth
+    curve instead of a white line along every step. A face its view cannot see (a ledge
+    under the roof) goes to the view that sees that voxel nearest the surface."""
+    own = NORMALS.index(normal)
+    pick = np.full(len(ys), view)
+    nidx = np.full(len(ys), own)
+    if normal == (0, -1, 0):
+        return pick, nidx
+    b = surf['blur'].astype(np.int32)
+    y, x, z = ys + 1, xs + 1, zs + 1
+    slope = np.stack([b[y, x, z - 1] - b[y, x, z + 1], b[y, x - 1, z] - b[y, x + 1, z],
+                      b[y - 1, x, z] - b[y + 1, x, z]], 1).astype(np.float32)   # out: z, x, y
+    slope /= np.maximum(np.linalg.norm(slope, axis=1, keepdims=True), 1e-6)
+    # Facing per candidate f-, f+, s-, s+, t+ (NORMALS order).
+    dot = np.stack([-slope[:, 0], slope[:, 0], -slope[:, 1], slope[:, 1], slope[:, 2]], 1)
+    d = np.stack([surf[v][end][ys, xs, zs] for v in 'fst' for end in (0, 1)], 1)[:, :5]
+    back = NORMALS.index(tuple(-v for v in normal))
+    if back < 5:
+        dot[:, back] = -2                               # never light a face from behind
+    # Keep the face's own view while it faces within 60 degrees of its slope and sees it.
+    keep = (dot[:, own] >= 0.5) & (d[:, own] == 0)
+    best = np.where(d == 0, dot, dot - 3).argmax(1)    # facing views that see it first
+    best = np.where(keep, own, best)
+    pick = np.array(list('ffsst'))[best]
+    return pick, best
+
+
+def face_colours(views, view, normal, ys, xs, zs, shape, surf):
+    """Vertex colour (linear RGB, 8 bit) + night glow + shading normal index for faces
+    looking along `normal` (see face_view)."""
+    pick, nidx = face_view(view, normal, ys, xs, zs, surf)
+    c = np.empty((len(ys), 4), np.uint8)
+    e = np.empty((len(ys), 4), np.uint8)
+    for v in 'fst':
+        sel = pick == v
+        if sel.any():
+            rgb, em = views[v]
+            c[sel] = np.broadcast_to(rgb, shape + (4,))[ys[sel], xs[sel], zs[sel]]
+            e[sel] = np.broadcast_to(em, shape + (4,))[ys[sel], xs[sel], zs[sel]]
     # Faces that face the view through a hole in it (alpha 0) borrow the front colour.
     miss = c[:, 3] < 128
     if miss.any():
@@ -91,7 +158,8 @@ def face_colours(views, view, normal, ys, xs, zs, shape):
     if normal == (0, -1, 0):
         lin = lin * 0.5
     glow = e[:, :3].max(1).astype(np.float32) / 255.0
-    return np.concatenate([np.round(np.clip(lin, 0, 1) * 255), np.round(glow[:, None] * 255)], 1).astype(np.uint8)
+    rgba = np.concatenate([np.round(np.clip(lin, 0, 1) * 255), np.round(glow[:, None] * 255)], 1)
+    return np.concatenate([rgba, nidx[:, None]], 1).astype(np.uint8)
 
 
 def build(name):
@@ -155,6 +223,7 @@ def build(name):
 
     Y, X, Z = occ.shape
     pad = np.pad(occ, 1)
+    surf = surface(occ)
     # (normal, neighbour offset in [y, x, z], view)
     dirs = [((0, 0, -1), (0, 0, -1), 'f'), ((0, 0, 1), (0, 0, 1), 'f'),
             ((-1, 0, 0), (0, -1, 0), 's'), ((1, 0, 0), (0, 1, 0), 's'),
@@ -169,9 +238,16 @@ def build(name):
             continue
         n = np.array(normal, np.float32)
         if textured:
-            cq = np.zeros((len(ys), 4), np.uint8)             # shape only; colour from textures
+            # Colour comes from the textures (Toon.voxel_tex); the vertex colour only says
+            # which view: r = side, g = top, neither = front (0/255 only, so the importer's
+            # colour-space conversion can't shift it). NORMAL lights it.
+            pick, nidx = face_view(view, normal, ys, xs, zs, surf)
+            cq = np.zeros((len(ys), 5), np.uint8)
+            cq[:, 0] = np.where(pick == 's', 255, 0)
+            cq[:, 1] = np.where(pick == 't', 255, 0)
+            cq[:, 4] = nidx
         else:
-            cq = face_colours(views, view, normal, ys, xs, zs, (Y, X, Z))
+            cq = face_colours(views, view, normal, ys, xs, zs, (Y, X, Z), surf)
         ax = [i for i in range(3) if normal[i] == 0]
         a, b = ax
         k = [i for i in range(3) if normal[i] != 0][0]
@@ -186,7 +262,7 @@ def build(name):
         lengths = np.diff(np.append(starts, len(vox)))
         vox, cq = vox[starts], cq[starts]
         # Then stack identical runs (same start, length, colour) in consecutive rows along b.
-        cid = cq.astype(np.int64) @ np.array([1 << 24, 1 << 16, 1 << 8, 1], np.int64)
+        cid = cq.astype(np.int64) @ np.array([1 << 32, 1 << 24, 1 << 16, 1 << 8, 1], np.int64)
         order = np.lexsort((vox[:, b], cid, lengths, vox[:, a], vox[:, k]))
         vox, cq, lengths, cid = vox[order], cq[order], lengths[order], cid[order]
         new_row = np.ones(len(vox), bool)
@@ -215,8 +291,8 @@ def build(name):
         world[:, 1] = quad[:, 1] / PPM
         world[:, 2] = (quad[:, 2] - oz) / PPM
         pos.append(world)
-        nor.append(np.repeat(n[None], len(world), 0))
-        col.append(np.repeat(cq, 4, 0))
+        nor.append(np.repeat(np.array(NORMALS, np.float32)[cq[:, 4]], 4, 0))
+        col.append(np.repeat(cq[:, :4], 4, 0))
         base_i = v0 + np.arange(len(vox)) * 4
         tri = [0, 2, 1, 0, 3, 2] if flip else [0, 1, 2, 0, 2, 3]
         idx.append((base_i[:, None] + np.array(tri)[None]).reshape(-1))

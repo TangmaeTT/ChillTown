@@ -72,13 +72,11 @@ uniform sampler2D vtex_top_em : source_color, filter_nearest, repeat_disable, hi
 varying vec3 world_pos;
 varying vec4 vcol;
 varying vec3 local_pos;
-varying vec3 local_nrm;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	vcol = COLOR;
 	local_pos = VERTEX;
-	local_nrm = NORMAL;
 }
 
 float bayer4(vec2 p) {
@@ -124,18 +122,27 @@ void fragment() {
 		glow += texture(emission_tex, uv).rgb * tex_emission_energy;
 	}
 	if (use_vtex) {
-		vec3 n = normalize(local_nrm);
+		// The face's own direction from its slope on screen (NORMAL may be bent to light a
+		// step like the surface it belongs to), turned toward the camera, snapped to an axis.
+		vec3 n = cross(dFdx(local_pos), dFdy(local_pos));
+		vec3 to_cam = (inverse(MODEL_MATRIX) * vec4(INV_VIEW_MATRIX[2].xyz, 0.0)).xyz;
+		n *= sign(dot(n, to_cam));
+		vec3 an = abs(n);
+		n = an.x > an.y && an.x > an.z ? vec3(sign(n.x), 0, 0)
+				: (an.y > an.z ? vec3(0, sign(n.y), 0) : vec3(0, 0, sign(n.z)));
+		// Vertex colour (voxel_from_views) picks the view: r = side, g = top, else front.
+		int view = vcol.r > 0.5 ? 1 : (vcol.g > 0.5 ? 2 : 0);
 		// Voxel index of this face: half a voxel inside the surface.
 		vec3 v = floor(vec3(local_pos.x * 32.0 + vtex_size.x * 0.5, local_pos.y * 32.0,
 				local_pos.z * 32.0 + vtex_size.z * 0.5) - n * 0.5);
 		vec2 uf = vec2((vtex_size.x - v.x - 0.5) / vtex_size.x, (vtex_size.y - v.y - 0.5) / vtex_size.y);
 		vec4 c = texture(vtex_front, uf);
 		vec3 e = texture(vtex_front_em, uf).rgb;
-		if (abs(n.x) > 0.5) {
+		if (view == 1) {
 			vec2 us = vec2((v.z + 0.5) / vtex_size.z, (vtex_size.y - v.y - 0.5) / vtex_size.y);
 			vec4 cs = texture(vtex_side, us);
 			if (cs.a > 0.5) { c = cs; e = texture(vtex_side_em, us).rgb; }
-		} else if (n.y > 0.5) {
+		} else if (view == 2) {
 			vec2 ut = vec2((v.x + 0.5) / vtex_size.x, (v.z + 0.5) / vtex_size.z);
 			vec4 ct = texture(vtex_top, ut);
 			if (ct.a > 0.5) { c = ct; e = texture(vtex_top_em, ut).rgb; }
