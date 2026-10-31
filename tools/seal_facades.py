@@ -11,6 +11,7 @@ through every seam. This fills, in albedo and emission alike:
   2. on every wall row (a row whose solid span is nearly the full width), a margin of up to
      MAX_MARGIN px out to the texture edge: the outline pixel moves out to the edge and the wall colour fills in behind;
   3. on the roof, the same for columns too (seen from above it is a full rectangle).
+  0. edge pixels tinted purple by the magenta background (mostly the outline), made neutral.
 The shopfront hole (a large enclosed area) and the shape above the wall rows (gables, water
 tanks) are left alone. Safe to run again.
 """
@@ -106,6 +107,24 @@ def edge_map(solid, axis_rows=True):
     return src
 
 
+R = 6                 # purple tint counts as background bleed this close to a clear pixel
+
+
+def fringe(alb):
+    """Leftover magenta-background pixels: purple, and within R px of a hole or the border."""
+    a = alb.astype(int)
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    purple = (alb[..., 3] >= 128) & (r - g > 12) & (b - g > 12) & (b > 0.6 * r)
+    clear = np.pad(alb[..., 3] < 128, R, constant_values=True)
+    h, w = purple.shape
+    near = np.zeros_like(purple)
+    for dy in range(-R, R + 1):
+        for dx in range(-R, R + 1):
+            near |= clear[R + dy:R + dy + h, R + dx:R + dx + w]
+    strong = (r - g > 20) & (b - g > 20)       # magenta seen through railings, baked in
+    return purple & (near | strong)
+
+
 def seal(name, view):
     pa = TEX / f'city_{name}_{view}_albedo.png'
     pe = TEX / f'city_{name}_{view}_emission.png'
@@ -114,6 +133,12 @@ def seal(name, view):
     alb = np.array(Image.open(pa).convert('RGBA'))
     emi = np.array(Image.open(pe).convert('RGBA')) if pe.exists() else None
     total = 0
+    bad = fringe(alb)
+    if bad.any():
+        # Mostly the dark outline tinted by the magenta: make it neutral, same brightness.
+        v = alb[bad, :3].astype(int).mean(axis=1)
+        alb[bad, 0] = v; alb[bad, 1] = v; alb[bad, 2] = np.minimum(v + 4, 255)
+        total += int(bad.sum())
     passes = [True, False] if view == 'roof' else [True]
     for _ in range(2):                       # margins can enclose new dots, so twice
         solid = alb[..., 3] >= 128

@@ -127,6 +127,13 @@ static func building(root: Node3D, x: float, tex: String, sign: String, nudge: f
 	# Body behind the facade, set back so the shopfront opening is a real recess or room.
 	var body := Toon.mat(Color("5e5550"))
 	CityBuilder.box(root, Vector3(x, h / 2, front + room + (depth - room) / 2), Vector3(front_m.x - 0.06, h - 0.02, depth - room), body)
+	# Fill above the shopfront too, so the building is solid right up to the front: where
+	# the art has a stray clear pixel at a corner or roof edge it shows dark wall, not the
+	# street behind the building.
+	var cap := CityBuilder.SIDEWALK_TOP + hole.position.y + hole.size.y + 0.2 if room > 1.5 else 3.45
+	if h - cap > 0.1:
+		CityBuilder.box(root, Vector3(x, (cap + h - 0.02) / 2, front + 0.04 + (room - 0.04) / 2),
+				Vector3(front_m.x - 0.06, h - 0.02 - cap, room - 0.04), body)
 	if room > 1.5:
 		_shop_room(root, x, front, front_m, hole, shop)
 	else:
