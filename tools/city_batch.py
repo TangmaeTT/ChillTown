@@ -130,6 +130,8 @@ Attached are style references from our game: ref_building.png and ref_vending.pn
 Subject: {desc}.
 Draw it as FLAT ORTHOGRAPHIC VIEWS (no perspective, not isometric): {views}. Put the views side by side from left to right on one canvas, all at the same scale, bottoms aligned, with wide plain magenta gaps between them.
 Real size: {size}. Chunky pixel art at about 32 pixels per metre, scaled up with big hard square pixels.
+The views are carved together into ONE 3D object, so they must agree exactly: the same length, width and height in every view that shows them, and every feature (roof units, doors, cab, awning) at the same place along the object in every view. The TOP/ROOF view looks straight down: no side walls visible in it.
+Colour every surface right up to its outline with its own colour: NO pale rim, highlight band, bevel or shading strip along the edges of any view, only the 1-pixel dark outline.
 Bangkok, Siam district, quiet and a little worn. Muted palette (dusty brick, moss green, blue-grey, warm greys), flat soft daylight from the top-left, no cast shadows, no ground, no sky.
 Plain solid magenta #FF00FF background everywhere else. Flat colours, no gradients, no anti-aliasing, no blur. No text, no letters, no numbers, no logos, no real brands."""
 
