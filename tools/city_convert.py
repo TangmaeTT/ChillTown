@@ -157,6 +157,10 @@ def convert(aid):
             cmd += ['--names', views]
     r = subprocess.run(cmd, capture_output=True, text=True)
     print(f'{aid}: ' + (r.stdout.strip().replace('\n', ' | ') or r.stderr.strip().splitlines()[-1]))
+    if r.returncode == 0 and views == FSR:
+        # Buildings are boxes: close the see-through outline dots and wall margins.
+        r2 = subprocess.run([PY, str(ROOT / 'tools' / 'seal_facades.py'), name], capture_output=True, text=True)
+        print('  ' + (r2.stdout.strip() or r2.stderr.strip()))
     return r.returncode == 0
 
 

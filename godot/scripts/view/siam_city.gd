@@ -136,8 +136,12 @@ static func building(root: Node3D, x: float, tex: String, sign: String, nudge: f
 		for sx in [-1.0, 1.0]:
 			CityBuilder.box(root, Vector3(x + sx * (front_m.x / 2 - 0.05), 1.7, front + 0.75), Vector3(0.06, 3.4, 1.5), inside)
 		CityBuilder.omni(root, Vector3(x, 2.4, front + 0.8), Color("ffc58a"), 1.2, 3.5)
-	CityBuilder.face(root, Vector3(x, h / 2, front - 0.01 - nudge), front_m, PI, Toon.textured(tex + "_front"))
+	# 2 cm wider each side so packed neighbours overlap and no seam line shows between them.
+	CityBuilder.face(root, Vector3(x, h / 2, front - 0.01 - nudge), front_m + Vector2(0.04, 0), PI, Toon.textured(tex + "_front"))
 	CityBuilder.face(root, Vector3(x - front_m.x / 2 - 0.01, h / 2, c.z), Vector2(depth, h), -PI / 2, Toon.textured(tex + "_side"))
+	# Backing just inside the side face: the side art starts with the facade's profile
+	# (balconies, awning), which is see-through between its pieces.
+	CityBuilder.face(root, Vector3(x - front_m.x / 2 + 0.03, h / 2, c.z), Vector2(depth, h), -PI / 2, body)
 	var roof := CityBuilder.face(root, Vector3(x, h + 0.01, c.z), Vector2(front_m.x, depth), 0.0, Toon.textured(tex + "_roof"))
 	roof.rotation.x = -PI / 2
 	CityBuilder.reflection(root, Vector3(x, 0, front - 0.3), 2.4, 2.0, Color("ffbf80"), 0.3)
@@ -202,7 +206,7 @@ static func _shop_room(root: Node3D, x: float, front: float, front_m: Vector2, h
 		var bs := Toon.texture_size_m(spec.back)
 		CityBuilder.face(root, Vector3(x, floor_y + bs.y / 2, front + ROOM_DEPTH - 0.01), Vector2(minf(bs.x, w), bs.y), PI, Toon.textured(spec.back))
 	for sx in [-1.0, 1.0]:
-		CityBuilder.box(root, Vector3(x + sx * (w / 2 + 0.05), (floor_y + top) / 2, cz), Vector3(0.1, top - floor_y, ROOM_DEPTH), wall)
+		CityBuilder.box(root, Vector3(x + sx * (w / 2 - 0.05), (floor_y + top) / 2, cz), Vector3(0.1, top - floor_y, ROOM_DEPTH), wall)
 	var strip := Toon.glow(Color(spec.light), 2.5)
 	for dz in [1.2, 3.0]:
 		CityBuilder.box(root, Vector3(x, top - 0.02, front + dz), Vector3(w * 0.7, 0.04, 0.14), strip)

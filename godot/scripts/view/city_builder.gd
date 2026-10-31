@@ -197,8 +197,43 @@ static func _road_markings(root: Node3D) -> void:
 
 
 static func _shophouses(root: Node3D, rng: RandomNumberGenerator) -> void:
+	var packed := _packed_row() if _new_city else {}
 	for i in range(ROW_FIRST if _new_city else 0, (ROW_LAST if _new_city else 12) + 1):
-		_shophouse(root, rng, -26.4 + 4.4 * i, i)
+		_shophouse(root, rng, packed.get(i, -26.4 + 4.4 * i), i)
+
+
+## Width along X of what stands in row slot i: a Codex building's real facade width (its
+## slots share one entry), the soi, or a plain 4.4 m slot. 0 for a wide building's second slot.
+static func _row_width(i: int) -> float:
+	if CITY_ROW.has(i - 1) and CITY_ROW[i - 1].size() > 2 and CITY_ROW[i - 1][2] > 1:
+		return 0.0
+	if CITY_ROW.has(i):
+		var spec: Array = CITY_ROW[i]
+		var slots: int = spec[2] if spec.size() > 2 else 1
+		return Toon.texture_size_m(spec[0] + "_front").x if Toon.has_texture(spec[0] + "_front") else 4.4 * slots
+	if CORNERS.has(i + 1):
+		return SOI_WIDTH
+	return 4.4
+
+
+## Centre x of each row item with the buildings packed wall to wall. Codex facades are not
+## 4.4 m wide (3.3 to 5.1 m), so on the slot grid they left gaps or overlapped. Each block
+## starts flush at the side road and runs outward; the far end of the row takes the slack.
+static func _packed_row() -> Dictionary:
+	var out := {}
+	var west := range(ROW_FIRST, CROSS_ROW[0])
+	west.reverse()
+	for block in [[west, -26.4 + 4.4 * CROSS_ROW[0] - 2.2, -1.0],
+			[range(CROSS_ROW[-1] + 1, ROW_LAST + 1), -26.4 + 4.4 * CROSS_ROW[-1] + 2.2, 1.0]]:
+		var edge: float = block[1]
+		var dir: float = block[2]
+		for i in block[0]:
+			var w := _row_width(i)
+			if w == 0.0:
+				continue
+			out[i] = edge + dir * w / 2
+			edge += dir * w
+	return out
 
 
 static func face(parent: Node3D, center: Vector3, size: Vector2, yaw: float, m: Material) -> MeshInstance3D:
@@ -333,7 +368,7 @@ static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: 
 		var shop: String = spec[3] if spec.size() > 3 else ""
 		# Its -X wall shows when nothing stands west of it: the row's end, the side road, a soi.
 		var exposed := not _slot_built(idx - 1)
-		SiamCity.building(root, x + 2.2 * (slots - 1), spec[0], spec[1], 0.01 * (idx % 2), shop, exposed)
+		SiamCity.building(root, x, spec[0], spec[1], 0.01 * (idx % 2), shop, exposed)
 		rng.randi()
 		return
 	if CORNERS.has(idx + 1):
