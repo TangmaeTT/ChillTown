@@ -117,8 +117,9 @@ static func voxel(parent: Node3D, name: String, foot: Vector3, yaw := 0.0) -> No
 	node.position = foot
 	node.rotation.y = yaw
 	parent.add_child(node)
+	var m: ShaderMaterial = Toon.voxel_tex(name) if FileAccess.file_exists("res://assets/models/%s.vx.json" % name) else Toon.vcolor()
 	for mi in node.find_children("*", "MeshInstance3D", true, false):
-		(mi as MeshInstance3D).material_override = Toon.vcolor()
+		(mi as MeshInstance3D).material_override = m
 	return node
 
 

@@ -31,6 +31,7 @@ OUT = ROOT / 'godot' / 'assets' / 'models'
 PPM = 32.0
 MAX_VOXELS = 6_000_000
 VIEW_PARTS = ('front', 'side', 'top')
+TEXTURED_NAMES = {'city_train_head', 'city_train_mid'}
 
 
 def load(name, part, kind='albedo'):
@@ -76,16 +77,36 @@ def srgb_to_linear(c):
     return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
 
 
+def face_colours(views, view, normal, ys, xs, zs, shape):
+    """Vertex colour (linear RGB, 8 bit) + night glow for faces looking along `normal`."""
+    rgb, em = views[view]
+    c = np.broadcast_to(rgb, shape + (4,))[ys, xs, zs].copy()
+    e = np.broadcast_to(em, shape + (4,))[ys, xs, zs]
+    # Faces that face the view through a hole in it (alpha 0) borrow the front colour.
+    miss = c[:, 3] < 128
+    if miss.any():
+        fc = np.broadcast_to(views['f'][0], shape + (4,))[ys, xs, zs]
+        c[miss] = fc[miss]
+    lin = srgb_to_linear(c[:, :3].astype(np.float32))
+    if normal == (0, -1, 0):
+        lin = lin * 0.5
+    glow = e[:, :3].max(1).astype(np.float32) / 255.0
+    return np.concatenate([np.round(np.clip(lin, 0, 1) * 255), np.round(glow[:, None] * 255)], 1).astype(np.uint8)
+
+
 def build(name):
+    global VIEW_PARTS
     fa, sa, ta = load(name, 'front'), load(name, 'side'), load(name, 'top')
-    if ta is None and load(name, 'roof') is not None and load(name, 'rear') is not None:
+    if ta is None and load(name, 'roof') is not None and load(name, 'top') is None and load(name, 'rear') is not None:
         # Vehicle sheet (side, front, rear, roof): parked along X with its nose to -X, the
         # camera sees the long side from -Z and the nose from -X.
-        fa, sa, ta = load(name, 'side'), load(name, 'front'), load(name, 'roof')
-        global VIEW_PARTS
         VIEW_PARTS = ('side', 'front', 'roof')
+    elif ta is None and load(name, 'roof') is not None and (load(name, 'end') is not None or name.startswith('city_train')):
+        # Train car sheet (side, front cab or end, roof): long axis along X like a vehicle.
+        VIEW_PARTS = ('side', 'end' if load(name, 'end') is not None else 'front', 'roof')
     else:
         VIEW_PARTS = ('front', 'side', 'top')
+    fa, sa, ta = load(name, VIEW_PARTS[0]), load(name, VIEW_PARTS[1]), load(name, VIEW_PARTS[2])
     if fa is None or sa is None:
         print(f'{name}: needs _front and _side')
         return False
@@ -93,6 +114,9 @@ def build(name):
     te = load(name, VIEW_PARTS[2], 'emission')
     H, W = fa.shape[:2]
     D = sa.shape[1]
+    # Big pieces (station, train) keep their colours in textures sampled by the shader, so
+    # the mesh only needs the shape and merges into far fewer quads.
+    textured = W * H * D > MAX_VOXELS or name in TEXTURED_NAMES
     sa = resize(sa, D, H)
     se = resize(se, D, H) if se is not None else None
     F = fa[..., 3] > 127
@@ -143,20 +167,11 @@ def build(name):
         ys, xs, zs = np.nonzero(exposed)
         if len(ys) == 0:
             continue
-        rgb, em = views[view]
-        c = np.broadcast_to(rgb, (Y, X, Z, 4))[ys, xs, zs]
-        e = np.broadcast_to(em, (Y, X, Z, 4))[ys, xs, zs]
-        # Faces that face the view through a hole in it (alpha 0) borrow the front colour.
-        miss = c[:, 3] < 128
-        if miss.any():
-            fc = np.broadcast_to(views['f'][0], (Y, X, Z, 4))[ys, xs, zs]
-            c[miss] = fc[miss]
-        lin = srgb_to_linear(c[:, :3].astype(np.float32))
-        if normal == (0, -1, 0):
-            lin = lin * 0.5
-        glow = e[:, :3].max(1).astype(np.float32) / 255.0
         n = np.array(normal, np.float32)
-        cq = np.concatenate([np.round(np.clip(lin, 0, 1) * 255), np.round(glow[:, None] * 255)], 1).astype(np.uint8)
+        if textured:
+            cq = np.zeros((len(ys), 4), np.uint8)             # shape only; colour from textures
+        else:
+            cq = face_colours(views, view, normal, ys, xs, zs, (Y, X, Z))
         ax = [i for i in range(3) if normal[i] == 0]
         a, b = ax
         k = [i for i in range(3) if normal[i] != 0][0]
@@ -212,6 +227,19 @@ def build(name):
     I = I.astype(np.uint16) if I.max() < 65536 else I.astype(np.uint32)
     OUT.mkdir(parents=True, exist_ok=True)
     write_glb(OUT / f'{name}.glb', P, N, C, I, name)
+    if textured:
+        # The views as the shader reads them (Toon.voxel_tex): front as drawn, the side and
+        # top in the orientation that carved best, top resized to W x D.
+        for part, img in (('front', fa), ('side', s_img), ('top', t_img)):
+            Image.fromarray(img).save(OUT / f'{name}_vx_{part}_albedo.png')
+        for part, img in (('front', fe), ('side', s_em), ('top', t_em)):
+            ref = {'front': fa, 'side': s_img, 'top': t_img}[part]
+            Image.fromarray(img if img is not None else np.zeros_like(ref)).save(OUT / f'{name}_vx_{part}_emission.png')
+        (OUT / f'{name}.vx.json').write_text(json.dumps({'w': W, 'h': H, 'd': D}))
+    else:
+        for f in OUT.glob(f'{name}_vx_*.png'):
+            f.unlink()
+        (OUT / f'{name}.vx.json').unlink(missing_ok=True)
     print(f'{name}: {W}x{H}x{D} voxels, {int(occ.sum())} solid, {len(I) // 6} faces, '
           f'side {sl}, top {tl}, fit {sc:.2f}/3')
     return True
@@ -259,18 +287,12 @@ def write_glb(path, P, N, C, I, name):
 def main():
     names = sys.argv[1:]
     if names == ['--all']:
-        # Props only: sets with a top view and a modest voxel count. Buildings, piers, the
-        # station and its stairs stay as textured boxes (they are boxes, and too big).
-        names = []
-        for p in sorted(TEX.glob('city_*_front_albedo.png')):
-            n = p.name[:-len('_front_albedo.png')]
-            vehicle = (TEX / f'{n}_roof_albedo.png').exists() and (TEX / f'{n}_rear_albedo.png').exists()
-            if not ((TEX / f'{n}_top_albedo.png').exists() or vehicle) or not (TEX / f'{n}_side_albedo.png').exists():
-                continue
-            w, h = Image.open(p).size
-            d = Image.open(TEX / f'{n}_side_albedo.png').size[0]
-            if w * h * d <= MAX_VOXELS:
-                names.append(n)
+        # Props, vehicles, train cars and the station pieces. Big ones go to textured mode.
+        # Buildings (front/side/roof, no top) stay as textured boxes in SiamCity.building.
+        def has(n, part):
+            return (TEX / f'{n}_{part}_albedo.png').exists()
+        stems = {p.name.rsplit('_', 2)[0] for p in TEX.glob('city_*_side_albedo.png')}
+        names = sorted(n for n in stems if has(n, 'top') or (has(n, 'roof') and (has(n, 'rear') or has(n, 'end') or n.startswith('city_train'))))
     for n in names:
         build(n)
 

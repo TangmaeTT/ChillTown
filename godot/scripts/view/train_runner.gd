@@ -1,6 +1,7 @@
 extends Node3D
-## Runs a skytrain along X: comes in from one end, stops at the station, leaves,
-## waits off-screen and starts again. `direction` +1 runs toward +X.
+## Runs a skytrain into the terminus along Z: comes in from the far end, stops at the
+## station, then runs back out the way it came, waits off-screen and starts again.
+## `direction` +1: arrives travelling toward +Z.
 
 var direction := 1.0
 var delay := 0.0
@@ -21,18 +22,18 @@ func _ready() -> void:
 
 func _process(dt: float) -> void:
 	_t += dt
-	var stop_x := SiamCity.STATION_X
+	var stop := SiamCity.STATION_Z
 	match _state:
 		"wait":
 			if _t >= WAIT:
 				_state = "in"
-				position.x = stop_x - FAR * direction
+				position.z = stop - FAR * direction
 				visible = true
 		"in":
-			var left := stop_x - position.x
+			var left := stop - position.z
 			# Brake into the station (v^2 = 2 a s).
 			var v := minf(SiamCity.TRAIN_SPEED, sqrt(absf(left) * 2.0 * BRAKE) + 0.3)
-			position.x += signf(left) * minf(v * dt, absf(left))
+			position.z += signf(left) * minf(v * dt, absf(left))
 			if absf(left) < 0.01:
 				_state = "dwell"
 				_t = 0.0
@@ -41,8 +42,8 @@ func _process(dt: float) -> void:
 				_state = "out"
 				_t = 0.0
 		"out":
-			position.x += direction * minf(SiamCity.TRAIN_SPEED, 1.0 + _t * BRAKE) * dt
-			if absf(position.x - stop_x) > FAR:
+			position.z -= direction * minf(SiamCity.TRAIN_SPEED, 1.0 + _t * BRAKE) * dt
+			if absf(position.z - stop) > FAR:
 				_state = "wait"
 				visible = false
 				_t = 0.0

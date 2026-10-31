@@ -84,6 +84,24 @@ static func vcolor(emission_energy := 2.0) -> ShaderMaterial:
 	return m
 
 
+## Material for big voxel pieces (tools/voxel_from_views.py textured mode): the shader
+## reads each face's colour from the oriented views saved next to the model.
+static func voxel_tex(name: String, emission_energy := 2.0) -> ShaderMaterial:
+	var key := "vtex|%s|%s" % [name, emission_energy]
+	if _cache.has(key):
+		return _cache[key]
+	var info = JSON.parse_string(FileAccess.get_file_as_string("res://assets/models/%s.vx.json" % name))
+	var m := mat(Color.WHITE).duplicate() as ShaderMaterial
+	m.set_shader_parameter("use_vtex", true)
+	m.set_shader_parameter("vtex_size", Vector3(info.w, info.h, info.d))
+	m.set_shader_parameter("vcolor_emission", emission_energy)
+	for part in ["front", "side", "top"]:
+		m.set_shader_parameter("vtex_" + part, load("res://assets/models/%s_vx_%s_albedo.png" % [name, part]))
+		m.set_shader_parameter("vtex_%s_em" % part, load("res://assets/models/%s_vx_%s_emission.png" % [name, part]))
+	_cache[key] = m
+	return m
+
+
 ## True when a face/ground texture has been converted into the project.
 static func has_texture(name: String) -> bool:
 	return ResourceLoader.exists("res://assets/textures/%s_albedo.png" % name)
