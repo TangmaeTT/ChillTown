@@ -39,6 +39,11 @@ const CATALOG := {
 	"phone_booth": ["box", "city_phone_booth", "ตู้โทรศัพท์"],
 	"planter_tree": ["box", "city_planter_tree", "กระบะต้นไม้"],
 	"rain_tree": ["card", "city_rain_tree", "ต้นจามจุรี"],
+	"sign_aframe": ["box", "city_sign_aframe", "ป้ายตั้งพื้น"],
+	"sign_lightbox": ["box", "city_sign_lightbox", "กล่องไฟ"],
+	"barrier_water": ["box", "city_barrier_water", "แผงกั้นน้ำ"],
+	"cone": ["box", "city_cone", "กรวย"],
+	"crowd_barrier": ["box", "city_crowd_barrier", "รั้วเหล็กกั้น"],
 }
 
 

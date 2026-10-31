@@ -14,8 +14,8 @@ const RAIL_Z := -32.0           ## along X, south of the main road (shows below 
 const RAIL_HALF_LEN := 90.0
 const TRACKS := [-1.8, 1.8]     ## z of the two tracks, from RAIL_Z
 const STATION_X := 14.0         ## +X is up-left on screen: with the rail this far south, lower left
-const WEST_END := -30.0
-const EAST_END := 30.0
+const WEST_END := -37.4
+const EAST_END := 37.4
 const TRAIN_SPEED := 11.0
 
 
@@ -53,10 +53,13 @@ static func ground(root: Node3D) -> void:
 			CityBuilder.box(root, Vector3(ix * 10 + 5, -0.1, iz * 10 + 5), Vector3(10, 0.2, 10), asphalt)
 	var top := CityBuilder.SIDEWALK_TOP
 	# Main sidewalks, cut where the side road meets the north one.
+	var road := CityBuilder.ROAD_HALF
+	var north := CityBuilder.WALK_EDGE - road
+	var south := -CityBuilder.SOUTH_EDGE - road
 	for seg in [[WEST_END, -CROSS_HALF - CROSS_WALK], [CROSS_HALF + CROSS_WALK, EAST_END]]:
 		var w: float = seg[1] - seg[0]
-		CityBuilder.box(root, Vector3((seg[0] + seg[1]) / 2, top / 2, 6.0), Vector3(w, top, 4), walk)
-	CityBuilder.box(root, Vector3((WEST_END + EAST_END) / 2, top / 2, -6.0), Vector3(EAST_END - WEST_END, top, 4), walk)
+		CityBuilder.box(root, Vector3((seg[0] + seg[1]) / 2, top / 2, road + north / 2), Vector3(w, top, north), walk)
+	CityBuilder.box(root, Vector3((WEST_END + EAST_END) / 2, top / 2, -road - south / 2), Vector3(EAST_END - WEST_END, top, south), walk)
 	# Side road sidewalks, from the main road's north edge to the far end.
 	for sx in [-1.0, 1.0]:
 		var x: float = sx * (CROSS_HALF + CROSS_WALK / 2)
@@ -130,7 +133,7 @@ static func building(root: Node3D, x: float, tex: String, sign: String, nudge: f
 	roof.rotation.x = -PI / 2
 	CityBuilder.reflection(root, Vector3(x, 0, front - 0.3), 2.4, 2.0, Color("ffbf80"), 0.3)
 	if sign != "":
-		CityBuilder.box(root, Vector3(x, 3.75, front - 0.08), Vector3(3.0, 0.7, 0.1), Toon.mat(Color("2a2f38")))
+		CityBuilder.box(root, Vector3(x, 3.75, front - 0.08), Vector3(minf(3.0, front_m.x - 1.0), 0.7, 0.1), Toon.mat(Color("2a2f38")))
 		var l := Toon.label(sign, 72, Color(1.7, 1.4, 1.0), 0)
 		l.pixel_size = 0.006
 		l.position = Vector3(x, 3.75, front - 0.15)
@@ -187,7 +190,7 @@ static func skytrain(root: Node3D) -> void:
 			var st_len := Toon.texture_size_m("city_station_front").x
 			var sw := Toon.texture_size_m("city_station_stairs_front").x
 			PropKit.textured_box(root, "city_station_stairs",
-					Vector3(STATION_X + st_len / 2 + sw / 2 + 0.5, 0.0, -8.6 - run / 2), PI)
+					Vector3(STATION_X + st_len / 2 + sw / 2 + 0.5, 0.0, CityBuilder.SOUTH_EDGE - 0.6 - run / 2), PI)
 	if PropKit.has_voxel("city_train_head") and PropKit.has_voxel("city_train_mid"):
 		for i in TRACKS.size():
 			var t := Node3D.new()
@@ -218,7 +221,7 @@ static func utilities(root: Node3D) -> void:
 	if not has("city_utility_pole_front"):
 		return
 	var z := CityBuilder.ROAD_HALF + 0.5
-	var xs := [-27.0, -19.0, -11.0, 11.0, 19.0, 27.0]
+	var xs := [-35.0, -27.0, -19.0, -11.0, 11.0, 19.0, 27.0, 35.0]
 	for x in xs:
 		PropKit.textured_box(root, "city_utility_pole", Vector3(x, CityBuilder.SIDEWALK_TOP, z))
 	if not has("city_wire_bundle"):
@@ -251,15 +254,15 @@ static func lamp(root: Node3D, x: float, z: float) -> bool:
 
 # --- vehicles ----------------------------------------------------------------
 
-## A car parked along the main road, nose toward -X (the camera sees its side and nose).
-static func vehicle(root: Node3D, name: String, pos: Vector3) -> void:
+## A car parked along the main road, nose toward -X (yaw 0: the camera sees its side and
+## nose) or +X (yaw PI).
+static func vehicle(root: Node3D, name: String, pos: Vector3, yaw := 0.0) -> void:
 	if not has(name + "_side"):
 		return
 	if PropKit.has_voxel(name):
-		var v := PropKit.voxel(root, name, pos)
+		PropKit.voxel(root, name, pos, yaw)
 		var sz := Toon.texture_size_m(name + "_side")
 		CityBuilder.solid(root, pos + Vector3(0, sz.y / 2, 0), Vector3(sz.x, sz.y, 1.8))
-		v = v
 		return
 	var side := Toon.texture_size_m(name + "_side")
 	var w := Toon.texture_size_m(name + "_front").x if has(name + "_front") else 1.8
@@ -299,6 +302,111 @@ static func default_props() -> void:
 	]
 	for s in spots:
 		CityBuilder.add_default(s[0], s[1], s[2])
-	for x in [-18.0, -6.0, 6.0, 18.0]:
-		CityBuilder.add_default("planter_tree", Vector3(x, t, -7.3))
-	CityBuilder.add_default("rain_tree", Vector3(-28.0, t, -7.6))
+	var back := CityBuilder.SOUTH_EDGE + 0.9
+	for x in [-30.0, -18.0, -6.0, 6.0, 18.0, 30.0]:
+		CityBuilder.add_default("planter_tree", Vector3(x, t, back))
+	CityBuilder.add_default("rain_tree", Vector3(-36.0, t, back - 0.2))
+	# Shop signs out on the pavement, roadworks at the far east end.
+	var front := CityBuilder.WALK_EDGE
+	for spot in [["sign_aframe", -17.0], ["sign_aframe", 17.0], ["sign_aframe", -30.0],
+			["sign_lightbox", 12.6], ["sign_lightbox", 22.0], ["sign_lightbox", -31.8]]:
+		CityBuilder.add_default(spot[0], Vector3(spot[1], t, front - 0.7))
+	CityBuilder.add_default("barrier_water", Vector3(33.0, 0.0, -3.2))
+	CityBuilder.add_default("cone", Vector3(30.8, 0.0, -3.0))
+	CityBuilder.add_default("cone", Vector3(29.6, 0.0, -2.6))
+	CityBuilder.add_default("crowd_barrier", Vector3(35.0, t, -5.0))
+	CityBuilder.add_default("table_stools", Vector3(18.6, t, front - 1.6))
+	CityBuilder.add_default("trash_bins", Vector3(15.2, t, front - 0.5))
+
+
+# --- street marks -----------------------------------------------------------
+
+## Paint and ironwork on the ground (fixed, not layout props): stop lines before the
+## crossings, lane arrows, manholes in the road and drain grates along the curbs.
+static func street_marks(root: Node3D) -> void:
+	if not has("city_road_marks_3"):
+		return
+	var road := CityBuilder.ROAD_HALF
+	# Stop lines across the inner lanes, a car length before each crossing.
+	flat(root, Vector3(-CROSS_HALF - 5.2, 0.012, -road / 2), Vector2(0.3, road - 0.2), "city_road_marks_3")
+	flat(root, Vector3(CROSS_HALF + 1.2, 0.012, road / 2), Vector2(0.3, road - 0.2), "city_road_marks_3")
+	# Straight-ahead arrows in the traffic lanes, pointing the way each lane runs.
+	for spot in [[-16.0, -1.1, -1.0], [16.0, -1.1, -1.0], [-16.0, 1.1, 1.0], [16.0, 1.1, 1.0]]:
+		var a := flat(root, Vector3(spot[0], 0.012, spot[1]), Vector2(2.6, 1.1), "city_road_marks_4")
+		a.rotate_y(PI if spot[2] > 0 else 0.0)
+	# Manholes in the road, grates and covers along the kerbs and on the pavement.
+	for spot in [[-24.0, -0.4, 0], [9.5, 0.6, 0], [26.0, -1.6, 0], [-10.0, 3.7, 1], [4.0, -3.7, 1],
+			[-30.0, 3.7, 1], [20.0, -3.7, 1], [-14.0, 6.0, 2], [24.0, -6.2, 2]]:
+		var tex := "city_street_decals_%d" % spot[2]
+		var y := 0.012 if absf(spot[1]) < road else CityBuilder.SIDEWALK_TOP + 0.006
+		var size := Toon.texture_size_m(tex)
+		flat(root, Vector3(spot[0], y, spot[1]), size, tex)
+
+
+# --- life ---------------------------------------------------------------------
+
+const TRAFFIC := ["city_taxi_pink", "city_taxi_green", "city_sedan_white", "city_tuktuk",
+		"city_pickup", "city_taxi_pink", "city_city_bus", "city_sedan_white", "city_taxi_green"]
+
+
+## Two lanes of cars on the main road, westbound on the south side (noses to -X, the way
+## the models face) and eastbound on the north. Parked cars use the curb lanes.
+static func traffic(root: Node3D) -> void:
+	var kinds := TRAFFIC.filter(func(n: String) -> bool: return PropKit.has_voxel(n))
+	if kinds.is_empty():
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	for lane in [[-1.1, -1.0, 7.5], [1.1, 1.0, 6.5]]:
+		var node := Node3D.new()
+		node.set_script(preload("res://scripts/view/traffic_lane.gd"))
+		node.set("direction", lane[1])
+		node.set("speed", lane[2])
+		node.position.z = lane[0]
+		root.add_child(node)
+		var x := -60.0
+		var k := rng.randi() % kinds.size()
+		while x < 60.0:
+			var name: String = kinds[k % kinds.size()]
+			k += 1
+			var half := Toon.texture_size_m(name + "_side").x / 2
+			var car := PropKit.voxel(node, name, Vector3(x + half, 0, 0), 0.0 if lane[1] < 0 else PI)
+			car.set_meta("half", half)
+			x += half * 2 + rng.randf_range(9.0, 22.0)
+
+
+## Passers-by on both sidewalks and up the side road, in the outfits and hairstyles the
+## player can pick, plus a couple standing at the stalls.
+static func pedestrians(root: Node3D) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	var outfits := SpriteChibi.OUTFITS.keys()
+	var hairs := SpriteChibi.HAIR_STYLES.keys()
+	var tints := [Color(0, 0, 0, 0), Color("3d2c26"), Color("8a5a3c"), Color("1e1e24"), Color("c9a27a"), Color("7a4a8a")]
+	var walk := CityBuilder.WALK_EDGE
+	var south := CityBuilder.SOUTH_EDGE
+	# [x0, x1, z, along_z]
+	var routes := [
+		[-36.0, -7.0, walk - 2.4, false], [-36.0, -7.0, walk - 1.6, false], [7.0, 36.0, walk - 2.4, false],
+		[7.0, 36.0, walk - 1.6, false], [-34.0, 34.0, south + 1.7, false], [-34.0, 34.0, south + 1.7, false],
+		[-20.0, 20.0, -4.8, false], [5.0, 30.0, CROSS_HALF + CROSS_WALK / 2, true],
+	]
+	for r in routes:
+		var p := Node3D.new()
+		p.set_script(preload("res://scripts/view/pedestrian.gd"))
+		p.set("x0", r[0])
+		p.set("x1", r[1])
+		p.set("along_z", r[3])
+		p.set("speed", rng.randf_range(0.8, 1.4))
+		p.set("look", {"outfit": outfits[rng.randi() % outfits.size()],
+				"hair_style": hairs[rng.randi() % hairs.size()], "hair_tint": tints[rng.randi() % tints.size()]})
+		var along := rng.randf_range(r[0], r[1])
+		p.position = Vector3(r[2], 0, along) if r[3] else Vector3(along, 0, r[2])
+		root.add_child(p)
+	# Customers at the noodle cart and the fruit cart (standing, facing the stall).
+	for spot in [[Vector3(-17.0, 0, 5.4), Vector3(0, 0, 1)], [Vector3(15.4, 0, 5.4), Vector3(0, 0, 1)]]:
+		var c := SpriteChibi.new({"outfit": outfits[rng.randi() % outfits.size()],
+				"hair_style": hairs[rng.randi() % hairs.size()], "hair_tint": tints[rng.randi() % tints.size()]})
+		c.position = spot[0] + Vector3(0, CityBuilder.SIDEWALK_TOP, 0)
+		root.add_child(c)
+		c.set_motion(0.0, spot[1])

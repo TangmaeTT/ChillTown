@@ -4,7 +4,8 @@ extends CharacterBody3D
 ## the ground to walk there. Height follows the sidewalk, not physics.
 
 const SPEED := 3.2
-const BOUNDS := Rect2(-28, -7.6, 56, 15.2)
+## The walkable street: both sidewalks and the road, wall to shopfronts.
+const BOUNDS := Rect2(-36.5, -9.1, 73, 18.7)
 
 var chibi: Chibi
 var camera: Camera3D

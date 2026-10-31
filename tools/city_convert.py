@@ -45,6 +45,11 @@ RULES = {
     'A2': ('shophouse_b', 'h', 13.5, FSR),
     'A3': ('shophouse_old', 'h', 7, FSR),
     'A9': ('noodle_shop', 'h', 10.5, FSR),
+    'A4': ('mini_mart', 'h', 7, FSR),
+    'A5': ('cafe', 'h', 7.5, FSR),
+    'A6': ('pharmacy', 'h', 10.5, FSR),
+    'A7': ('condo', 'h', 19, FSR),
+    'A8': ('gold_shop', 'h', 10.5, FSR),
     'A9i': ('noodle_interior', 'w', 4, None),
     'C1': ('spirit_house', 'h', 2, FST),
     'C2': ('noodle_cart', 'h', 2.2, FST),
@@ -68,6 +73,9 @@ RULES = {
     'D1': ('taxi_pink', 'w', 4.6, 'side,front,rear,roof'),
     'D2': ('taxi_green', 'w', 4.6, 'side,front,rear,roof'),
     'D3': ('tuktuk', 'w', 3, 'side,front,rear,roof'),
+    'D4': ('city_bus', 'w', 10.5, 'side,front,rear,roof'),
+    'D5': ('sedan_white', 'w', 4.4, 'side,front,rear,roof'),
+    'D6': ('pickup', 'w', 5.2, 'side,front,rear,roof'),
 }
 
 

@@ -8,7 +8,9 @@ class_name CityBuilder
 
 const SIDEWALK_TOP := 0.12
 const ROAD_HALF := 4.0
-const WALK_EDGE := 8.0
+## Building line on the north side (6 m sidewalk) and the low wall on the south (5.5 m).
+const WALK_EDGE := 10.0
+const SOUTH_EDGE := -9.5
 ## Skytrain viaduct: behind the shophouses (which end at z = 14), lifted to clear the roofs.
 const RAIL_Z := 17.5
 const RAIL_LIFT := 3.5
@@ -23,12 +25,17 @@ const TEXTURED := {5: ["shophouse_a", ""], 9: ["shophouse_a", "ร้านช�
 ## Optional third value: interior kit, which turns the shopfront into a hole with a room behind it.
 const CORNERS := {4: ["corner_b", "ร้านชำ", "grocery"]}
 const SOI_WIDTH := 4.4
-## Codex shophouses (SiamCity): row index -> [texture, sign]. Indices 5-7 are the side road.
+## Codex buildings (SiamCity): row index (x = -26.4 + 4.4 i) -> [texture, sign, slots].
+## Indices 5-7 are the side road; a 2-slot building also takes the next index.
 const CITY_ROW := {
-	0: ["city_shophouse_b", ""], 1: ["city_shophouse_old", ""], 2: ["city_noodle_shop", "ก๋วยเตี๋ยว"],
-	8: ["city_shophouse_a", "ร้านกาแฟ"], 9: ["city_shophouse_b", "เสื้อผ้า"], 10: ["city_shophouse_old", ""],
-	11: ["city_shophouse_a", "ร้านเกม"], 12: ["city_shophouse_b", "ตัดผม"],
+	-2: ["city_shophouse_a", "ร้านเกม"], -1: ["city_pharmacy", "ร้านขายยา"],
+	0: ["city_condo", "", 2], 2: ["city_noodle_shop", "ก๋วยเตี๋ยว"],
+	8: ["city_mini_mart", "มาร์ท 24 ชม.", 2], 10: ["city_cafe", "คาเฟ่"],
+	11: ["city_shophouse_b", "ตัดผม"], 12: ["city_gold_shop", "ห้างทอง"],
+	13: ["city_shophouse_old", ""], 14: ["city_shophouse_a", "เสื้อผ้า"],
 }
+const ROW_FIRST := -2
+const ROW_LAST := 14
 const CROSS_ROW := [5, 6, 7]
 
 ## True once the Codex ground tiles are in: the Siam block layout with the side road.
@@ -188,12 +195,8 @@ static func _road_markings(root: Node3D) -> void:
 
 
 static func _shophouses(root: Node3D, rng: RandomNumberGenerator) -> void:
-	var i := 0
-	var x := -26.4
-	while x <= 26.4:
-		_shophouse(root, rng, x, i)
-		x += 4.4
-		i += 1
+	for i in range(ROW_FIRST if _new_city else 0, (ROW_LAST if _new_city else 12) + 1):
+		_shophouse(root, rng, -26.4 + 4.4 * i, i)
 
 
 static func face(parent: Node3D, center: Vector3, size: Vector2, yaw: float, m: Material) -> MeshInstance3D:
@@ -313,8 +316,12 @@ static func _soi(root: Node3D, x: float) -> void:
 static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: int) -> void:
 	if _new_city and idx in CROSS_ROW:
 		return
+	if _new_city and CITY_ROW.has(idx - 1) and CITY_ROW[idx - 1].size() > 2 			and Toon.has_texture(CITY_ROW[idx - 1][0] + "_front"):
+		return                           # second slot of a wide building
 	if _new_city and CITY_ROW.has(idx) and Toon.has_texture(CITY_ROW[idx][0] + "_front"):
-		SiamCity.building(root, x, CITY_ROW[idx][0], CITY_ROW[idx][1], 0.01 * (idx % 2))
+		var spec: Array = CITY_ROW[idx]
+		var slots: int = spec[2] if spec.size() > 2 else 1
+		SiamCity.building(root, x + 2.2 * (slots - 1), spec[0], spec[1], 0.01 * (idx % 2))
 		rng.randi()
 		return
 	if CORNERS.has(idx + 1):
@@ -410,17 +417,19 @@ static func _lamp(root: Node3D, x: float, z: float) -> void:
 
 
 static func _lamps(root: Node3D) -> void:
-	for x in [-18.0, -6.0, 6.0, 18.0]:
+	for x in [-30.0, -18.0, -6.0, 6.0, 18.0, 30.0]:
 		_lamp(root, x, 4.5)
-	for x in [-24.0, -12.0, 0.0, 12.0, 24.0]:
+	for x in [-36.0, -24.0, -12.0, 0.0, 12.0, 24.0, 36.0]:
 		_lamp(root, x, -4.5)
 
 
 static func _south_side(root: Node3D) -> void:
 	var wall := Toon.mat(Color("5c5a58"))
 	var ivy := Toon.mat(Color("3b5849"))
-	box(root, Vector3(0, 0.3, -8.25), Vector3(64, 0.6, 0.3), wall, true)
-	box(root, Vector3(0, 0.66, -8.25), Vector3(64, 0.14, 0.42), ivy)
+	var wz := SOUTH_EDGE - 0.25 if _new_city else -8.25
+	var wl := SiamCity.EAST_END - SiamCity.WEST_END if _new_city else 64.0
+	box(root, Vector3(0, 0.3, wz), Vector3(wl, 0.6, 0.3), wall, true)
+	box(root, Vector3(0, 0.66, wz), Vector3(wl, 0.14, 0.42), ivy)
 	var trunk := Toon.mat(Color("51444a"))
 	var leaf_a := Toon.occluder(Color("3b5849"), 0.03)
 	var leaf_b := Toon.occluder(Color("4d6c55"), 0.03)
@@ -438,9 +447,15 @@ static func _props(root: Node3D) -> void:
 	add_default("vending", Vector3(5.3 if _new_city else 1.3, SIDEWALK_TOP, 9.6 if _new_city else WALK_EDGE - 0.4))
 
 	if _new_city and Toon.has_texture("city_bench_front"):
-		SiamCity.vehicle(root, "city_taxi_pink", Vector3(8, 0, -2.3))
-		SiamCity.vehicle(root, "city_taxi_green", Vector3(-20, 0, -2.3))
-		SiamCity.vehicle(root, "city_tuktuk", Vector3(16, 0, 2.4))
+		# Parked in the curb lanes; the inner lanes carry the traffic (SiamCity.traffic).
+		SiamCity.vehicle(root, "city_taxi_pink", Vector3(8, 0, -3.0))
+		SiamCity.vehicle(root, "city_sedan_white", Vector3(-26, 0, -3.0))
+		SiamCity.vehicle(root, "city_taxi_green", Vector3(-20, 0, 3.0), PI)
+		SiamCity.vehicle(root, "city_tuktuk", Vector3(16, 0, 3.0), PI)
+		SiamCity.vehicle(root, "city_pickup", Vector3(28, 0, 3.0), PI)
+		SiamCity.street_marks(root)
+		SiamCity.traffic(root)
+		SiamCity.pedestrians(root)
 		return
 	# Bench on the south sidewalk.
 	var wood := Toon.mat(Color("8f7068"))
