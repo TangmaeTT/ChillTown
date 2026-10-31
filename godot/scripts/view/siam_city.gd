@@ -171,6 +171,18 @@ const SHOPS := {
 		["pharmacy_shelf", 0.25, 1.6, "side"], ["pharmacy_shelf", 1.3, 3.6, "street"], ["mart_counter", -1.3, 0.8, "street"]]},
 	"gold": {"floor": "6e3a32", "wall": "8a2f2a", "light": "ffd38a", "pieces": [
 		["gold_wall", 0.3, 1.6, "side"], ["gold_counter", 1.7, 0.9, "street"], ["gold_counter", 2.4, 2.8, "street"]]},
+	"grocery": {"floor": "d8d2c4", "wall": "e8e2d4", "light": "fff1d6", "pieces": [
+		["mart_fridge", 0.45, 1.5, "side"], ["mart_shelf", 2.2, 2.8, "street"], ["mart_counter", -1.2, 0.8, "street"]]},
+	"noodle": {"floor": "b8ab96", "wall": "a2584a", "light": "ffd9a0", "back": "city_noodle_interior_0", "pieces": [
+		["noodle_station", 1.4, 0.9, "street"], ["noodle_table", -1.2, 1.4, "street"], ["noodle_table", -1.4, 3.2, "street"],
+		["stool_stack", 0.35, 2.4, "street"], ["stool_stack", 0.35, 3.0, "street"]]},
+	"game": {"floor": "3a3550", "wall": "4a4260", "light": "c8b8ff", "pieces": [
+		["arcade_cabinet", 0.5, 1.2, "side"], ["arcade_cabinet", 0.5, 2.2, "side"], ["claw_machine", -1.0, 1.3, "street"],
+		["arcade_cabinet", 2.0, 3.4, "street"]]},
+	"barber": {"floor": "dcd6cc", "wall": "efe9de", "light": "fff4e0", "pieces": [
+		["barber_station", 0.7, 1.4, "side"], ["barber_station", 0.7, 3.0, "side"], ["stool_stack", -0.5, 1.0, "street"]]},
+	"clothes": {"floor": "c9b8a4", "wall": "f0ebe4", "light": "fff1dc", "pieces": [
+		["clothes_rack", 1.2, 1.2, "street"], ["clothes_rack", -1.2, 1.6, "street"], ["clothes_rack", 0.4, 3.0, "side"]]},
 }
 
 
@@ -186,6 +198,9 @@ static func _shop_room(root: Node3D, x: float, front: float, front_m: Vector2, h
 	CityBuilder.box(root, Vector3(x, floor_y - 0.04, cz), Vector3(w, 0.08, ROOM_DEPTH), Toon.mat(Color(spec.floor), 0.4))
 	CityBuilder.box(root, Vector3(x, top + 0.05, cz), Vector3(w, 0.1, ROOM_DEPTH), wall)
 	CityBuilder.box(root, Vector3(x, (floor_y + top) / 2, front + ROOM_DEPTH + 0.05), Vector3(w, top - floor_y, 0.1), wall)
+	if spec.has("back") and has(spec.back):
+		var bs := Toon.texture_size_m(spec.back)
+		CityBuilder.face(root, Vector3(x, floor_y + bs.y / 2, front + ROOM_DEPTH - 0.01), Vector2(minf(bs.x, w), bs.y), PI, Toon.textured(spec.back))
 	for sx in [-1.0, 1.0]:
 		CityBuilder.box(root, Vector3(x + sx * (w / 2 + 0.05), (floor_y + top) / 2, cz), Vector3(0.1, top - floor_y, ROOM_DEPTH), wall)
 	var strip := Toon.glow(Color(spec.light), 2.5)
@@ -209,8 +224,9 @@ static func _shop_room(root: Node3D, x: float, front: float, front_m: Vector2, h
 
 # --- wall dressing --------------------------------------------------------------
 
-## Roof air-con on every building; on an exposed -X wall also wall units with their pipes,
-## a meter box with conduit, a downpipe and a twin bin at its foot (the mart reference).
+## Roof air-con on every building and a water tank on some; on an exposed -X wall also wall
+## units with their conduit, the meter cluster, a downpipe and a twin bin at its foot (the
+## mart reference). Pipes are the Codex U3 pieces (tools/city_pieces.py), stacked to height.
 static func _dress(root: Node3D, x: float, front: float, front_m: Vector2, depth: float, exposed: bool) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(x * 10.0) + 99
@@ -219,23 +235,41 @@ static func _dress(root: Node3D, x: float, front: float, front_m: Vector2, depth
 		for i in rng.randi_range(1, 2):
 			CityBuilder.add_default("ac_unit", Vector3(x + rng.randf_range(-front_m.x / 3, front_m.x / 3), h,
 					front + rng.randf_range(2.5, depth - 1.5)), PI if rng.randf() < 0.5 else 0.0)
+	if PropKit.available("water_tank") and rng.randf() < 0.6:
+		CityBuilder.add_default("water_tank", Vector3(x + front_m.x / 4, h, front + depth - 1.2))
 	if not exposed:
 		return
 	var wx := x - front_m.x / 2
-	PropKit.pipe(root, Vector3(wx - 0.08, CityBuilder.SIDEWALK_TOP, front + 0.3), Vector3(wx - 0.08, h - 0.2, front + 0.3), 0.06, Color("8a9096"))
+	var yaw := PI / 2                                  # fronts face -X, off the wall
+	pipe_run(root, "city_drainpipe", Vector3(wx - 0.15, CityBuilder.SIDEWALK_TOP, front + 0.3), h - 0.5, yaw)
+	if PropKit.has_voxel("city_pipe_elbow"):
+		PropKit.voxel(root, "city_pipe_elbow", Vector3(wx - 0.3, h - 0.75, front + 0.3), yaw)
 	var units := 2 if h > 6.0 else 1
 	for i in units:
 		var uz := front + 1.6 + i * 2.6
 		var uy := 2.6 + i * 2.2
 		if PropKit.available("ac_unit"):
-			CityBuilder.add_default("ac_unit", Vector3(wx - 0.18, uy, uz), PI / 2)
-		# Refrigerant pipe from the unit up the wall into the building.
-		PropKit.pipe(root, Vector3(wx - 0.05, uy + 0.3, uz + 0.5), Vector3(wx - 0.05, h - 0.6, uz + 0.5), 0.035, Color("d8d8d2"))
-	if PropKit.available("meter_box"):
-		CityBuilder.add_default("meter_box", Vector3(wx - 0.11, 1.3, front + 3.6), PI / 2)
-		PropKit.pipe(root, Vector3(wx - 0.04, 2.0, front + 3.6), Vector3(wx - 0.04, h - 0.4, front + 3.6), 0.025, Color("3a3d42"))
+			CityBuilder.add_default("ac_unit", Vector3(wx - 0.18, uy, uz), yaw)
+		# Refrigerant line from the unit up the wall into the building.
+		pipe_run(root, "city_conduit", Vector3(wx - 0.1, uy + 0.6, uz + 0.5), h - 0.6, yaw)
+	if PropKit.available("meter_cluster"):
+		CityBuilder.add_default("meter_cluster", Vector3(wx - 0.2, 1.0, front + 3.8), yaw)
+		pipe_run(root, "city_conduit", Vector3(wx - 0.1, 2.7, front + 3.6), h - 0.4, yaw)
 	if PropKit.available("bin_twin"):
-		CityBuilder.add_default("bin_twin", Vector3(wx - 0.45, CityBuilder.SIDEWALK_TOP, front + 0.8), PI / 2)
+		CityBuilder.add_default("bin_twin", Vector3(wx - 0.45, CityBuilder.SIDEWALK_TOP, front + 0.8), yaw)
+
+
+## A vertical pipe from `foot` up to height `top`: copies of the voxel piece stacked, the
+## last one squashed to fit.
+static func pipe_run(root: Node3D, name: String, foot: Vector3, top: float, yaw := 0.0) -> void:
+	if not PropKit.has_voxel(name):
+		return
+	var seg := Toon.texture_size_m(name + "_front").y
+	var y := foot.y
+	while y < top - 0.05:
+		var p := PropKit.voxel(root, name, Vector3(foot.x, y, foot.z), yaw)
+		p.scale.y = minf(1.0, (top - y) / seg)
+		y += seg
 
 
 # --- skytrain ---------------------------------------------------------------

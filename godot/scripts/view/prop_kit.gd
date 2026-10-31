@@ -57,6 +57,15 @@ const CATALOG := {
 	"pharmacy_shelf": ["box", "city_pharmacy_shelf", "ชั้นยา"],
 	"gold_counter": ["box", "city_gold_counter", "ตู้โชว์ทอง"],
 	"gold_wall": ["box", "city_gold_wall", "ตู้ทองติดผนัง"],
+	"noodle_station": ["box", "city_noodle_station", "เตาก๋วยเตี๋ยว"],
+	"noodle_table": ["box", "city_noodle_table", "โต๊ะสแตนเลส"],
+	"stool_stack": ["box", "city_stool_stack", "เก้าอี้แดงซ้อน"],
+	"arcade_cabinet": ["box", "city_arcade_cabinet", "ตู้เกม"],
+	"claw_machine": ["box", "city_claw_machine", "ตู้คีบตุ๊กตา"],
+	"barber_station": ["box", "city_barber_station", "เก้าอี้ตัดผม"],
+	"clothes_rack": ["box", "city_clothes_rack", "ราวเสื้อผ้า"],
+	"water_tank": ["box", "city_water_tank", "แท็งก์น้ำ"],
+	"meter_cluster": ["box", "city_meter_cluster", "ชุดมิเตอร์"],
 }
 
 

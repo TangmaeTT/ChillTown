@@ -2,7 +2,8 @@
 
   python tools/city_pieces.py
 
-tools/city_convert.py splits sheets like C19 shop signs and C20 barriers into numbered
+tools/city_convert.py splits sheets like C19 shop signs, C20 barriers, U3 pipes and the A9i
+noodle-shop kit into numbered
 pieces (city_barriers_0, _1, ...). This copies the pieces of each object to
 city_<object>_{front,side,top}_{albedo,emission}.png so tools/voxel_from_views.py can carve
 them, then carves them.
@@ -21,6 +22,14 @@ SETS = {
     'city_barrier_water': ('city_barriers', 0, 1, 2),
     'city_cone': ('city_barriers', 3, 4, 5),
     'city_crowd_barrier': ('city_barriers', 9, 10, 11),
+    'city_drainpipe': ('city_pipes', 0, 1, None),
+    'city_pipe_elbow': ('city_pipes', 2, 3, None),
+    'city_conduit': ('city_pipes', 4, 5, None),
+    'city_water_tank': ('city_pipes', 6, 7, None),
+    'city_meter_cluster': ('city_pipes', 8, 9, None),
+    'city_noodle_station': ('city_noodle_interior', 1, 2, 3),
+    'city_noodle_table': ('city_noodle_interior', 4, 5, 6),
+    'city_stool_stack': ('city_noodle_interior', 7, 8, 9),
 }
 
 

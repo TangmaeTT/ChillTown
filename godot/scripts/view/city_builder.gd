@@ -29,11 +29,12 @@ const SOI_WIDTH := 4.4
 ## shop = a SiamCity.SHOPS room behind the storefront glass.
 ## Indices 5-7 are the side road; a 2-slot building also takes the next index.
 const CITY_ROW := {
-	-2: ["city_shophouse_a", "ร้านเกม"], -1: ["city_pharmacy", "ร้านขายยา", 1, "pharmacy"],
-	0: ["city_condo", "", 2], 2: ["city_noodle_shop", "ก๋วยเตี๋ยว"],
+	-2: ["city_shophouse_a", "ร้านเกม", 1, "game"], -1: ["city_pharmacy", "ร้านขายยา", 1, "pharmacy"],
+	0: ["city_condo", "", 2], 2: ["city_noodle_shop", "ก๋วยเตี๋ยว", 1, "noodle"],
+	4: ["city_shophouse_b", "ร้านชำ", 1, "grocery"],
 	8: ["city_mini_mart", "มาร์ท 24 ชม.", 2, "mart"], 10: ["city_cafe", "คาเฟ่", 1, "cafe"],
-	11: ["city_shophouse_b", "ตัดผม"], 12: ["city_gold_shop", "ห้างทอง", 1, "gold"],
-	13: ["city_shophouse_old", ""], 14: ["city_shophouse_a", "เสื้อผ้า"],
+	11: ["city_shophouse_b", "ตัดผม", 1, "barber"], 12: ["city_gold_shop", "ห้างทอง", 1, "gold"],
+	13: ["city_shophouse_old", ""], 14: ["city_shophouse_a", "เสื้อผ้า", 1, "clothes"],
 }
 const ROW_FIRST := -2
 const ROW_LAST := 14
@@ -314,6 +315,13 @@ static func _soi(root: Node3D, x: float) -> void:
 	box(root, Vector3(x, SIDEWALK_TOP / 2, WALK_EDGE + 4), Vector3(SOI_WIDTH, SIDEWALK_TOP, 8), floor)
 
 
+## Does a Codex building stand in row slot i (its own, or the second slot of a wide one)?
+static func _slot_built(i: int) -> bool:
+	if CITY_ROW.has(i):
+		return true
+	return CITY_ROW.has(i - 1) and CITY_ROW[i - 1].size() > 2 and CITY_ROW[i - 1][2] > 1
+
+
 static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: int) -> void:
 	if _new_city and idx in CROSS_ROW:
 		return
@@ -323,8 +331,8 @@ static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: 
 		var spec: Array = CITY_ROW[idx]
 		var slots: int = spec[2] if spec.size() > 2 else 1
 		var shop: String = spec[3] if spec.size() > 3 else ""
-		# Its -X wall shows when nothing stands west of it: the row's end or the side road.
-		var exposed := idx == ROW_FIRST or (idx - 1) in CROSS_ROW
+		# Its -X wall shows when nothing stands west of it: the row's end, the side road, a soi.
+		var exposed := not _slot_built(idx - 1)
 		SiamCity.building(root, x + 2.2 * (slots - 1), spec[0], spec[1], 0.01 * (idx % 2), shop, exposed)
 		rng.randi()
 		return
