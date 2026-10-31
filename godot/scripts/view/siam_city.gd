@@ -1,8 +1,8 @@
 class_name SiamCity
 ## The Siam block drawn from Codex textures (tools/city_batch.py -> tools/city_convert.py):
-## a side road north from the junction at x = 0, the skytrain crossing the main road at the
-## west end with its station to the south, utility poles with cable bundles, and the
-## street props.
+## a side road north from the junction at x = 0, the skytrain running along X south of the
+## main road with its station in the lower-left of the screen, utility poles with cable
+## bundles, and the street props.
 ## Every piece checks that its texture exists, so the scene still runs while art is missing.
 
 const CROSS_HALF := 4.0         ## side road: x in [-4, 4], from the main road north
@@ -10,11 +10,10 @@ const CROSS_WALK := 2.5         ## its sidewalks
 const CROSS_END := 40.0
 const DECK_Y := 11.0            ## underside of the viaduct = top of the piers
 const DECK_WIDTH := 7.2
-const RAIL_X := 12.0            ## south of the main road: the lower-left corner of the screen
-const RAIL_Z_FROM := -110.0
-const RAIL_Z_TO := -23.0        ## the line ends at the station
-const TRACKS := [-1.8, 1.8]     ## x of the two tracks, from RAIL_X
-const STATION_Z := -45.0        ## far enough south to sit in the screen's lower-left corner
+const RAIL_Z := -40.0           ## along X, south of the main road (shows below the south sidewalk)
+const RAIL_HALF_LEN := 90.0
+const TRACKS := [-1.8, 1.8]     ## z of the two tracks, from RAIL_Z
+const STATION_X := 14.0         ## +X is up-left on screen: with the rail this far south, lower left
 const WEST_END := -30.0
 const EAST_END := 30.0
 const TRAIN_SPEED := 11.0
@@ -49,8 +48,8 @@ static func ground(root: Node3D) -> void:
 	var asphalt := Toon.ground("city_asphalt", Color.WHITE, 0.85)
 	var walk := Toon.ground("city_pavers", Color.WHITE, 0.45)
 	var cross_walk := Toon.ground("city_pavers", Color.WHITE, 0.45, 2.0, true)
-	for ix in range(-3, 5):
-		for iz in range(-12, 10):
+	for ix in range(-9, 9):
+		for iz in range(-7, 10):
 			CityBuilder.box(root, Vector3(ix * 10 + 5, -0.1, iz * 10 + 5), Vector3(10, 0.2, 10), asphalt)
 	var top := CityBuilder.SIDEWALK_TOP
 	# Main sidewalks, cut where the side road meets the north one.
@@ -151,63 +150,60 @@ static func cut_away(node: Node3D) -> void:
 			(mi as MeshInstance3D).material_override = m
 
 
-## The line comes in from the south (along Z) and ends at a terminus station just behind
-## the south sidewalk. On screen +X runs up-left and +Z up-right, so this is the lower-left
-## corner: a set piece that never covers the street. The camera sees each car's whole -X
-## side; trains run in, stop, and run back out. Stairs come down the station's west side
-## to the south sidewalk.
+## The line runs along X like the main road, far enough south (z = RAIL_Z) that from this
+## camera it shows below the south sidewalk instead of over the street (a thing h metres up
+## looks like ground about 1.2 h further toward +X and +Z). On screen +X runs up-left and
+## +Z up-right, so the station at x = STATION_X is the lower-left corner. The station
+## building stands on the road side of the tracks and the camera sees the trains' -Z side
+## at the platform in front of it; stairs come down to the south sidewalk.
 static func skytrain(root: Node3D) -> void:
 	if not has("city_viaduct_side"):
 		return
 	var seg := Toon.texture_size_m("city_viaduct_side")          # (length, girder depth)
-	var z := RAIL_Z_FROM
-	while z < RAIL_Z_TO:
-		var cz := z + seg.x / 2
-		for sx in [-1.0, 1.0]:
-			CityBuilder.face(root, Vector3(RAIL_X + sx * DECK_WIDTH / 2, DECK_Y + seg.y / 2, cz), seg,
-					sx * PI / 2, Toon.textured("city_viaduct_side", 2.0, true))
+	var x := -RAIL_HALF_LEN
+	while x < RAIL_HALF_LEN:
+		var cx := x + seg.x / 2
+		for sz in [-1.0, 1.0]:
+			CityBuilder.face(root, Vector3(cx, DECK_Y + seg.y / 2, RAIL_Z + sz * DECK_WIDTH / 2), seg,
+					PI if sz < 0 else 0.0, Toon.textured("city_viaduct_side", 2.0, true))
 		if has("city_viaduct_top"):
-			flat(root, Vector3(RAIL_X, DECK_Y + seg.y + 0.01, cz), Vector2(DECK_WIDTH, seg.x), "city_viaduct_top", false, true)
-		z += seg.x
+			flat(root, Vector3(cx, DECK_Y + seg.y + 0.01, RAIL_Z), Vector2(seg.x, DECK_WIDTH), "city_viaduct_top", false, true)
+		x += seg.x
 	if has("city_pier_front"):
-		# The T cap spans the deck (X); the camera sees it from -Z.
-		for pz in [-100.0, -82.0, -64.0, -46.0, -28.0]:
-			cut_away(PropKit.textured_box(root, "city_pier", Vector3(RAIL_X, 0, pz)))
+		# The T cap spans the deck (Z), so the camera sees the pier's profile: yaw 90.
+		for px in [-56.0, -36.0, -16.0, 4.0, 24.0, 44.0, 64.0]:
+			cut_away(PropKit.textured_box(root, "city_pier", Vector3(px, 0, RAIL_Z), PI / 2))
 	if has("city_station_front"):
-		# Long face toward -X (yaw +90 turns the model's front from -Z to -X).
-		# Beside the tracks on the far (+X) side, so the train stands in full view at the
-		# platform instead of hiding inside the building.
 		var depth := Toon.texture_size_m("city_station_side").x
-		var sx := RAIL_X + DECK_WIDTH / 2 + depth / 2
-		cut_away(PropKit.textured_box(root, "city_station", Vector3(sx, DECK_Y - 1.0, STATION_Z), PI / 2))
-		CityBuilder.omni(root, Vector3(RAIL_X, DECK_Y + 4.0, STATION_Z), Color("e8f0ff"), 1.5, 14.0)
+		var sz := RAIL_Z + DECK_WIDTH / 2 + depth / 2
+		cut_away(PropKit.textured_box(root, "city_station", Vector3(STATION_X, DECK_Y - 1.0, sz), 0.0))
+		CityBuilder.omni(root, Vector3(STATION_X, DECK_Y + 4.0, RAIL_Z), Color("e8f0ff"), 1.5, 14.0)
 		if has("city_station_stairs_front"):
-			# Behind the south wall, running east from the station and down toward the street.
+			# From the station's road side down to the south sidewalk, near its +X end
+			# (left on screen), away from the clock at the junction.
 			var run := Toon.texture_size_m("city_station_stairs_side").x
-			var sw := Toon.texture_size_m("city_station_stairs_front").x
 			cut_away(PropKit.textured_box(root, "city_station_stairs",
-					Vector3(RAIL_X - DECK_WIDTH / 2 - sw / 2, 0.0, -8.6 - run / 2)))
+					Vector3(STATION_X + 13.0, 0.0, -8.6 - run / 2)))
 	if PropKit.has_voxel("city_train_head") and PropKit.has_voxel("city_train_mid"):
 		for i in TRACKS.size():
 			var t := Node3D.new()
 			t.set_script(preload("res://scripts/view/train_runner.gd"))
-			t.set("direction", 1.0)
+			t.set("direction", -1.0 if i == 0 else 1.0)
 			t.set("delay", 0.0 if i == 0 else 25.0)
-			t.position = Vector3(RAIL_X + TRACKS[i], DECK_Y + seg.y, 0)
+			t.position = Vector3(0, DECK_Y + seg.y, RAIL_Z + TRACKS[i])
 			root.add_child(t)
 			_train_cars(t)
 
 
-## Three voxel cars along local Z. The models' long side faces their local -Z and the
-## cab is at local -X, so yaw +90 shows the side to the camera (-X) with the cab at +Z;
-## the first car is mirrored to put its cab at the -Z end, toward the camera.
+## Three voxel cars along local X. The models' long side faces -Z (toward the camera) and
+## the cab is at local -X; the last car is mirrored to put its cab at the +X end.
 static func _train_cars(t: Node3D) -> void:
 	var length := Toon.texture_size_m("city_train_head_side").x
 	var gap := 0.6
 	var names := ["city_train_head", "city_train_mid", "city_train_head"]
 	for i in 3:
-		var car := PropKit.voxel(t, names[i], Vector3(0, 0, (i - 1) * (length + gap)), PI / 2)
-		if i == 0:
+		var car := PropKit.voxel(t, names[i], Vector3((i - 1) * (length + gap), 0, 0))
+		if i == 2:
 			car.scale.x = -1.0
 		cut_away(car)
 

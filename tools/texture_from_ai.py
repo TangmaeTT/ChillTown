@@ -153,7 +153,9 @@ def main():
 
         lum_n = n[..., :3].astype(np.float32).max(-1)
         lum_d = d[..., :3].astype(np.float32).max(-1)
-        lit = (lum_n > 140) & (lum_n > lum_d * 0.55) & (d[..., 3] > 0)
+        nrgb = n[..., :3].astype(int)
+        pinkish = np.minimum(nrgb[..., 0], nrgb[..., 2]) - nrgb[..., 1] > 30   # background bleeding in
+        lit = (lum_n > 140) & (lum_n > lum_d * 0.55) & (d[..., 3] > 0) & ~pinkish
         if a.night == "-":
             lit[:] = False
         em = np.zeros_like(n)
