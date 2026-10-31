@@ -175,15 +175,18 @@ static func skytrain(root: Node3D) -> void:
 			cut_away(PropKit.textured_box(root, "city_pier", Vector3(RAIL_X, 0, pz)))
 	if has("city_station_front"):
 		# Long face toward -X (yaw +90 turns the model's front from -Z to -X).
+		# Beside the tracks on the far (+X) side, so the train stands in full view at the
+		# platform instead of hiding inside the building.
 		var depth := Toon.texture_size_m("city_station_side").x
-		cut_away(PropKit.textured_box(root, "city_station", Vector3(RAIL_X, DECK_Y - 1.0, STATION_Z), PI / 2))
-		CityBuilder.omni(root, Vector3(RAIL_X - depth / 2 - 1.0, DECK_Y - 1.5, STATION_Z), Color("e8f0ff"), 1.5, 14.0)
+		var sx := RAIL_X + DECK_WIDTH / 2 + depth / 2
+		cut_away(PropKit.textured_box(root, "city_station", Vector3(sx, DECK_Y - 1.0, STATION_Z), PI / 2))
+		CityBuilder.omni(root, Vector3(RAIL_X, DECK_Y + 4.0, STATION_Z), Color("e8f0ff"), 1.5, 14.0)
 		if has("city_station_stairs_front"):
 			# Behind the south wall, running east from the station and down toward the street.
 			var run := Toon.texture_size_m("city_station_stairs_side").x
 			var sw := Toon.texture_size_m("city_station_stairs_front").x
 			cut_away(PropKit.textured_box(root, "city_station_stairs",
-					Vector3(RAIL_X - depth / 2 - sw / 2, 0.0, -8.6 - run / 2)))
+					Vector3(RAIL_X - DECK_WIDTH / 2 - sw / 2, 0.0, -8.6 - run / 2)))
 	if PropKit.has_voxel("city_train_head") and PropKit.has_voxel("city_train_mid"):
 		for i in TRACKS.size():
 			var t := Node3D.new()

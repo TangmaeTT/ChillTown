@@ -18,6 +18,12 @@ var _state := "wait"
 func _ready() -> void:
 	_t = -delay
 	visible = false
+	if OS.get_cmdline_user_args().has("--train-now"):
+		# Dev: start standing at the platform (screenshots).
+		_state = "dwell"
+		_t = -60.0
+		position.z = SiamCity.STATION_Z
+		visible = true
 
 
 func _process(dt: float) -> void:

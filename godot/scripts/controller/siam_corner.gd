@@ -121,6 +121,10 @@ func _ready() -> void:
 			# Dev: start the player at x,z (screenshots of one spot).
 			var xz := a.substr(5).split(",")
 			player.position = Vector3(float(xz[0]), 0, float(xz[1]))
+		elif a.begins_with("--look="):
+			# Dev: aim the camera at x,z (offset from the player) for screenshots.
+			var lz := a.substr(7).split(",")
+			focus_offset = Vector3(float(lz[0]), 0, float(lz[1])) - player.position
 		elif a == "--charview":
 			# Dev: both chibis side by side on open pavement, camera on them.
 			player.position = Vector3(-1.0, 0, -6.0)
