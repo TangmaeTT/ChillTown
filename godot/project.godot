@@ -58,6 +58,11 @@ wet_amount={
 
 [importer_defaults]
 
+scene={
+"meshes/generate_lods": false,
+"meshes/create_shadow_meshes": false
+}
+
 texture={
 "detect_3d/compress_to": 0
 }

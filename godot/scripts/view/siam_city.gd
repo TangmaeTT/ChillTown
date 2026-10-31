@@ -10,7 +10,7 @@ const CROSS_WALK := 2.5         ## its sidewalks
 const CROSS_END := 40.0
 const DECK_Y := 11.0            ## underside of the viaduct = top of the piers
 const DECK_WIDTH := 7.2
-const RAIL_Z := -40.0           ## along X, south of the main road (shows below the south sidewalk)
+const RAIL_Z := -24.0           ## along X, south of the main road (shows below the south sidewalk)
 const RAIL_HALF_LEN := 90.0
 const TRACKS := [-1.8, 1.8]     ## z of the two tracks, from RAIL_Z
 const STATION_X := 14.0         ## +X is up-left on screen: with the rail this far south, lower left
@@ -184,8 +184,10 @@ static func skytrain(root: Node3D) -> void:
 			# (left on screen), away from the clock at the junction.
 			var run := Toon.texture_size_m("city_station_stairs_side").x
 			# Turned round (yaw 180): the climb starts at the other end.
+			var st_len := Toon.texture_size_m("city_station_front").x
+			var sw := Toon.texture_size_m("city_station_stairs_front").x
 			PropKit.textured_box(root, "city_station_stairs",
-					Vector3(STATION_X + 13.0, 0.0, -8.6 - run / 2), PI)
+					Vector3(STATION_X + st_len / 2 + sw / 2 + 0.5, 0.0, -8.6 - run / 2), PI)
 	if PropKit.has_voxel("city_train_head") and PropKit.has_voxel("city_train_mid"):
 		for i in TRACKS.size():
 			var t := Node3D.new()
