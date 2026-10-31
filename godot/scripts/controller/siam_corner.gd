@@ -42,8 +42,9 @@ var rain: GPUParticles3D
 var zoom := 0.75
 var focus_offset := FOCUS_OFFSET
 var pixel := 2
-## Ground wetness: soaks up while it rains, dries slowly to damp after.
-var wet := 1.0
+## Ground wetness: soaks up while it rains, dries slowly after. Rain starts off for now
+## (R turns it on) until the weather pass.
+var wet := 0.0
 var _cam_focus := Vector3.ZERO
 var _npc_line := 0
 var _npc_timer := 0.4
@@ -97,6 +98,7 @@ func _ready() -> void:
 		look.save())
 
 	rain = _make_rain()
+	rain.emitting = false
 	add_child(rain)
 
 	for a in OS.get_cmdline_user_args():
@@ -192,7 +194,7 @@ func _process(delta: float) -> void:
 	camera.global_position = b * local
 	rain.position = player.position + Vector3(0, 12, 2)
 	RenderingServer.global_shader_parameter_set("player_position", player.position)
-	wet = move_toward(wet, 1.0 if rain.emitting else 0.35, delta * (0.2 if rain.emitting else 0.02))
+	wet = move_toward(wet, 1.0 if rain.emitting else 0.0, delta * (0.2 if rain.emitting else 0.02))
 	RenderingServer.global_shader_parameter_set("wet_amount", wet)
 	clock.advance(delta)
 	sky.update(delta, player.position)
