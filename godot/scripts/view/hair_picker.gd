@@ -4,6 +4,7 @@ extends CanvasLayer
 ## the controller applies it to the player. tint alpha 0 = drawn colour.
 
 signal changed(style: String, tint: Color)
+signal outfit_changed(id: String)
 
 const DYES := {
 	"สีเดิม": Color(0, 0, 0, 0),
@@ -23,6 +24,8 @@ var tint := Color(0, 0, 0, 0)
 var _panel := PanelContainer.new()
 var _style_buttons := {}
 var _dye_buttons := {}
+var _outfit_buttons := {}
+var outfit := ""
 
 
 func _ready() -> void:
@@ -40,7 +43,19 @@ func _ready() -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 10)
 	_panel.add_child(col)
-	col.add_child(_label("ทรงผม  (H = ปิด)", 22, Color("d3ca90")))
+	col.add_child(_label("แต่งตัว  (H = ปิด)", 22, Color("d3ca90")))
+	col.add_child(_label("เสื้อ", 18, Color(0.85, 0.82, 0.7)))
+	var outfits := HBoxContainer.new()
+	col.add_child(outfits)
+	for id in SpriteChibi.OUTFITS:
+		var ob := _button(SpriteChibi.OUTFITS[id])
+		ob.pressed.connect(func() -> void:
+			outfit = id
+			_refresh()
+			outfit_changed.emit(id))
+		outfits.add_child(ob)
+		_outfit_buttons[id] = ob
+	col.add_child(_label("ทรงผม", 18, Color(0.85, 0.82, 0.7)))
 	var styles := HBoxContainer.new()
 	col.add_child(styles)
 	for id in SpriteChibi.HAIR_STYLES:
@@ -108,6 +123,8 @@ func _pick(p_style: String, p_tint: Color) -> void:
 
 
 func _refresh() -> void:
+	for id in _outfit_buttons:
+		_outfit_buttons[id].modulate = Color("ffd98a") if id == outfit else Color.WHITE
 	for id in _style_buttons:
 		_style_buttons[id].modulate = Color("ffd98a") if id == style else Color.WHITE
 	for name in _dye_buttons:

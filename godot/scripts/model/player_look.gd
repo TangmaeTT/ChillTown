@@ -6,6 +6,7 @@ extends RefCounted
 const PATH := "user://look.json"
 
 var hair_style := "messy"
+var outfit := ""
 ## alpha 0 = the hairstyle's drawn colour
 var hair_tint := Color(0, 0, 0, 0)
 
@@ -16,6 +17,7 @@ static func load_saved() -> PlayerLook:
 		var d = JSON.parse_string(FileAccess.get_file_as_string(PATH))
 		if d is Dictionary:
 			look.hair_style = String(d.get("hair_style", look.hair_style))
+			look.outfit = String(d.get("outfit", look.outfit))
 			var t = d.get("hair_tint", [])
 			if t is Array and t.size() == 4:
 				look.hair_tint = Color(t[0], t[1], t[2], t[3])
@@ -27,5 +29,6 @@ func save() -> void:
 	if f:
 		f.store_string(JSON.stringify({
 			"hair_style": hair_style,
+			"outfit": outfit,
 			"hair_tint": [hair_tint.r, hair_tint.g, hair_tint.b, hair_tint.a],
 		}))
