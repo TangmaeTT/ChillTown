@@ -10,7 +10,7 @@ const CROSS_WALK := 2.5         ## its sidewalks
 const CROSS_END := 40.0
 const DECK_Y := 11.0            ## underside of the viaduct = top of the piers
 const DECK_WIDTH := 7.2
-const RAIL_Z := -24.0           ## along X, south of the main road (shows below the south sidewalk)
+const RAIL_Z := -32.0           ## along X, south of the main road (shows below the south sidewalk)
 const RAIL_HALF_LEN := 90.0
 const TRACKS := [-1.8, 1.8]     ## z of the two tracks, from RAIL_Z
 const STATION_X := 14.0         ## +X is up-left on screen: with the rail this far south, lower left
