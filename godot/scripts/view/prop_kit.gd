@@ -44,6 +44,19 @@ const CATALOG := {
 	"barrier_water": ["box", "city_barrier_water", "แผงกั้นน้ำ"],
 	"cone": ["box", "city_cone", "กรวย"],
 	"crowd_barrier": ["box", "city_crowd_barrier", "รั้วเหล็กกั้น"],
+	"ac_unit": ["box", "city_ac_unit", "แอร์ตัวนอก"],
+	"meter_box": ["box", "city_meter_box", "กล่องมิเตอร์"],
+	"bin_twin": ["box", "city_bin_twin", "ถังขยะ 2 ช่อง"],
+	"motorbike": ["box", "city_motorbike", "มอเตอร์ไซค์"],
+	# Shop interiors (SiamCity.SHOPS)
+	"mart_shelf": ["box", "city_mart_shelf", "ชั้นขนม"],
+	"mart_fridge": ["box", "city_mart_fridge", "ตู้แช่เครื่องดื่ม"],
+	"mart_counter": ["box", "city_mart_counter", "เคาน์เตอร์คิดเงิน"],
+	"cafe_counter": ["box", "city_cafe_counter", "เคาน์เตอร์กาแฟ"],
+	"cafe_table": ["box", "city_cafe_table", "โต๊ะคาเฟ่"],
+	"pharmacy_shelf": ["box", "city_pharmacy_shelf", "ชั้นยา"],
+	"gold_counter": ["box", "city_gold_counter", "ตู้โชว์ทอง"],
+	"gold_wall": ["box", "city_gold_wall", "ตู้ทองติดผนัง"],
 }
 
 
@@ -69,6 +82,8 @@ static func spawn(parent: Node3D, kind: String, foot: Vector3, yaw := 0.0) -> No
 			_vending_fx(node)
 		_:
 			node = textured_box(parent, spec[1], foot, yaw)
+	if kind == "grill_cart":
+		_smoke(node, Toon.texture_size_m(spec[1] + "_front").y * 0.55)
 	node.set_meta("kind", kind)
 	node.set_meta("size", size_of(kind))
 	return node
@@ -101,6 +116,47 @@ static func _vending_fx(node: Node3D) -> void:
 	node.add_child(fx)
 	fx.rotation.y = -node.rotation.y
 	CityBuilder.reflection(fx, Vector3.ZERO, size.y, 0.8, Color("f2ead0"), 0.6)
+
+
+## Grill smoke: soft grey puffs rising off the coals and drifting with the breeze.
+static func _smoke(node: Node3D, height: float) -> void:
+	var p := GPUParticles3D.new()
+	p.amount = 24
+	p.lifetime = 2.6
+	p.position = Vector3(0, height, 0)
+	var pm := ParticleProcessMaterial.new()
+	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	pm.emission_box_extents = Vector3(0.35, 0.02, 0.15)
+	pm.direction = Vector3(0.15, 1, 0.1)
+	pm.spread = 12.0
+	pm.initial_velocity_min = 0.35
+	pm.initial_velocity_max = 0.6
+	pm.gravity = Vector3(0.12, 0.05, 0.08)
+	pm.scale_min = 0.6
+	pm.scale_max = 1.0
+	var grow := Curve.new()
+	grow.add_point(Vector2(0, 0.4))
+	grow.add_point(Vector2(1, 1.6))
+	var ct := CurveTexture.new()
+	ct.curve = grow
+	pm.scale_curve = ct
+	var fade := Gradient.new()
+	fade.set_color(0, Color(0.85, 0.85, 0.82, 0.45))
+	fade.set_color(1, Color(0.85, 0.85, 0.82, 0.0))
+	var gt := GradientTexture1D.new()
+	gt.gradient = fade
+	pm.color_ramp = gt
+	p.process_material = pm
+	var q := QuadMesh.new()
+	q.size = Vector2(0.32, 0.32)
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.vertex_color_use_as_albedo = true
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	q.material = m
+	p.draw_pass_1 = q
+	node.add_child(p)
 
 
 static func _face(parent: Node3D, center: Vector3, size: Vector2, rot: Vector3, tex: String) -> MeshInstance3D:

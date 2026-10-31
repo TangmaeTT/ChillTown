@@ -38,6 +38,19 @@ static func glow(color: Color, energy: float, cutaway := false) -> ShaderMateria
 	return mat(color.darkened(0.3), 0.0, color, energy, 0.0, 0.0, 0.0, cutaway)
 
 
+## Shop window glass: a faint cool tint that lets the room behind show through.
+static func glass() -> StandardMaterial3D:
+	if _cache.has("glass"):
+		return _cache["glass"]
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(0.78, 0.9, 1.0, 0.14)
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_cache["glass"] = m
+	return m
+
+
 ## Pixel-art face from tools/texture_from_ai.py: `name` is the path stem under
 ## res://assets/textures/ (expects <name>_albedo.png and <name>_emission.png).
 ## `cutaway`: dithers out around the player when it sits between camera and player

@@ -25,13 +25,14 @@ const TEXTURED := {5: ["shophouse_a", ""], 9: ["shophouse_a", "ร้านช�
 ## Optional third value: interior kit, which turns the shopfront into a hole with a room behind it.
 const CORNERS := {4: ["corner_b", "ร้านชำ", "grocery"]}
 const SOI_WIDTH := 4.4
-## Codex buildings (SiamCity): row index (x = -26.4 + 4.4 i) -> [texture, sign, slots].
+## Codex buildings (SiamCity): row index (x = -26.4 + 4.4 i) -> [texture, sign, slots, shop],
+## shop = a SiamCity.SHOPS room behind the storefront glass.
 ## Indices 5-7 are the side road; a 2-slot building also takes the next index.
 const CITY_ROW := {
-	-2: ["city_shophouse_a", "ร้านเกม"], -1: ["city_pharmacy", "ร้านขายยา"],
+	-2: ["city_shophouse_a", "ร้านเกม"], -1: ["city_pharmacy", "ร้านขายยา", 1, "pharmacy"],
 	0: ["city_condo", "", 2], 2: ["city_noodle_shop", "ก๋วยเตี๋ยว"],
-	8: ["city_mini_mart", "มาร์ท 24 ชม.", 2], 10: ["city_cafe", "คาเฟ่"],
-	11: ["city_shophouse_b", "ตัดผม"], 12: ["city_gold_shop", "ห้างทอง"],
+	8: ["city_mini_mart", "มาร์ท 24 ชม.", 2, "mart"], 10: ["city_cafe", "คาเฟ่", 1, "cafe"],
+	11: ["city_shophouse_b", "ตัดผม"], 12: ["city_gold_shop", "ห้างทอง", 1, "gold"],
 	13: ["city_shophouse_old", ""], 14: ["city_shophouse_a", "เสื้อผ้า"],
 }
 const ROW_FIRST := -2
@@ -316,12 +317,15 @@ static func _soi(root: Node3D, x: float) -> void:
 static func _shophouse(root: Node3D, rng: RandomNumberGenerator, x: float, idx: int) -> void:
 	if _new_city and idx in CROSS_ROW:
 		return
-	if _new_city and CITY_ROW.has(idx - 1) and CITY_ROW[idx - 1].size() > 2 			and Toon.has_texture(CITY_ROW[idx - 1][0] + "_front"):
+	if _new_city and CITY_ROW.has(idx - 1) and CITY_ROW[idx - 1].size() > 2 and CITY_ROW[idx - 1][2] > 1 			and Toon.has_texture(CITY_ROW[idx - 1][0] + "_front"):
 		return                           # second slot of a wide building
 	if _new_city and CITY_ROW.has(idx) and Toon.has_texture(CITY_ROW[idx][0] + "_front"):
 		var spec: Array = CITY_ROW[idx]
 		var slots: int = spec[2] if spec.size() > 2 else 1
-		SiamCity.building(root, x + 2.2 * (slots - 1), spec[0], spec[1], 0.01 * (idx % 2))
+		var shop: String = spec[3] if spec.size() > 3 else ""
+		# Its -X wall shows when nothing stands west of it: the row's end or the side road.
+		var exposed := idx == ROW_FIRST or (idx - 1) in CROSS_ROW
+		SiamCity.building(root, x + 2.2 * (slots - 1), spec[0], spec[1], 0.01 * (idx % 2), shop, exposed)
 		rng.randi()
 		return
 	if CORNERS.has(idx + 1):
@@ -452,7 +456,7 @@ static func _props(root: Node3D) -> void:
 		SiamCity.vehicle(root, "city_sedan_white", Vector3(-26, 0, -3.0))
 		SiamCity.vehicle(root, "city_taxi_green", Vector3(-20, 0, 3.0), PI)
 		SiamCity.vehicle(root, "city_tuktuk", Vector3(16, 0, 3.0), PI)
-		SiamCity.vehicle(root, "city_pickup", Vector3(28, 0, 3.0), PI)
+		SiamCity.vehicle(root, "city_pickup", Vector3(34, 0, 3.0), PI)
 		SiamCity.street_marks(root)
 		SiamCity.traffic(root)
 		SiamCity.pedestrians(root)

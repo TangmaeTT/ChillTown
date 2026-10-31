@@ -110,28 +110,38 @@ static func crossings(root: Node3D) -> void:
 # --- buildings --------------------------------------------------------------
 
 ## A building from a front/side/roof texture set, front on the sidewalk edge at `x`.
-## No interior kit: the shopfront hole looks into a shallow lit room.
-static func building(root: Node3D, x: float, tex: String, sign: String, nudge: float) -> void:
+## `shop` (a SHOPS key) turns the storefront hole into glass with a real room behind it,
+## furnished with voxel pieces; otherwise the hole looks into a shallow lit recess.
+## `exposed`: nothing stands against its -X wall (row end, side road), so the camera sees
+## that wall and it gets air-con units, a meter, pipes and a bin like a real one.
+static func building(root: Node3D, x: float, tex: String, sign: String, nudge: float,
+		shop := "", exposed := false) -> void:
 	var front_m := Toon.texture_size_m(tex + "_front")
 	var depth := Toon.texture_size_m(tex + "_side").x
 	var h := front_m.y
 	var front := CityBuilder.WALK_EDGE
 	var c := Vector3(x, h / 2, front + depth / 2)
 	CityBuilder.solid(root, c, Vector3(front_m.x - 0.1, h, depth))
-	# Body behind the facade, set back so the shopfront opening is a real recess.
+	var hole := Toon.hole_rect_m(tex + "_front")
+	var room := ROOM_DEPTH if shop != "" and hole.size.x > 0.5 else 1.5
+	# Body behind the facade, set back so the shopfront opening is a real recess or room.
 	var body := Toon.mat(Color("5e5550"))
-	CityBuilder.box(root, Vector3(x, h / 2, front + 1.5 + (depth - 1.5) / 2), Vector3(front_m.x - 0.06, h - 0.02, depth - 1.5), body)
-	var room := Toon.mat(Color("8a7a66"))
-	CityBuilder.box(root, Vector3(x, 3.4, front + 0.75), Vector3(front_m.x - 0.06, 0.1, 1.5), room)    # ceiling
-	CityBuilder.box(root, Vector3(x, CityBuilder.SIDEWALK_TOP, front + 0.75), Vector3(front_m.x - 0.06, 0.02, 1.5), room)
-	for sx in [-1.0, 1.0]:
-		CityBuilder.box(root, Vector3(x + sx * (front_m.x / 2 - 0.05), 1.7, front + 0.75), Vector3(0.06, 3.4, 1.5), room)
-	CityBuilder.omni(root, Vector3(x, 2.4, front + 0.8), Color("ffc58a"), 1.2, 3.5)
+	CityBuilder.box(root, Vector3(x, h / 2, front + room + (depth - room) / 2), Vector3(front_m.x - 0.06, h - 0.02, depth - room), body)
+	if room > 1.5:
+		_shop_room(root, x, front, front_m, hole, shop)
+	else:
+		var inside := Toon.mat(Color("8a7a66"))
+		CityBuilder.box(root, Vector3(x, 3.4, front + 0.75), Vector3(front_m.x - 0.06, 0.1, 1.5), inside)    # ceiling
+		CityBuilder.box(root, Vector3(x, CityBuilder.SIDEWALK_TOP, front + 0.75), Vector3(front_m.x - 0.06, 0.02, 1.5), inside)
+		for sx in [-1.0, 1.0]:
+			CityBuilder.box(root, Vector3(x + sx * (front_m.x / 2 - 0.05), 1.7, front + 0.75), Vector3(0.06, 3.4, 1.5), inside)
+		CityBuilder.omni(root, Vector3(x, 2.4, front + 0.8), Color("ffc58a"), 1.2, 3.5)
 	CityBuilder.face(root, Vector3(x, h / 2, front - 0.01 - nudge), front_m, PI, Toon.textured(tex + "_front"))
 	CityBuilder.face(root, Vector3(x - front_m.x / 2 - 0.01, h / 2, c.z), Vector2(depth, h), -PI / 2, Toon.textured(tex + "_side"))
 	var roof := CityBuilder.face(root, Vector3(x, h + 0.01, c.z), Vector2(front_m.x, depth), 0.0, Toon.textured(tex + "_roof"))
 	roof.rotation.x = -PI / 2
 	CityBuilder.reflection(root, Vector3(x, 0, front - 0.3), 2.4, 2.0, Color("ffbf80"), 0.3)
+	_dress(root, x, front, front_m, depth, exposed)
 	if sign != "":
 		CityBuilder.box(root, Vector3(x, 3.75, front - 0.08), Vector3(minf(3.0, front_m.x - 1.0), 0.7, 0.1), Toon.mat(Color("2a2f38")))
 		var l := Toon.label(sign, 72, Color(1.7, 1.4, 1.0), 0)
@@ -139,6 +149,93 @@ static func building(root: Node3D, x: float, tex: String, sign: String, nudge: f
 		l.position = Vector3(x, 3.75, front - 0.15)
 		l.rotation.y = PI
 		root.add_child(l)
+
+
+# --- shop rooms -------------------------------------------------------------
+
+const ROOM_DEPTH := 4.5
+## Shop kinds: floor, walls, light colour, and the pieces as [kind, along, depth, facing],
+## with `along` metres from the room's +X wall (screen left, the wall the camera sees;
+## negative = from the -X wall) and `depth` metres back from the glass. facing: "street"
+## (front to -Z) or "side" (front to -X, against the +X wall). From this camera tall pieces
+## only show within about 2 m of the glass, so they stand near it or along the +X wall;
+## low ones can go deeper.
+const SHOPS := {
+	"mart": {"floor": "e6e4de", "wall": "f2f1ec", "light": "eef6ff", "pieces": [
+		["mart_fridge", 0.45, 1.5, "side"], ["mart_fridge", 2.0, 4.05, "street"],
+		["mart_shelf", 2.4, 1.5, "street"], ["mart_shelf", 4.6, 1.5, "street"],
+		["mart_shelf", 2.4, 3.2, "street"], ["mart_counter", -1.6, 0.8, "street"]]},
+	"cafe": {"floor": "b08a64", "wall": "efe6da", "light": "ffd9a8", "pieces": [
+		["cafe_counter", 2.0, 2.6, "street"], ["cafe_table", 1.0, 0.9, "street"], ["cafe_table", -1.0, 1.0, "street"]]},
+	"pharmacy": {"floor": "e9ece8", "wall": "f4f6f2", "light": "f0fff6", "pieces": [
+		["pharmacy_shelf", 0.25, 1.6, "side"], ["pharmacy_shelf", 1.3, 3.6, "street"], ["mart_counter", -1.3, 0.8, "street"]]},
+	"gold": {"floor": "6e3a32", "wall": "8a2f2a", "light": "ffd38a", "pieces": [
+		["gold_wall", 0.3, 1.6, "side"], ["gold_counter", 1.7, 0.9, "street"], ["gold_counter", 2.4, 2.8, "street"]]},
+}
+
+
+## The room behind a shop's glass: floor, walls, ceiling with light strips, the glass pane,
+## and the shop's pieces (movable defaults, so the layout editor can rearrange them).
+static func _shop_room(root: Node3D, x: float, front: float, front_m: Vector2, hole: Rect2, shop: String) -> void:
+	var spec: Dictionary = SHOPS[shop]
+	var w := front_m.x - 0.12
+	var floor_y := CityBuilder.SIDEWALK_TOP
+	var top := floor_y + hole.position.y + hole.size.y + 0.05
+	var cz := front + ROOM_DEPTH / 2
+	var wall := Toon.mat(Color(spec.wall))
+	CityBuilder.box(root, Vector3(x, floor_y - 0.04, cz), Vector3(w, 0.08, ROOM_DEPTH), Toon.mat(Color(spec.floor), 0.4))
+	CityBuilder.box(root, Vector3(x, top + 0.05, cz), Vector3(w, 0.1, ROOM_DEPTH), wall)
+	CityBuilder.box(root, Vector3(x, (floor_y + top) / 2, front + ROOM_DEPTH + 0.05), Vector3(w, top - floor_y, 0.1), wall)
+	for sx in [-1.0, 1.0]:
+		CityBuilder.box(root, Vector3(x + sx * (w / 2 + 0.05), (floor_y + top) / 2, cz), Vector3(0.1, top - floor_y, ROOM_DEPTH), wall)
+	var strip := Toon.glow(Color(spec.light), 2.5)
+	for dz in [1.2, 3.0]:
+		CityBuilder.box(root, Vector3(x, top - 0.02, front + dz), Vector3(w * 0.7, 0.04, 0.14), strip)
+	var l := CityBuilder.omni(root, Vector3(x, top - 0.5, cz - 0.6), Color(spec.light), 1.6, ROOM_DEPTH + 2.0)
+	l.remove_from_group("night_lights")     # shops are lit by day too
+	# Glass just behind the facade, over the hole (texture x runs from the facade's +X edge).
+	var hx := x + front_m.x / 2 - hole.get_center().x
+	var glass := CityBuilder.face(root, Vector3(hx, floor_y + hole.get_center().y, front + 0.03), hole.size, PI, Toon.glass())
+	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var plus_x := x + w / 2
+	for p in spec.pieces:
+		var kind: String = p[0]
+		if not (PropKit.CATALOG.has(kind) and PropKit.available(kind)):
+			continue
+		var along: float = p[1] if p[1] >= 0.0 else w + p[1]
+		var foot := Vector3(plus_x - along, floor_y, front + p[2])
+		CityBuilder.add_default(kind, foot, PI / 2 if p[3] == "side" else 0.0)
+
+
+# --- wall dressing --------------------------------------------------------------
+
+## Roof air-con on every building; on an exposed -X wall also wall units with their pipes,
+## a meter box with conduit, a downpipe and a twin bin at its foot (the mart reference).
+static func _dress(root: Node3D, x: float, front: float, front_m: Vector2, depth: float, exposed: bool) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(x * 10.0) + 99
+	var h := front_m.y
+	if PropKit.available("ac_unit"):
+		for i in rng.randi_range(1, 2):
+			CityBuilder.add_default("ac_unit", Vector3(x + rng.randf_range(-front_m.x / 3, front_m.x / 3), h,
+					front + rng.randf_range(2.5, depth - 1.5)), PI if rng.randf() < 0.5 else 0.0)
+	if not exposed:
+		return
+	var wx := x - front_m.x / 2
+	PropKit.pipe(root, Vector3(wx - 0.08, CityBuilder.SIDEWALK_TOP, front + 0.3), Vector3(wx - 0.08, h - 0.2, front + 0.3), 0.06, Color("8a9096"))
+	var units := 2 if h > 6.0 else 1
+	for i in units:
+		var uz := front + 1.6 + i * 2.6
+		var uy := 2.6 + i * 2.2
+		if PropKit.available("ac_unit"):
+			CityBuilder.add_default("ac_unit", Vector3(wx - 0.18, uy, uz), PI / 2)
+		# Refrigerant pipe from the unit up the wall into the building.
+		PropKit.pipe(root, Vector3(wx - 0.05, uy + 0.3, uz + 0.5), Vector3(wx - 0.05, h - 0.6, uz + 0.5), 0.035, Color("d8d8d2"))
+	if PropKit.available("meter_box"):
+		CityBuilder.add_default("meter_box", Vector3(wx - 0.11, 1.3, front + 3.6), PI / 2)
+		PropKit.pipe(root, Vector3(wx - 0.04, 2.0, front + 3.6), Vector3(wx - 0.04, h - 0.4, front + 3.6), 0.025, Color("3a3d42"))
+	if PropKit.available("bin_twin"):
+		CityBuilder.add_default("bin_twin", Vector3(wx - 0.45, CityBuilder.SIDEWALK_TOP, front + 0.8), PI / 2)
 
 
 # --- skytrain ---------------------------------------------------------------
@@ -317,6 +414,10 @@ static func default_props() -> void:
 	CityBuilder.add_default("crowd_barrier", Vector3(35.0, t, -5.0))
 	CityBuilder.add_default("table_stools", Vector3(18.6, t, front - 1.6))
 	CityBuilder.add_default("trash_bins", Vector3(15.2, t, front - 0.5))
+	# Moo ping in front of the mart, motorbike-taxi bikes parked nose to the road by their stand.
+	CityBuilder.add_default("grill_cart", Vector3(7.9, t, front - 1.5))
+	for i in 4:
+		CityBuilder.add_default("motorbike", Vector3(26.4 + i * 0.95, t, 5.3))
 
 
 # --- street marks -----------------------------------------------------------
@@ -403,8 +504,16 @@ static func pedestrians(root: Node3D) -> void:
 		var along := rng.randf_range(r[0], r[1])
 		p.position = Vector3(r[2], 0, along) if r[3] else Vector3(along, 0, r[2])
 		root.add_child(p)
-	# Customers at the noodle cart and the fruit cart (standing, facing the stall).
-	for spot in [[Vector3(-17.0, 0, 5.4), Vector3(0, 0, 1)], [Vector3(15.4, 0, 5.4), Vector3(0, 0, 1)]]:
+	# Vendors behind their carts (facing the street) and customers in front (facing the
+	# stall): noodles, fruit, the two moo ping grills; motorbike-taxi riders by their stand.
+	var front := CityBuilder.WALK_EDGE
+	var street := Vector3(0, 0, -1)
+	var stall := Vector3(0, 0, 1)
+	for spot in [[Vector3(-17.0, 0, 5.4), stall], [Vector3(15.4, 0, 5.4), stall], [Vector3(21.0, 0, 5.4), stall],
+			[Vector3(22.0, 0, 5.5), stall], [Vector3(8.4, 0, front - 2.4), stall],
+			[Vector3(-17.6, 0, 7.4), street], [Vector3(14.6, 0, 7.3), street], [Vector3(21.5, 0, 7.3), street],
+			[Vector3(7.9, 0, front - 0.6), street],
+			[Vector3(27.2, 0, 6.2), Vector3(-1, 0, -0.4)], [Vector3(28.4, 0, 6.4), Vector3(-1, 0, 0.3)]]:
 		var c := SpriteChibi.new({"outfit": outfits[rng.randi() % outfits.size()],
 				"hair_style": hairs[rng.randi() % hairs.size()], "hair_tint": tints[rng.randi() % tints.size()]})
 		c.position = spot[0] + Vector3(0, CityBuilder.SIDEWALK_TOP, 0)
