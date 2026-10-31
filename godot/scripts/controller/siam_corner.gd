@@ -59,7 +59,7 @@ func _ready() -> void:
 	for it in PropLayout.load_or(CityBuilder.default_props).items:
 		PropKit.spawn(props, it.kind, it.pos, it.yaw)
 
-	player = PlayerController.new(SpriteChibi.new({"hair_style": look.hair_style, "hair_tint": look.hair_tint}))
+	player = PlayerController.new(SpriteChibi.new({"hair_style": look.hair_style, "hair_tint": look.hair_tint, "outfit": look.outfit}))
 	player.position = Vector3(-6.5, 0, 5.4)
 	add_child(player)
 	player.chibi.display_name = "torad"
@@ -89,6 +89,11 @@ func _ready() -> void:
 	add_child(hair_picker)
 	hair_picker.set_current(look.hair_style, look.hair_tint)
 	hair_picker.changed.connect(_on_hair_changed)
+	hair_picker.outfit = look.outfit
+	hair_picker.outfit_changed.connect(func(id: String) -> void:
+		(player.chibi as SpriteChibi).set_outfit(id)
+		look.outfit = id
+		look.save())
 
 	rain = _make_rain()
 	add_child(rain)
@@ -107,6 +112,8 @@ func _ready() -> void:
 			_set_pixel(int(a.substr(8)))
 		elif a == "--small":
 			_set_pixel(3)
+		elif a.begins_with("--outfit="):
+			(player.chibi as SpriteChibi).set_outfit(a.substr(9))
 		elif a == "--edit":
 			editor.toggle()
 		elif a == "--charview":

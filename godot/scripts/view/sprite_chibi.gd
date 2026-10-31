@@ -54,12 +54,27 @@ func _ready() -> void:
 	_card.position.y = (CELL / 2.0 - (CELL - FEET)) * PIXEL
 	_pivot.add_child(_card)
 	add_child(_pivot)
+	set_outfit(look.get("outfit", ""))
 	set_hair(look.get("hair_style", ""), look.get("hair_tint", Color(0, 0, 0, 0)))
 	_show(0)
 
 
+## Outfits: whole-body walk sheets with the same frames as the base, so hair
+## layers fit any of them (Ragnarok-style: the body sprite carries the clothes).
+const OUTFITS := {"": "เสื้อยืดเทา", "under": "เสื้อกล้าม+บ็อกเซอร์", "shirt": "เชิ้ตเปิด+เสื้อยืดดำ"}
+
 ## Hairstyles available as layers (tools/hair_layer.py), id -> Thai name.
 const HAIR_STYLES := {"": "หัวโล้น", "messy": "ฟูยุ่ง", "twintail": "ทวินเทล"}
+
+
+## Swaps the body sheet. id "" = the base T-shirt.
+func set_outfit(id: String) -> void:
+	look.outfit = id
+	if _mat == null:
+		return
+	var path := "res://assets/characters/walk_v62_%s.png" % id
+	var tex: Texture2D = load(path) if id != "" and ResourceLoader.exists(path) else sheet
+	_mat.set_shader_parameter("albedo_tex", tex)
 
 
 ## Outfit layer drawn over the body, Ragnarok-style: a sheet the size of the
