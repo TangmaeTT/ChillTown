@@ -179,10 +179,12 @@ static func _road_markings(root: Node3D) -> void:
 		if absf(z) > 0.6:
 			box(root, Vector3(0, 0.012, z), Vector3(3.2, 0.02, 0.45), paint)
 		z += 0.9
-	# Median divider with a gap at the crossing.
-	var divider := Toon.mat(Color("7d7f80"))
-	for side in [-1.0, 1.0]:
-		box(root, Vector3(side * 16.5, 0.15, 0), Vector3(29, 0.3, 0.6), divider, true)
+	# Median divider with a gap at the crossing (old test block only; torad removed it
+	# from the Siam city on 31 Oct).
+	if not _new_city:
+		var divider := Toon.mat(Color("7d7f80"))
+		for side in [-1.0, 1.0]:
+			box(root, Vector3(side * 16.5, 0.15, 0), Vector3(29, 0.3, 0.6), divider, true)
 
 
 static func _shophouses(root: Node3D, rng: RandomNumberGenerator) -> void:
