@@ -12,7 +12,8 @@ and the game's underwear walk sheet. Like the hair, the clothes are drawn once p
      a skirt piece;
   3. on every walk frame the top piece follows the torso (tank top's top centre) and the
      skirt follows the waistband (down) and the torso (sideways), so the pattern never changes between frames;
-  4. the base's hands and forearms beside the hips are pasted back over the skirt.
+  4. the base's hands and forearms beside the hips are pasted back over the skirt, and the
+     head is drawn over the collar (the chin hides its top edge, as in the AI drawing).
 Writes a whole-body sheet (base + clothes) for SpriteChibi.OUTFITS.
 --colors N limits the clothes palette (default 16).
 """
@@ -30,6 +31,7 @@ from hair_layer import ORDER, ROWS, drop_specks, head_anchor  # noqa: E402
 from texture_from_ai import mode_downscale, split_parts  # noqa: E402
 
 CELL = 96
+HEAD_GAP = 4   # rows above the tank top that still belong to the neck (clothes may cover them)
 
 
 def load(path):
@@ -165,6 +167,11 @@ def main():
             over(dst, clothes[rs, cs])
             arm = arms_mask(cell, fa)
             dst[arm] = cell[arm]
+            # the head (chin and face) is in front of the collar, as in the AI drawing
+            head = np.zeros(arm.shape, bool)
+            head[:fa[0] - HEAD_GAP] = True
+            head &= cell[..., 3] > 0
+            dst[head] = cell[head]
     Image.fromarray(out).save(a.out)
     print('saved', a.out)
 
