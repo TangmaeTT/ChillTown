@@ -61,7 +61,7 @@ func _ready() -> void:
 
 ## Outfits: whole-body walk sheets with the same frames as the base, so hair
 ## layers fit any of them (Ragnarok-style: the body sprite carries the clothes).
-const OUTFITS := {"": "เสื้อยืดเทา", "under": "เสื้อกล้ามครอป+บ็อกเซอร์", "dress": "เดรสสายเดี่ยว", "shirt": "เชิ้ตเปิด+เสื้อยืดดำ"}
+const OUTFITS := {"": "เสื้อยืดเทา", "under": "เสื้อกล้ามครอป+บ็อกเซอร์", "dress": "เดรสสายเดี่ยว", "puffdress": "เดรสแขนพองลายดอก", "shirt": "เชิ้ตเปิด+เสื้อยืดดำ"}
 
 ## Hairstyles available as layers (tools/hair_layer.py), id -> Thai name.
 const HAIR_STYLES := {"": "หัวโล้น", "messy": "ฟูยุ่ง", "twintail": "ทวินเทล"}
