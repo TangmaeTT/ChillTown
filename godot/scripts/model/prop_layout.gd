@@ -18,12 +18,18 @@ static func load_or(defaults: Array[Dictionary]) -> PropLayout:
 			continue
 		var data = JSON.parse_string(FileAccess.get_file_as_string(path))
 		if data is Array:
+			var saved := {}
 			for d in data:
+				saved[String(d.kind)] = true
 				layout.items.append({
 					"kind": String(d.kind),
 					"pos": Vector3(d.pos[0], d.pos[1], d.pos[2]),
 					"yaw": float(d.get("yaw", 0.0)),
 				})
+			# Kinds added to the city after this file was saved start at their defaults.
+			for it in defaults:
+				if not saved.has(it.kind) and PropKit.CATALOG.has(it.kind):
+					layout.items.append(it.duplicate())
 			return layout
 	layout.items = defaults.duplicate(true)
 	return layout

@@ -57,7 +57,8 @@ func _ready() -> void:
 	props.name = "Props"
 	add_child(props)
 	for it in PropLayout.load_or(CityBuilder.default_props).items:
-		PropKit.spawn(props, it.kind, it.pos, it.yaw)
+		if PropKit.CATALOG.has(it.kind) and PropKit.available(it.kind):
+			PropKit.spawn(props, it.kind, it.pos, it.yaw)
 
 	player = PlayerController.new(SpriteChibi.new({"hair_style": look.hair_style, "hair_tint": look.hair_tint, "outfit": look.outfit}))
 	player.position = Vector3(-6.5, 0, 5.4)
@@ -116,6 +117,10 @@ func _ready() -> void:
 			(player.chibi as SpriteChibi).set_outfit(a.substr(9))
 		elif a == "--edit":
 			editor.toggle()
+		elif a.begins_with("--at="):
+			# Dev: start the player at x,z (screenshots of one spot).
+			var xz := a.substr(5).split(",")
+			player.position = Vector3(float(xz[0]), 0, float(xz[1]))
 		elif a == "--charview":
 			# Dev: both chibis side by side on open pavement, camera on them.
 			player.position = Vector3(-1.0, 0, -6.0)

@@ -78,7 +78,10 @@ def main():
     ap.add_argument("day")
     ap.add_argument("night", help="night version, or '-' for props with no lights (emission stays black)")
     ap.add_argument("out", help="output path prefix, e.g. godot/assets/textures/vending")
-    ap.add_argument("--widths", required=True, help="real width of each part in metres, left to right, comma-separated")
+    ap.add_argument("--widths", help="real width of each part in metres, left to right, comma-separated")
+    ap.add_argument("--uniform-height", type=float, help="instead of --widths: the first part is this tall in metres "
+                    "and every part is scaled by the same factor (the AI drew all views at one scale)")
+    ap.add_argument("--uniform-width", type=float, help="same, but the first part is this wide in metres")
     ap.add_argument("--names", help="suffix for each part, comma-separated (default: none for one part, 0,1,.. otherwise)")
     ap.add_argument("--height", type=float, help="force every part to this height in metres (faces of one box must match)")
     ap.add_argument("--heights", help="height in metres per part, comma-separated; leave a slot empty to keep that part's "
@@ -93,12 +96,27 @@ def main():
     if day.shape != night.shape:
         # ChatGPT edits sometimes come back a pixel or two off; crop both to the overlap.
         if max(abs(p - q) for p, q in zip(day.shape, night.shape)) > 4:
-            sys.exit(f"day {day.shape} and night {night.shape} differ in size")
+            # Codex sometimes returns the night edit at a slightly different size: scale it
+            # onto the day image if the proportions agree.
+            if abs(day.shape[0] / day.shape[1] - night.shape[0] / night.shape[1]) > 0.03:
+                sys.exit(f"day {day.shape} and night {night.shape} differ in size")
+            night = np.array(Image.fromarray(night).resize((day.shape[1], day.shape[0]), Image.NEAREST))
         hh, ww = min(day.shape[0], night.shape[0]), min(day.shape[1], night.shape[1])
         day, night = day[:hh, :ww].copy(), night[:hh, :ww].copy()
     night[..., 3] = day[..., 3]                                      # one silhouette for both
-    widths = [float(v) for v in a.widths.split(",")]
     parts = split_parts(day[..., 3], a.min_gap)
+    if a.uniform_height or a.uniform_width:
+        def tall(x0, x1):
+            ys = np.nonzero(day[:, x0:x1, 3].max(1) > 0)[0]
+            return ys.max() - ys.min() + 1
+        x0, x1 = parts[0]
+        k = a.uniform_height / tall(x0, x1) if a.uniform_height else a.uniform_width / (x1 - x0)
+        widths = [(q - p) * k for p, q in parts]
+        a.heights = ",".join(f"{tall(p, q) * k:.4f}" for p, q in parts)
+    elif a.widths:
+        widths = [float(v) for v in a.widths.split(",")]
+    else:
+        sys.exit("give --widths, --uniform-height or --uniform-width")
     if len(parts) != len(widths):
         sys.exit(f"found {len(parts)} parts {parts}, but --widths gives {len(widths)}")
     heights = [float(v) if v.strip() else None for v in a.heights.split(",")] if a.heights else [a.height] * len(parts)
@@ -116,6 +134,22 @@ def main():
         h = round(hm * a.ppm) if hm else round((box[0].stop - box[0].start) * w / (x1 - x0))
         d = mode_downscale(day_q[box], w, h)
         n = mode_downscale(night_q[box], w, h)
+        # Edge pixels blended with the magenta background read as pink fringes in game.
+        rgb = d[..., :3].astype(int)
+        # Strongly magenta anywhere, or a little magenta on the silhouette's edge (repeat to
+        # peel a 2-pixel fringe).
+        for _ in range(2):
+            rgb = d[..., :3].astype(int)
+            tint = np.minimum(rgb[..., 0], rgb[..., 2]) - rgb[..., 1]
+            clear = d[..., 3] == 0
+            edge = np.zeros_like(clear)
+            edge[1:] |= clear[:-1]
+            edge[:-1] |= clear[1:]
+            edge[:, 1:] |= clear[:, :-1]
+            edge[:, :-1] |= clear[:, 1:]
+            fringe = ((tint > 45) & (rgb[..., 2] > 110)) | (edge & (tint > 12))
+            d[fringe, 3] = 0
+            n[fringe, 3] = 0
 
         lum_n = n[..., :3].astype(np.float32).max(-1)
         lum_d = d[..., :3].astype(np.float32).max(-1)

@@ -1,5 +1,10 @@
 ; Engine configuration file.
-; Chill Town (Godot) — see ../design/GDD.md v0.2
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
@@ -22,6 +27,20 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=4
 
+[gui]
+
+theme/custom_font="res://assets/fonts/Mali-Medium.ttf"
+
+[internationalization]
+
+locale/include_text_server_data=true
+
+[rendering]
+
+renderer/rendering_method="mobile"
+anti_aliasing/quality/msaa_3d=2
+textures/decals/filter=0
+
 [shader_globals]
 
 player_position={
@@ -37,17 +56,8 @@ wet_amount={
 "value": 1.0
 }
 
-[gui]
+[importer_defaults]
 
-theme/custom_font="res://assets/fonts/Mali-Medium.ttf"
-
-[internationalization]
-
-locale/include_text_server_data=true
-
-[rendering]
-
-renderer/rendering_method="mobile"
-renderer/rendering_method.mobile="mobile"
-anti_aliasing/quality/msaa_3d=2
-textures/decals/filter=0
+texture={
+"detect_3d/compress_to": 0
+}

@@ -21,7 +21,31 @@ const CATALOG := {
 	"counter": ["box", "grocery_counter", "เคาน์เตอร์"],
 	"fridge": ["box", "grocery_fridge", "ตู้แช่"],
 	"vending": ["vending", "vending", "ตู้กดน้ำ"],
+	# Codex street props (tools/city_batch.py)
+	"spirit_house": ["box", "city_spirit_house", "ศาลพระภูมิ"],
+	"noodle_cart": ["box", "city_noodle_cart", "รถเข็นก๋วยเตี๋ยว"],
+	"fruit_cart": ["box", "city_fruit_cart", "รถเข็นผลไม้"],
+	"grill_cart": ["box", "city_grill_cart", "รถเข็นหมูปิ้ง"],
+	"lottery_stand": ["box", "city_lottery_stand", "แผงลอตเตอรี่"],
+	"table_stools": ["box", "city_table_stools", "โต๊ะ+เก้าอี้"],
+	"kiosk_drinks": ["box", "city_kiosk_drinks", "ซุ้มน้ำ"],
+	"kiosk_flowers": ["box", "city_kiosk_flowers", "ซุ้มดอกไม้"],
+	"police_box": ["box", "city_police_box", "ป้อมตำรวจ"],
+	"bus_stop": ["box", "city_bus_stop", "ป้ายรถเมล์"],
+	"moto_stand": ["box", "city_moto_stand", "วินมอไซค์"],
+	"clock_post": ["box", "city_clock_post", "เสานาฬิกา"],
+	"bench": ["box", "city_bench", "ม้านั่ง"],
+	"trash_bins": ["box", "city_trash_bins", "ถังขยะ"],
+	"phone_booth": ["box", "city_phone_booth", "ตู้โทรศัพท์"],
+	"planter_tree": ["box", "city_planter_tree", "กระบะต้นไม้"],
+	"rain_tree": ["card", "city_rain_tree", "ต้นจามจุรี"],
 }
+
+
+## Catalogue entries whose textures are in the project (Codex art arrives over time).
+static func available(kind: String) -> bool:
+	var spec: Array = CATALOG[kind]
+	return Toon.has_texture(spec[1] if spec[0] == "card" else spec[1] + "_front")
 
 
 ## Places a catalogue prop with its base centred on `foot`. The returned node
@@ -87,7 +111,25 @@ static func _has(tex: String) -> bool:
 
 ## Box from <name>_front / _side / _top textures. `foot` is the centre of its
 ## base; local -Z is the front, turned by `yaw` (PI/2 puts the front on -X).
+## A solid voxel model carved from the views (tools/voxel_from_views.py), when there is one.
+static func voxel(parent: Node3D, name: String, foot: Vector3, yaw := 0.0) -> Node3D:
+	var node: Node3D = (load("res://assets/models/%s.glb" % name) as PackedScene).instantiate()
+	node.position = foot
+	node.rotation.y = yaw
+	parent.add_child(node)
+	for mi in node.find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).material_override = Toon.vcolor()
+	return node
+
+
+static func has_voxel(name: String) -> bool:
+	return ResourceLoader.exists("res://assets/models/%s.glb" % name)
+
+
+## A box faced with the front/side/top textures, or the voxel model carved from them.
 static func textured_box(parent: Node3D, name: String, foot: Vector3, yaw := 0.0) -> Node3D:
+	if has_voxel(name):
+		return voxel(parent, name, foot, yaw)
 	var front := Toon.texture_size_m(name + "_front")
 	var depth := Toon.texture_size_m(name + "_side").x
 	var w := front.x

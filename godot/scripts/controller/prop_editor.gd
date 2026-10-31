@@ -60,6 +60,8 @@ func _ready() -> void:
 	row.add_theme_constant_override("h_separation", 6)
 	col.add_child(row)
 	for kind in PropKit.CATALOG:
+		if not PropKit.available(kind):
+			continue
 		var b := Button.new()
 		b.text = PropKit.CATALOG[kind][2]
 		b.add_theme_font_size_override("font_size", 16)

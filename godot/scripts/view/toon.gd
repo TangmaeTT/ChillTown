@@ -40,12 +40,15 @@ static func glow(color: Color, energy: float, cutaway := false) -> ShaderMateria
 
 ## Pixel-art face from tools/texture_from_ai.py: `name` is the path stem under
 ## res://assets/textures/ (expects <name>_albedo.png and <name>_emission.png).
-static func textured(name: String, emission_energy := 2.0) -> ShaderMaterial:
-	var key := "tex|%s|%s" % [name, emission_energy]
+## `cutaway`: dithers out around the player when it sits between camera and player
+## (the skytrain overhead).
+static func textured(name: String, emission_energy := 2.0, cutaway := false) -> ShaderMaterial:
+	var key := "tex|%s|%s|%s" % [name, emission_energy, cutaway]
 	if _cache.has(key):
 		return _cache[key]
 	var m := mat(Color.WHITE).duplicate() as ShaderMaterial
 	m.set_shader_parameter("use_tex", true)
+	m.set_shader_parameter("cutaway", cutaway)
 	m.set_shader_parameter("albedo_tex", load("res://assets/textures/%s_albedo.png" % name))
 	m.set_shader_parameter("emission_tex", load("res://assets/textures/%s_emission.png" % name))
 	m.set_shader_parameter("tex_emission_energy", emission_energy)
@@ -54,16 +57,36 @@ static func textured(name: String, emission_energy := 2.0) -> ShaderMaterial:
 
 
 ## Ground tiled from above in world space (tools/gen_ground.py textures).
-static func ground(name: String, color: Color, wet: float, tile_m := 2.0) -> ShaderMaterial:
-	var key := "ground|%s|%s|%s" % [name, color.to_html(), wet]
+## A "city_" texture (Codex-painted, tools/city_convert.py) is used as the colour itself.
+static func ground(name: String, color: Color, wet: float, tile_m := 2.0, swap := false) -> ShaderMaterial:
+	var key := "ground|%s|%s|%s|%s|%s" % [name, color.to_html(), wet, tile_m, swap]
 	if _cache.has(key):
 		return _cache[key]
 	var m := mat(color, wet).duplicate() as ShaderMaterial
 	m.set_shader_parameter("use_ground", true)
+	m.set_shader_parameter("ground_raw", name.begins_with("city_"))
+	m.set_shader_parameter("ground_swap", swap)
 	m.set_shader_parameter("ground_tex", load("res://assets/textures/%s_albedo.png" % name))
 	m.set_shader_parameter("ground_tile_m", tile_m)
 	_cache[key] = m
 	return m
+
+
+## Material for voxel props: colour (and night glow) from the mesh's vertex colours.
+static func vcolor(emission_energy := 2.0) -> ShaderMaterial:
+	var key := "vcolor|%s" % emission_energy
+	if _cache.has(key):
+		return _cache[key]
+	var m := mat(Color.WHITE).duplicate() as ShaderMaterial
+	m.set_shader_parameter("use_vcolor", true)
+	m.set_shader_parameter("vcolor_emission", emission_energy)
+	_cache[key] = m
+	return m
+
+
+## True when a face/ground texture has been converted into the project.
+static func has_texture(name: String) -> bool:
+	return ResourceLoader.exists("res://assets/textures/%s_albedo.png" % name)
 
 
 ## Size in metres of a face texture at the project's 32 px per metre.

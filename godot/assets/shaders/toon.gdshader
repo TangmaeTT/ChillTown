@@ -48,13 +48,23 @@ uniform float overlay_ref = 0.3;
 uniform bool use_ground = false;
 uniform sampler2D ground_tex : source_color, filter_nearest, repeat_enable;
 uniform float ground_tile_m = 2.0;
+// Painted ground (tools/city_convert.py tiles): the texture is the colour itself.
+uniform bool ground_raw = false;
+// Turn the tile a quarter (zebra stripes across a road running along X).
+uniform bool ground_swap = false;
 // 0 dry .. 1 soaked (rain); scales the wet look of materials with wetness > 0.
 global uniform float wet_amount;
+// Voxel props (tools/voxel_from_views.py): colour per vertex, alpha = how strongly
+// that voxel face glows at night (lit windows, lamps).
+uniform bool use_vcolor = false;
+uniform float vcolor_emission = 2.0;
 
 varying vec3 world_pos;
+varying vec4 vcol;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	vcol = COLOR;
 }
 
 float bayer4(vec2 p) {
@@ -99,8 +109,14 @@ void fragment() {
 		base *= t.rgb;
 		glow += texture(emission_tex, uv).rgb * tex_emission_energy;
 	}
+	if (use_vcolor) {
+		base *= vcol.rgb;
+		glow += vcol.rgb * vcol.a * vcolor_emission;
+	}
 	if (use_ground) {
-		base *= texture(ground_tex, world_pos.xz / ground_tile_m).rgb * 2.0;
+		vec2 gp = ground_swap ? world_pos.zx : world_pos.xz;
+		vec3 g = texture(ground_tex, gp / ground_tile_m).rgb;
+		base = ground_raw ? g : base * g * 2.0;
 	}
 	float wet = wetness * wet_amount;
 	ALBEDO = base * mix(1.0, 0.72, wet);
